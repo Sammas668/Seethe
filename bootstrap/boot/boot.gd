@@ -6,7 +6,7 @@ const TACTICAL_UI_SANDBOX: PackedScene = preload(
 
 
 func _ready() -> void:
-    print("Seethe Stage 3.3 interactive hand-slot UI loaded.")
+    print("Seethe Stage 3.6 XCOM belt and spatial inventory loaded.")
     call_deferred("_open_tactical_ui_sandbox")
 
 

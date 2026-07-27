@@ -50,6 +50,17 @@ func add_ground_item(item_state: TacticalItemState) -> void:
     ground_items_by_id[item_state.item_id] = item_state
 
 
+func get_ground_item(item_id: StringName) -> TacticalItemState:
+    return ground_items_by_id.get(item_id) as TacticalItemState
+
+
+func remove_ground_item(item_id: StringName) -> TacticalItemState:
+    var item := get_ground_item(item_id)
+    if item != null:
+        ground_items_by_id.erase(item_id)
+    return item
+
+
 func get_ground_items() -> Array[TacticalItemState]:
     var result: Array[TacticalItemState] = []
     for value: Variant in ground_items_by_id.values():

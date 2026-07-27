@@ -271,36 +271,40 @@ theme_override_styles/panel = SubResource("PanelMid")
 
 [node name="Margin" type="MarginContainer" parent="HUD/BottomDeck"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 7
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 7
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 5
 
 [node name="MainRow" type="HBoxContainer" parent="HUD/BottomDeck/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 5
 
 [node name="UnitBlock" type="VBoxContainer" parent="HUD/BottomDeck/Margin/MainRow"]
-custom_minimum_size = Vector2(240, 0)
+custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
 [node name="ShortNameLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 text = "Test Marauder"
 
 [node name="ShortHPLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
 layout_mode = 2
-text = "HP 24/24 · AC 14"
+theme_override_font_sizes/font_size = 12
+clip_text = true
+text = "HP 24/24 · AC 14 · 30/30 ft"
 
 [node name="ShortCapacityLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
+visible = false
+mouse_filter = 2
 layout_mode = 2
 text = "30/30 ft · Q ready · R ready"
 
 [node name="UnitCapacityBarContainer" type="Control" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
-custom_minimum_size = Vector2(0, 14)
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
 
 [node name="UnitCapacityBar" type="ProgressBar" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock/UnitCapacityBarContainer"]
@@ -328,23 +332,25 @@ color = Color(0.94, 0.77, 0.27, 0.95)
 mouse_filter = 2
 
 [node name="ShortContextLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
-custom_minimum_size = Vector2(0, 18)
+custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.66, 0.72, 0.77, 1)
+theme_override_font_sizes/font_size = 11
 clip_text = true
-text = "Ready."
+text = "Q ready · R ready · Ready."
 
 [node name="Divider1" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
 
 [node name="HandBlock" type="VBoxContainer" parent="HUD/BottomDeck/Margin/MainRow"]
-custom_minimum_size = Vector2(180, 0)
+custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 2
 
 [node name="HandTitle" type="Label" parent="HUD/BottomDeck/Margin/MainRow/HandBlock"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.63, 0.72, 0.78, 1)
+theme_override_font_sizes/font_size = 12
 text = "HELD ITEMS"
 
 [node name="HandRow" type="HBoxContainer" parent="HUD/BottomDeck/Margin/MainRow/HandBlock"]
@@ -352,16 +358,16 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="LeftHandButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/HandRow"]
-custom_minimum_size = Vector2(86, 58)
+custom_minimum_size = Vector2(81, 54)
 layout_mode = 2
-tooltip_text = "Click to show actions supplied by the item in the left hand."
-text = "LEFT HAND\nEmpty"
+tooltip_text = "Click to show actions supplied by the item in the Secondary Hand."
+text = "SECONDARY\nEmpty"
 
 [node name="RightHandButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/HandRow"]
-custom_minimum_size = Vector2(86, 58)
+custom_minimum_size = Vector2(81, 54)
 layout_mode = 2
-tooltip_text = "Click to show actions supplied by the item in the right hand."
-text = "RIGHT HAND\nTraining Axe"
+tooltip_text = "Click to show actions supplied by the item in the Primary Hand."
+text = "PRIMARY\nTraining Axe"
 
 [node name="Divider2" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
@@ -373,36 +379,42 @@ theme_override_constants/separation = 4
 
 [node name="CommandButtons" type="HBoxContainer" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 3
 
 [node name="AttackButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(62, 37)
+custom_minimum_size = Vector2(52, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Attack"
 
 [node name="AbilitiesButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(68, 37)
+custom_minimum_size = Vector2(58, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Abilities"
 
 [node name="TacticsButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(62, 37)
+custom_minimum_size = Vector2(52, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Tactics"
 
 [node name="InventoryButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(76, 37)
+custom_minimum_size = Vector2(66, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Inventory"
 
 [node name="InteractButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(62, 37)
+custom_minimum_size = Vector2(54, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "Interact"
 
 [node name="EndUnitButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(66, 37)
+custom_minimum_size = Vector2(58, 35)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "End Unit"
 
 [node name="ContextTray" type="PanelContainer" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock"]
@@ -422,45 +434,51 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="Action1" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
-custom_minimum_size = Vector2(95, 30)
+custom_minimum_size = Vector2(72, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
 text = "Action 1"
 
 [node name="Action2" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
-custom_minimum_size = Vector2(95, 30)
+custom_minimum_size = Vector2(72, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
 text = "Action 2"
 
 [node name="Action3" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
-custom_minimum_size = Vector2(95, 30)
+custom_minimum_size = Vector2(72, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
 text = "Action 3"
 
 [node name="Action4" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
-custom_minimum_size = Vector2(95, 30)
+custom_minimum_size = Vector2(72, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
 text = "Action 4"
 
 [node name="Divider3" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
 
 [node name="PhaseBlock" type="VBoxContainer" parent="HUD/BottomDeck/Margin/MainRow"]
-custom_minimum_size = Vector2(128, 0)
+custom_minimum_size = Vector2(122, 0)
 layout_mode = 2
-theme_override_constants/separation = 5
+theme_override_constants/separation = 3
 
 [node name="RoundShortLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/PhaseBlock"]
 layout_mode = 2
 horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
 text = "Round 1\nPLAYER PHASE"
 
 [node name="EndPhaseButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/PhaseBlock"]
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "END PHASE"
 
 [node name="InventoryPanel" type="PanelContainer" parent="HUD"]

@@ -6,6 +6,9 @@ const MOVEMENT_TEST_MAP: TacticalMapDefinition = preload(
 const UNIT_VIEW_SCENE: PackedScene = preload(
     "res://presentation/tactical/tactical_unit_view.tscn"
 )
+const UNIT_MANAGEMENT_WINDOW_SCENE: PackedScene = preload(
+    "res://presentation/tactical/unit_management_window.tscn"
+)
 
 const MARAUDER_ID: StringName = &"unit.prototype_marauder"
 const ARCHER_ID: StringName = &"unit.prototype_archer"
@@ -113,6 +116,7 @@ var _movement_mode: StringName = &"normal"
 var _last_status_message: String = "Ready."
 var _active_hand_name: String = ""
 var _active_hand_item: String = ""
+var _unit_management_window: UnitManagementWindow
 
 
 func _ready() -> void:
@@ -139,6 +143,7 @@ func _ready() -> void:
 			80.0
 		)
 	)
+	_configure_prototype_character_sheet(marauder, &"marauder")
 	initial_state.add_unit(marauder)
 
 	var archer := TacticalUnitState.new(
@@ -162,6 +167,7 @@ func _ready() -> void:
 			60.0
 		)
 	)
+	_configure_prototype_character_sheet(archer, &"archer")
 	initial_state.add_unit(archer)
 
 	var scout := TacticalUnitState.new(
@@ -185,6 +191,7 @@ func _ready() -> void:
 			55.0
 		)
 	)
+	_configure_prototype_character_sheet(scout, &"scout")
 	initial_state.add_unit(scout)
 
 	initial_state.add_ground_item(
@@ -224,6 +231,27 @@ func _ready() -> void:
 	_sprint_handler = SprintMoveHandler.new(_state_store, MOVEMENT_TEST_MAP)
 	_end_phase_handler = EndPhaseHandler.new(_state_store)
 
+	_unit_management_window = (
+		UNIT_MANAGEMENT_WINDOW_SCENE.instantiate()
+		as UnitManagementWindow
+	)
+	$HUD.add_child(_unit_management_window)
+	var management_unit_order: Array[StringName] = [
+		MARAUDER_ID,
+		ARCHER_ID,
+		SCOUT_ID,
+	]
+	_unit_management_window.configure(
+		_state_store,
+		_selected_unit_id,
+		management_unit_order
+	)
+	_unit_management_window.closed.connect(_on_unit_management_closed)
+	_unit_management_window.unit_changed.connect(
+		_on_unit_management_unit_changed
+	)
+	_unit_management_window.message_requested.connect(_set_status)
+
 	_unit_buttons = {
 		MARAUDER_ID: _marauder_button,
 		ARCHER_ID: _archer_button,
@@ -250,15 +278,13 @@ func _ready() -> void:
 		)
 
 	_left_hand_button.pressed.connect(
-		func() -> void: _open_hand_actions("Left Hand", false)
+		func() -> void: _open_hand_actions("Secondary Hand", false)
 	)
 	_right_hand_button.pressed.connect(
-		func() -> void: _open_hand_actions("Right Hand", true)
+		func() -> void: _open_hand_actions("Primary Hand", true)
 	)
 
-	_inventory_close_button.pressed.connect(_close_inventory)
-	_inventory_footer_close_button.pressed.connect(_close_inventory)
-	_inventory_confirm_button.pressed.connect(_on_inventory_confirm_pressed)
+	_inventory_panel.visible = false
 
 	_create_unit_views()
 	_select_unit(MARAUDER_ID)
@@ -268,10 +294,110 @@ func _ready() -> void:
 	_refresh_all_presentation()
 
 
+func _configure_prototype_character_sheet(
+		unit: TacticalUnitState,
+		profile_id: StringName
+) -> void:
+	var sheet := TacticalCharacterSheetState.new()
+
+	match profile_id:
+		&"marauder":
+			sheet.level = 1
+			sheet.class_name_text = "Barbarian"
+			sheet.archetype_name = "Reaver"
+			sheet.ability_scores = {
+				"STR": 16, "DEX": 12, "CON": 15,
+				"INT": 9, "WIS": 11, "CHA": 10,
+			}
+			sheet.fortitude_save = 4
+			sheet.reflex_save = 1
+			sheet.will_save = 0
+			sheet.initiative_bonus = 1
+			sheet.passive_perception = 10
+			sheet.attack_entries = [
+				"Training Axe · +5 · 1d8+3 · 5 ft · Half Action",
+				"Unarmed Strike · +4 · 1d3+3 · 5 ft · Half Action",
+			]
+			sheet.defence_entries = [
+				"Hide Armour",
+				"No resistances",
+			]
+			sheet.ability_entries = [
+				"Rage — prototype entry",
+				"Carry Captive — Reaver identity",
+			]
+			sheet.skill_entries = [
+				"Athletics +5",
+				"Intimidation +2",
+			]
+		&"archer":
+			sheet.level = 1
+			sheet.class_name_text = "Ranger"
+			sheet.archetype_name = "Bounty Hunter"
+			sheet.ability_scores = {
+				"STR": 11, "DEX": 16, "CON": 12,
+				"INT": 11, "WIS": 14, "CHA": 10,
+			}
+			sheet.fortitude_save = 1
+			sheet.reflex_save = 4
+			sheet.will_save = 2
+			sheet.initiative_bonus = 3
+			sheet.passive_perception = 12
+			sheet.attack_entries = [
+				"Training Shortbow · +4 · 1d6+2 · 30 ft · Half Action",
+				"Dagger · +2 · 1d4+1 · 5 ft · Half Action",
+			]
+			sheet.defence_entries = [
+				"Leather Armour",
+				"No resistances",
+			]
+			sheet.ability_entries = [
+				"Mark Target — prototype entry",
+				"Live Capture Training",
+			]
+			sheet.skill_entries = [
+				"Perception +4",
+				"Stealth +4",
+			]
+		&"scout":
+			sheet.level = 1
+			sheet.class_name_text = "Rogue"
+			sheet.archetype_name = "Crime Lord"
+			sheet.ability_scores = {
+				"STR": 12, "DEX": 15, "CON": 12,
+				"INT": 14, "WIS": 12, "CHA": 13,
+			}
+			sheet.fortitude_save = 1
+			sheet.reflex_save = 4
+			sheet.will_save = 1
+			sheet.initiative_bonus = 2
+			sheet.passive_perception = 11
+			sheet.attack_entries = [
+				"Training Spear · +3 · 1d6+1 · 5 ft · Half Action",
+				"Sling · +3 · 1d6+1 · 30 ft · Half Action",
+			]
+			sheet.defence_entries = [
+				"Light Armour",
+				"No resistances",
+			]
+			sheet.ability_entries = [
+				"Cunning Action — prototype entry",
+				"Lockpicking",
+			]
+			sheet.skill_entries = [
+				"Stealth +4",
+				"Thievery +4",
+			]
+
+	unit.configure_character_sheet(sheet)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		if not key_event.pressed or key_event.echo:
+			return
+		if _inventory_open:
 			return
 
 		match key_event.keycode:
@@ -519,6 +645,11 @@ func _select_unit(unit_id: StringName) -> void:
 		_set_status("%s selected." % unit.display_name)
 
 	_selected_unit_id = unit_id
+	if (
+		_unit_management_window != null
+		and _unit_management_window.visible
+	):
+		_unit_management_window.set_current_unit(unit_id)
 	_movement_mode = &"normal"
 	_hide_context_tray()
 	_update_unit_selection_visuals()
@@ -812,88 +943,63 @@ func _toggle_inventory() -> void:
 
 func _open_inventory() -> void:
 	if _selected_unit_id == &"":
-		_set_status("Select a unit before opening Inventory.")
+		_set_status("Select a unit before opening Unit Management.")
 		return
 
 	_inventory_open = true
-	_inventory_panel.visible = true
 	_hide_context_tray()
 	_movement_mode = &"normal"
 	_preview_result = null
-	_refresh_inventory_panel()
+	_unit_management_window.open_for_unit(
+		_selected_unit_id,
+		&"equipment"
+	)
 	_set_status(
-        "Inventory opened for free. Item movement remains read-only in this UI foundation."
+        "Unit Management opened. Equipment and Character Sheet tabs are free to inspect."
 	)
 	queue_redraw()
 
 
 func _close_inventory() -> void:
-	_inventory_open = false
-	_inventory_panel.visible = false
-	_set_status("Inventory closed.")
-	_refresh_all_presentation()
+	if _unit_management_window != null:
+		_unit_management_window.close_window()
+	else:
+		_inventory_open = false
 
 
 func _refresh_inventory_panel() -> void:
-	var unit := _state_store.state.get_unit(_selected_unit_id)
-	if unit == null:
-		return
-
-	_inventory_title.text = "%s — TACTICAL INVENTORY" % unit.display_name
-	_inventory_equipped_text.text = (
-        "[b]Main hand[/b]\n%s\n\n[b]Off hand[/b]\n%s\n\n[b]Armour[/b]\n%s\n\n[b]Prepared secondary set[/b]\n%s"
-		% [
-			unit.inventory.main_hand,
-			unit.inventory.off_hand,
-			unit.inventory.armour,
-			unit.inventory.secondary_set,
-		]
-	)
-	_inventory_quick_text.text = (
-		"[b]Quick access[/b]\n%s" % unit.inventory.quick_access_summary()
-	)
-	_inventory_packed_text.text = (
-		"[b]Packed inventory[/b]\n%s" % unit.inventory.packed_summary()
-	)
-	_inventory_weight_label.text = (
-        "Carried weight: %.1f / %.1f lb"
-		% [
-			unit.inventory.current_weight_lb,
-			unit.inventory.maximum_weight_lb,
-		]
-	)
-
-	var accessible := _state_store.state.get_accessible_ground_items(unit)
-	if accessible.is_empty():
-		_local_access_text.text = (
-            "[b]Locally accessible[/b]\n\nNo known items on the selected unit's tile or adjacent tiles."
-		)
-	else:
-		var lines: Array[String] = ["[b]Locally accessible[/b]", ""]
-		for item: TacticalItemState in accessible:
-			lines.append(
-                "• %s\n  %s tile (%d, %d)"
-				% [
-					item.display_line(),
-					item.source_label,
-					item.grid_position.x,
-					item.grid_position.y,
-				]
-			)
-		_local_access_text.text = "\n".join(PackedStringArray(lines))
-
-	_inventory_action_label.text = (
-        "Opening and inspection are free. Pickup, transfer, quick-access and packed-storage costs "
-		+ "are displayed here when tactical item commands are implemented."
-	)
-	_inventory_confirm_button.disabled = true
-	_inventory_confirm_button.tooltip_text = (
-        "Item-transfer commands are deliberately deferred; this stage establishes the permanent UI contract."
-	)
+	if _unit_management_window != null:
+		_unit_management_window.refresh()
 
 
 func _on_inventory_confirm_pressed() -> void:
-	_set_status("No item transfer is selected. Tactical item commands are a later stage.")
+	pass
+
+
+func _on_unit_management_closed() -> void:
+	_inventory_open = false
+	_set_status("Unit Management closed.")
+	_refresh_all_presentation()
+
+
+func _on_unit_management_unit_changed(unit_id: StringName) -> void:
+	if unit_id == _selected_unit_id:
+		return
+	_select_unit_for_management(unit_id)
+
+
+func _select_unit_for_management(unit_id: StringName) -> void:
+	var unit := _state_store.state.get_unit(unit_id)
+	if unit == null:
+		return
+
+	_selected_unit_id = unit_id
+	_movement_mode = &"normal"
+	_hide_context_tray()
+	_update_unit_selection_visuals()
+	_refresh_path_preview()
+	_refresh_all_presentation()
+	_set_status("%s selected for inspection." % unit.display_name)
 
 
 func _update_unit_selection_visuals() -> void:
@@ -982,7 +1088,7 @@ func _refresh_hud() -> void:
 		_path_label.text = "Path preview: -"
 		_terrain_label.text = "Terrain: -"
 		_short_name_label.text = "No unit"
-		_short_hp_label.text = "HP - · AC -"
+		_short_hp_label.text = "HP - · AC - · Capacity -"
 		_short_capacity_label.text = "Capacity - · Q - · R -"
 		_unit_capacity_bar.max_value = 1.0
 		_unit_capacity_bar.value = 0.0
@@ -1021,10 +1127,12 @@ func _refresh_hud() -> void:
 	_position_label.text = "Position: (%d, %d)" % [unit.grid_position.x, unit.grid_position.y]
 
 	_short_name_label.text = unit.display_name
-	_short_hp_label.text = "HP %d/%d · AC %d" % [
+	_short_hp_label.text = "HP %d/%d · AC %d · %d/%d ft" % [
 		unit.current_hp,
 		unit.maximum_hp,
 		unit.armour_class,
+		unit.action_budget.remaining_turn_capacity_feet,
+		unit.action_budget.maximum_turn_capacity_feet,
 	]
 	_short_capacity_label.text = "%d/%d ft · %s · %s" % [
 		unit.action_budget.remaining_turn_capacity_feet,
@@ -1048,23 +1156,23 @@ func _refresh_hud() -> void:
 	]:
 		command_button.tooltip_text = ""
 
-	var left_hand_name := unit.inventory.off_hand
-	if left_hand_name.is_empty():
-		left_hand_name = "Empty"
+	var secondary_hand_name := unit.inventory.off_hand
+	if secondary_hand_name.is_empty():
+		secondary_hand_name = "Empty"
 
-	var right_hand_name := unit.inventory.main_hand
-	if right_hand_name.is_empty():
-		right_hand_name = "Empty"
+	var primary_hand_name := unit.inventory.main_hand
+	if primary_hand_name.is_empty():
+		primary_hand_name = "Empty"
 
-	_left_hand_button.text = "LEFT HAND\n%s" % left_hand_name
-	_right_hand_button.text = "RIGHT HAND\n%s" % right_hand_name
+	_left_hand_button.text = "SECONDARY\n%s" % secondary_hand_name
+	_right_hand_button.text = "PRIMARY\n%s" % primary_hand_name
 	_left_hand_button.tooltip_text = (
-        "Left hand: %s\nClick to show actions supplied by this held item."
-		% left_hand_name
+        "Secondary Hand: %s\nClick to show actions supplied by this held item."
+		% secondary_hand_name
 	)
 	_right_hand_button.tooltip_text = (
-        "Right hand: %s\nClick to show actions supplied by this held item."
-		% right_hand_name
+        "Primary Hand: %s\nClick to show actions supplied by this held item."
+		% primary_hand_name
 	)
 
 	var nearby_count := _state_store.state.get_accessible_ground_items(unit).size()
@@ -1116,16 +1224,28 @@ func _refresh_hud() -> void:
 					% [_preview_result.cost_feet, remaining_after, action_note]
 				)
 
+	var quick_text := (
+        "Q ready"
+		if unit.action_budget.quick_action_available
+		else "Q spent"
+	)
+	var reaction_text := (
+        "R ready"
+		if unit.action_budget.reaction_available
+		else "R spent"
+	)
+
 	if not MOVEMENT_TEST_MAP.is_inside(_hovered_tile):
-		_short_context_label.text = "Tile (%d, %d) · %s" % [
-			unit.grid_position.x,
-			unit.grid_position.y,
+		_short_context_label.text = "%s · %s · %s" % [
+			quick_text,
+			reaction_text,
 			_last_status_message,
 		]
 	else:
-		_short_context_label.text = "%s · %s" % [
+		_short_context_label.text = "%s · %s · %s" % [
+			quick_text,
+			reaction_text,
 			_path_label.text,
-			_terrain_label.text,
 		]
 	_short_context_label.tooltip_text = _short_context_label.text
 
@@ -1230,7 +1350,8 @@ func _on_end_phase_pressed() -> void:
 
 func _close_inventory_silently() -> void:
 	_inventory_open = false
-	_inventory_panel.visible = false
+	if _unit_management_window != null:
+		_unit_management_window.hide_silently()
 
 
 func _on_state_changed(_reason: StringName) -> void:

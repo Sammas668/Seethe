@@ -13,6 +13,7 @@ var maximum_hp: int
 var current_hp: int
 var armour_class: int
 var inventory: TacticalInventoryState
+var character_sheet: TacticalCharacterSheetState
 
 
 func _init(
@@ -36,10 +37,21 @@ func _init(
     current_hp = maximum_hp
     armour_class = maxi(0, armour_class_value)
     inventory = TacticalInventoryState.new()
+    character_sheet = TacticalCharacterSheetState.new()
 
 
 func configure_inventory(inventory_value: TacticalInventoryState) -> void:
     inventory = inventory_value if inventory_value != null else TacticalInventoryState.new()
+
+
+func configure_character_sheet(
+        character_sheet_value: TacticalCharacterSheetState
+) -> void:
+    character_sheet = (
+        character_sheet_value
+        if character_sheet_value != null
+        else TacticalCharacterSheetState.new()
+    )
 
 
 func refresh_for_new_round() -> void:
