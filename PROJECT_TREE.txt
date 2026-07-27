@@ -1,0 +1,90 @@
+Seethe_Godot_Architecture_Starter_v2/
+├── application/
+│   ├── campaign/
+│   ├── inventory/
+│   ├── missions/
+│   ├── strategic/
+│   ├── stronghold/
+│   ├── tactical/
+│   └── time/
+├── assets/
+│   ├── art/
+│   └── audio/
+├── bootstrap/
+│   ├── autoload/
+│   ├── boot/
+│   │   ├── boot.gd
+│   │   └── boot.tscn
+│   └── config/
+├── content/
+│   ├── ai_profiles/
+│   ├── archetypes/
+│   │   └── reaver/
+│   ├── characters/
+│   ├── facilities/
+│   │   └── generic/
+│   ├── items/
+│   ├── manifest/
+│   ├── missions/
+│   │   └── farm_storehouse/
+│   ├── regions/
+│   │   └── ilyra_starter_region/
+│   ├── statuses/
+│   └── strongholds/
+│       └── fifth_god_ruin_01/
+├── core/
+│   ├── changes/
+│   ├── diagnostics/
+│   ├── events/
+│   ├── grid/
+│   ├── ids/
+│   ├── random/
+│   ├── results/
+│   └── serialisation/
+├── docs/
+│   ├── architecture/
+│   │   ├── DEPENDENCY_RULES.md
+│   │   └── FUTURE_STRUCTURE_REFERENCE.md
+│   ├── content_authoring/
+│   └── decisions/
+├── domain/
+│   ├── campaign/
+│   ├── characters/
+│   ├── inventory/
+│   ├── missions/
+│   ├── projects/
+│   ├── shared/
+│   ├── strategic/
+│   │   └── notoriety/
+│   ├── stronghold/
+│   └── tactical/
+├── infrastructure/
+│   ├── content/
+│   ├── diagnostics/
+│   ├── persistence/
+│   │   └── migrations/
+│   └── platform/
+├── presentation/
+│   ├── input/
+│   ├── screens/
+│   │   ├── region_map/
+│   │   └── stronghold/
+│   ├── shell/
+│   ├── tactical/
+│   ├── themes/
+│   ├── view_models/
+│   └── widgets/
+├── tests/
+│   ├── content/
+│   ├── integration/
+│   ├── invariants/
+│   └── unit/
+├── tools/
+│   ├── debug_tactical_launcher/
+│   └── state_viewer/
+├── .editorconfig
+├── .gitignore
+├── CHANGELOG_FROM_V1.md
+├── project.godot
+├── README_FIRST.txt
+└── SEETHE_PROJECT_STRUCTURE_GUIDE_V2.md
