@@ -1289,3 +1289,9 @@ Ask:
 12. Does the file need to exist for the current milestone?
 
 Preserve the boundaries. Expand the tree only when the game earns the complexity.
+
+---
+
+# Implemented milestone
+
+The project now includes Stage 1 tactical movement. See `docs/architecture/STAGE_1_TACTICAL_MOVEMENT_IMPLEMENTATION.md` for file ownership, controls, validation rules and deferred work.

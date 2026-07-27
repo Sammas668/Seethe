@@ -1,20 +1,22 @@
-SEETHE GODOT ARCHITECTURE STARTER V2
+SEETHE GODOT TACTICAL MOVEMENT PROTOTYPE
 
-1. Open SEETHE_PROJECT_STRUCTURE_GUIDE_V2.md.
-2. Import project.godot into Godot.
-3. Run the project to confirm the boot scene loads.
-4. Build only the files required for the current milestone.
-5. Keep the full future architecture in docs rather than creating every future folder now.
+This is the improved architecture starter with Stage 1 tactical movement implemented.
 
-This version incorporates the agreed architecture review:
-- app/ renamed to bootstrap/
-- corrected dependency direction
-- lean physical project tree
-- no duplicate archetype content ownership
-- reservations separated from item locations
-- Notoriety placed beneath strategic
-- shared timed-project ownership clarified
-- captives reference persistent characters
-- persistent recruit terminology corrected
-- screens start simple rather than requiring controller/presenter layers
-- .gitignore and working boot scene included
+RUN IT
+1. Import project.godot into Godot 4.
+2. Run the project.
+3. The boot scene automatically opens the tactical movement sandbox.
+
+CONTROLS
+- Left-click the blue unit to select it.
+- Hover over a tile to preview the path and cost.
+- Left-click a legal green destination to move.
+- Red routes cost more than the unit's remaining movement.
+- Right-click to deselect.
+- End Phase restores the unit's 30-foot capacity.
+
+READ NEXT
+- SEETHE_PROJECT_STRUCTURE_GUIDE_V2.md
+- docs/architecture/STAGE_1_TACTICAL_MOVEMENT_IMPLEMENTATION.md
+
+This build intentionally does not yet include combat, enemies, stealth or campaign screens.
