@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://presentation/tactical/unit_management_window.gd" id="1_window"]
 [ext_resource type="Script" path="res://presentation/tactical/spatial_inventory_grid.gd" id="2_grid"]
@@ -36,13 +36,6 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.20, 0.25, 0.29, 1)
 
-[sub_resource type="StyleBoxFlat" id="FooterStyle"]
-bg_color = Color(0.026, 0.034, 0.042, 0.998)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.38, 0.32, 0.18, 1)
 
 [node name="UnitManagementWindow" type="Control"]
 visible = false
@@ -99,23 +92,34 @@ text = "<"
 [node name="UnitTitle" type="Label" parent="Modal/Margin/VBox/Header"]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.92, 0.81, 0.55, 1)
 theme_override_font_sizes/font_size = 20
 text = "TEST MARAUDER"
 
-[node name="InventoryTabButton" type="Button" parent="Modal/Margin/VBox/Header"]
+[node name="HeaderLeftSpacer" type="Control" parent="Modal/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TabGroup" type="HBoxContainer" parent="Modal/Margin/VBox/Header"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="InventoryTabButton" type="Button" parent="Modal/Margin/VBox/Header/TabGroup"]
 custom_minimum_size = Vector2(118, 34)
 layout_mode = 2
 toggle_mode = true
 button_pressed = true
 text = "INVENTORY"
 
-[node name="CharacterTabButton" type="Button" parent="Modal/Margin/VBox/Header"]
+[node name="CharacterTabButton" type="Button" parent="Modal/Margin/VBox/Header/TabGroup"]
 custom_minimum_size = Vector2(145, 34)
 layout_mode = 2
 toggle_mode = true
 text = "CHARACTER SHEET"
+
+[node name="HeaderRightSpacer" type="Control" parent="Modal/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="NextUnitButton" type="Button" parent="Modal/Margin/VBox/Header"]
 custom_minimum_size = Vector2(38, 34)
@@ -197,6 +201,25 @@ text = "Q TO DRAW / STOW"
 custom_minimum_size = Vector2(240, 92)
 layout_mode = 2
 script = ExtResource("2_grid")
+
+[node name="CompactItemDetails" type="RichTextLabel" parent="Modal/Margin/VBox/Content/InventoryTab/Upper/LoadoutPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+bbcode_enabled = true
+fit_content = false
+scroll_active = false
+theme_override_font_sizes/normal_font_size = 10
+theme_override_font_sizes/bold_font_size = 10
+text = "Drag an item, click a destination, or right-click for a quick move."
+
+[node name="CompactActionPreview" type="Label" parent="Modal/Margin/VBox/Content/InventoryTab/Upper/LoadoutPanel/Margin/VBox"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.81, 0.55, 1)
+theme_override_font_sizes/font_size = 10
+autowrap_mode = 2
+vertical_alignment = 0
+text = "Belt ↔ Hand: Quick Action. Backpack is slower."
 
 [node name="PortraitPanel" type="PanelContainer" parent="Modal/Margin/VBox/Content/InventoryTab/Upper"]
 layout_mode = 2
@@ -398,33 +421,3 @@ layout_mode = 2
 bbcode_enabled = true
 scroll_active = true
 
-[node name="ContextFooter" type="PanelContainer" parent="Modal/Margin/VBox"]
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-theme_override_styles/panel = SubResource("FooterStyle")
-
-[node name="Margin" type="MarginContainer" parent="Modal/Margin/VBox/ContextFooter"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
-
-[node name="Row" type="HBoxContainer" parent="Modal/Margin/VBox/ContextFooter/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="ItemDetails" type="RichTextLabel" parent="Modal/Margin/VBox/ContextFooter/Margin/Row"]
-layout_mode = 2
-size_flags_horizontal = 3
-bbcode_enabled = true
-fit_content = true
-text = "Select an item to inspect it."
-
-[node name="ActionPreview" type="Label" parent="Modal/Margin/VBox/ContextFooter/Margin/Row"]
-custom_minimum_size = Vector2(470, 0)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.81, 0.55, 1)
-autowrap_mode = 2
-vertical_alignment = 1
-text = "Drag items between connected spaces."

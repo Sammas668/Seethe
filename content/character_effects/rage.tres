@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CharacterModifierDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_modifier_definition.gd" id="1_modifier"]
+
+[resource]
+script = ExtResource("1_modifier")
+id = &"effect.rage"
+display_name = "Rage"
+description = "The Marauder enters a violent battle state."
+ability_modifiers = {"CON": 4, "STR": 4}
+stat_modifiers = {"armour_class": -2, "will": 2}
+sheet_condition_text = "Rage — active: +4 Strength, +4 Constitution, +2 Will, −2 Armour Class."

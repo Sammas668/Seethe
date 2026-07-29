@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.prototype.archer"
+display_name = "Prototype Archer"
+species_name = "Human"
+class_name_text = "Ranger 1"
+archetype_name = "Bounty Hunter"
+troop_type = "Individual"
+base_level = 1
+base_ability_scores = {"CHA": 10, "CON": 12, "DEX": 16, "INT": 11, "STR": 11, "WIS": 14}
+base_attack_bonus = 1
+base_save_bonuses = {"fortitude": 0, "reflex": 1, "will": 0}
+base_hp_before_constitution = 17
+hp_constitution_levels = 1
+base_turn_capacity_feet = 30
+passive_perception_base = 10
+perception_skill_bonus = 0
+maximum_weight_lb = 60.0
+default_defence_profile_id = &"defence.leather_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+skill_bonuses = {"Perception": 4, "Stealth": 4}
+ability_entries = Array[String](["Mark Target — prototype entry", "Live Capture Training"])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.training_shortbow", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.bandage", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.smoke_pellet", "grid_position": Vector2i(1, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.dagger", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.buckler", "grid_position": Vector2i(1, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.spare_arrows", "grid_position": Vector2i(3, 0), "quantity": 1}])

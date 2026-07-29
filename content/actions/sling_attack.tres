@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="AttackDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+dice_count = 1
+die_size = 4
+damage_type = &"bludgeoning"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+range_kind = &"ranged"
+reach_feet = 0
+range_increment_feet = 30
+maximum_increments = 10
+
+[resource]
+script = ExtResource("1_attack")
+id = &"action.sling_attack"
+display_name = "Sling Attack"
+description = "A normal ranged attack with a sling."
+action_cost_type = &"half"
+provokes = true
+action_tags = Array[StringName]([&"attack", &"weapon_attack"])
+attack_kind = &"ranged"
+attack_ability = &"dexterity"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+targeting_rule_id = &"target.single_creature"
+critical_threat_minimum = 20
+critical_multiplier = 2
+attack_tags = Array[StringName]([&"weapon", &"sling", &"ranged"])

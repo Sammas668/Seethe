@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="AttackDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+dice_count = 1
+die_size = 6
+damage_type = &"blunt"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+range_kind = &"melee"
+reach_feet = 5
+
+[resource]
+script = ExtResource("1_attack")
+id = &"action.mace_attack"
+display_name = "Mace"
+description = "A blunt melee attack. Choose lethal or nonlethal damage before confirming."
+action_cost_type = &"half"
+action_tags = Array[StringName]([&"attack", &"weapon_attack"])
+attack_kind = &"melee"
+attack_ability = &"strength"
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+targeting_rule_id = &"target.single_creature"
+critical_threat_minimum = 20
+critical_multiplier = 2
+attack_tags = Array[StringName]([&"weapon", &"mace", &"melee", &"lethal"])

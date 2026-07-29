@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"item.rations"
+display_name = "Rations"
+description = "A compact bundle of food."
+weight_lb = 2.5
+inventory_footprint = Vector2i(2, 1)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = true
+stackable = true
+maximum_stack_size = 5
+equipment_tags = Array[StringName]([&"consumable", &"food"])
+tactical_visual_category = &"medical"

@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.reaver.marauder_tier_1"
+display_name = "Tier I Marauder"
+species_name = "Human"
+class_name_text = "Barbarian 3"
+archetype_name = "Reaver"
+troop_type = "Tier I Marauder"
+troop_tier = 1
+base_level = 3
+base_xp = 3000
+base_ability_scores = {"CHA": 10, "CON": 14, "DEX": 12, "INT": 10, "STR": 15, "WIS": 12}
+base_attack_bonus = 3
+base_save_bonuses = {"fortitude": 3, "reflex": 1, "will": 1}
+base_hp_before_constitution = 26
+hp_constitution_levels = 3
+base_armour_class = 10
+base_turn_capacity_feet = 80
+sprint_multiplier = 1.5
+passive_perception_base = 10
+perception_skill_bonus = 6
+initiative_flat_bonus = 0
+maximum_weight_lb = 80.0
+footprint = Vector2i(1, 1)
+default_defence_profile_id = &"defence.patchwork_raider_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+trait_ids = Array[StringName]([&"trait.take_them_alive"])
+skill_bonuses = {"Athletics": 5, "Intimidation": 2, "Perception": 7}
+ability_entries = Array[String](["Rage — Quick Action. Resolved through the shared modifier system.", "Power Attack — choose 0–3 during a supported melee attack; each point gives −1 attack and +1 damage.", "Take Them Alive — ignores the normal −4 nonlethal attack penalty when using a blunt weapon.", "Raider's Burden — authored; captive attachment requires the capture subsystem."])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.raiders_axe", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.mace", "grid_position": Vector2i(6, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.reaver_dagger", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.manacles", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.rope", "grid_position": Vector2i(2, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.rations", "grid_position": Vector2i(4, 0), "quantity": 1}])
+portrait_id = &"portrait.reaver.marauder"
+tactical_visual_id = &"tactical.reaver.marauder"

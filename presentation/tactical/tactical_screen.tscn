@@ -1,6 +1,8 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://presentation/tactical/tactical_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://presentation/tactical/tactical_board_view.gd" id="2_board"]
+[ext_resource type="Script" path="res://presentation/tactical/widgets/segmented_health_bar.gd" id="3_health"]
 
 [sub_resource type="StyleBoxFlat" id="PanelDark"]
 bg_color = Color(0.035, 0.047, 0.06, 0.97)
@@ -37,22 +39,13 @@ border_color = Color(0.24, 0.30, 0.35, 1)
 [sub_resource type="StyleBoxFlat" id="ProgressFill"]
 bg_color = Color(0.20, 0.62, 0.37, 1)
 
-[sub_resource type="StyleBoxFlat" id="InventoryPanelStyle"]
-bg_color = Color(0.025, 0.034, 0.043, 0.995)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.72, 0.55, 0.24, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
 [node name="TacticalScreen" type="Node2D"]
 script = ExtResource("1_screen")
 
-[node name="UnitLayer" type="Node2D" parent="."]
+[node name="BoardView" type="Node2D" parent="."]
+script = ExtResource("2_board")
+
+[node name="UnitLayer" type="Node2D" parent="BoardView"]
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -89,10 +82,35 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.62, 0.68, 0.73, 1)
 text = "1–3 Select · I Inventory · Esc Cancel"
 
+[node name="AttackCursorPreview" type="PanelContainer" parent="HUD"]
+visible = false
+offset_right = 190.0
+offset_bottom = 78.0
+mouse_filter = 2
+z_index = 100
+theme_override_styles/panel = SubResource("PanelGold")
+
+[node name="Margin" type="MarginContainer" parent="HUD/AttackCursorPreview"]
+layout_mode = 2
+theme_override_constants/margin_left = 7
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 7
+theme_override_constants/margin_bottom = 5
+
+[node name="Label" type="Label" parent="HUD/AttackCursorPreview/Margin"]
+custom_minimum_size = Vector2(162, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.77, 1)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+text = "65% HIT
+1d8+2 LETHAL
+40 ft"
+
 [node name="RosterPanel" type="PanelContainer" parent="HUD"]
 offset_top = 42.0
 offset_right = 172.0
-offset_bottom = 610.0
+offset_bottom = 570.0
 theme_override_styles/panel = SubResource("PanelDark")
 
 [node name="Margin" type="MarginContainer" parent="HUD/RosterPanel"]
@@ -131,140 +149,8 @@ text = "Test Scout\nHP 20/20\n40/40 ft"
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="RightPanel" type="PanelContainer" parent="HUD"]
-visible = false
-mouse_filter = 2
-offset_left = 728.0
-offset_top = 42.0
-offset_right = 1280.0
-offset_bottom = 610.0
-theme_override_styles/panel = SubResource("PanelDark")
-
-[node name="Margin" type="MarginContainer" parent="HUD/RightPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 15
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 15
-theme_override_constants/margin_bottom = 12
-
-[node name="VBox" type="VBoxContainer" parent="HUD/RightPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 7
-
-[node name="PanelTitle" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
-theme_override_font_sizes/font_size = 17
-text = "SELECTED UNIT"
-
-[node name="SelectedLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 23
-text = "TEST MARAUDER"
-
-[node name="HPLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-text = "HP: 24 / 24"
-
-[node name="ACLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-text = "Armour Class: 14"
-
-[node name="CapacityLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-text = "Turn capacity: 30 / 30 ft"
-
-[node name="CapacityBarContainer" type="Control" parent="HUD/RightPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-
-[node name="CapacityBar" type="ProgressBar" parent="HUD/RightPanel/Margin/VBox/CapacityBarContainer"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-max_value = 30.0
-value = 30.0
-show_percentage = false
-theme_override_styles/background = SubResource("ProgressBackground")
-theme_override_styles/fill = SubResource("ProgressFill")
-
-[node name="HalfMarker" type="ColorRect" parent="HUD/RightPanel/Margin/VBox/CapacityBarContainer"]
-layout_mode = 1
-anchor_left = 0.5
-anchor_top = 0.08
-anchor_right = 0.5
-anchor_bottom = 0.92
-offset_left = -1.0
-offset_right = 1.0
-color = Color(0.94, 0.77, 0.27, 0.95)
-mouse_filter = 2
-
-[node name="AllowanceRow" type="HBoxContainer" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="QuickLabel" type="Label" parent="HUD/RightPanel/Margin/VBox/AllowanceRow"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.59, 0.84, 0.96, 1)
-text = "Q: Available"
-
-[node name="ReactionLabel" type="Label" parent="HUD/RightPanel/Margin/VBox/AllowanceRow"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.69, 0.94, 1)
-text = "R: Available"
-
-[node name="SeparatorA" type="HSeparator" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-
-[node name="PositionLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-text = "Position: (2, 2)"
-
-[node name="PathLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-autowrap_mode = 2
-text = "Path preview: -"
-
-[node name="TerrainLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-text = "Terrain: -"
-
-[node name="SeparatorB" type="HSeparator" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-
-[node name="ContextTitle" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
-theme_override_font_sizes/font_size = 16
-text = "CONTEXT"
-
-[node name="ContextBody" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 118)
-layout_mode = 2
-autowrap_mode = 2
-text = "Hover a destination, choose an action category or open Inventory."
-
-[node name="RightSpacer" type="Control" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="StatusTitle" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.61, 0.69, 0.75, 1)
-text = "RECENT STATUS"
-
-[node name="StatusLabel" type="Label" parent="HUD/RightPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-autowrap_mode = 2
-text = "Ready."
-
 [node name="BottomDeck" type="PanelContainer" parent="HUD"]
-offset_top = 610.0
+offset_top = 570.0
 offset_right = 1280.0
 offset_bottom = 720.0
 theme_override_styles/panel = SubResource("PanelMid")
@@ -281,21 +167,29 @@ layout_mode = 2
 theme_override_constants/separation = 5
 
 [node name="UnitBlock" type="VBoxContainer" parent="HUD/BottomDeck/Margin/MainRow"]
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(265, 0)
 layout_mode = 2
-theme_override_constants/separation = 1
+theme_override_constants/separation = 2
 
 [node name="ShortNameLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
 theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
 text = "Test Marauder"
 
+[node name="UnitHealthBar" type="Control" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_health")
+
 [node name="ShortHPLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-clip_text = true
-text = "HP 24/24 · AC 14 · 30/30 ft"
+autowrap_mode = 3
+text = "AC 14"
 
 [node name="ShortCapacityLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
 visible = false
@@ -304,7 +198,7 @@ layout_mode = 2
 text = "30/30 ft · Q ready · R ready"
 
 [node name="UnitCapacityBarContainer" type="Control" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
-custom_minimum_size = Vector2(0, 10)
+custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 
 [node name="UnitCapacityBar" type="ProgressBar" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock/UnitCapacityBarContainer"]
@@ -331,19 +225,37 @@ offset_right = 1.0
 color = Color(0.94, 0.77, 0.27, 0.95)
 mouse_filter = 2
 
+[node name="UnitCapacityValueLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock/UnitCapacityBarContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.95)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "30 / 30 ft"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="ShortContextLabel" type="Label" parent="HUD/BottomDeck/Margin/MainRow/UnitBlock"]
-custom_minimum_size = Vector2(0, 14)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+size_flags_vertical = 3
+vertical_alignment = 0
 theme_override_colors/font_color = Color(0.66, 0.72, 0.77, 1)
 theme_override_font_sizes/font_size = 11
-clip_text = true
+autowrap_mode = 3
 text = "Q ready · R ready · Ready."
 
 [node name="Divider1" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
 
 [node name="HandBlock" type="VBoxContainer" parent="HUD/BottomDeck/Margin/MainRow"]
-custom_minimum_size = Vector2(170, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_override_constants/separation = 2
 
@@ -353,20 +265,53 @@ theme_override_colors/font_color = Color(0.63, 0.72, 0.78, 1)
 theme_override_font_sizes/font_size = 12
 text = "HELD ITEMS"
 
+[node name="AttackOptions" type="HBoxContainer" parent="HUD/BottomDeck/Margin/MainRow/HandBlock"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="AttackModeButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/AttackOptions"]
+custom_minimum_size = Vector2(154, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 10
+text = "NORMAL · LETHAL"
+tooltip_text = "Click to cycle the selected weapon between lethal and nonlethal attacks."
+
+[node name="PowerAttackDownButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/AttackOptions"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "PA−"
+
+[node name="PowerAttackValueButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/AttackOptions"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "0"
+tooltip_text = "Click to cycle Power Attack from 0 to 3."
+
+[node name="PowerAttackUpButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/AttackOptions"]
+custom_minimum_size = Vector2(38, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "PA+"
+
 [node name="HandRow" type="HBoxContainer" parent="HUD/BottomDeck/Margin/MainRow/HandBlock"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="LeftHandButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/HandRow"]
-custom_minimum_size = Vector2(81, 54)
+custom_minimum_size = Vector2(144, 54)
 layout_mode = 2
-tooltip_text = "Click to show actions supplied by the item in the Secondary Hand."
+toggle_mode = true
+tooltip_text = "Click to select the Secondary Hand weapon for direct battlefield targeting."
 text = "SECONDARY\nEmpty"
 
 [node name="RightHandButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/HandRow"]
-custom_minimum_size = Vector2(81, 54)
+custom_minimum_size = Vector2(144, 54)
 layout_mode = 2
-tooltip_text = "Click to show actions supplied by the item in the Primary Hand."
+toggle_mode = true
+tooltip_text = "Click to select the Primary Hand weapon for direct battlefield targeting."
 text = "PRIMARY\nTraining Axe"
 
 [node name="Divider2" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
@@ -382,7 +327,9 @@ layout_mode = 2
 theme_override_constants/separation = 3
 
 [node name="AttackButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/CommandButtons"]
-custom_minimum_size = Vector2(52, 35)
+visible = false
+mouse_filter = 2
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Attack"
@@ -461,6 +408,13 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 11
 text = "Action 4"
 
+[node name="Action5" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "Action 5"
+
 [node name="Divider3" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
 
@@ -481,142 +435,3 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "END PHASE"
 
-[node name="InventoryPanel" type="PanelContainer" parent="HUD"]
-visible = false
-offset_left = 304.0
-offset_top = 82.0
-offset_right = 1170.0
-offset_bottom = 570.0
-theme_override_styles/panel = SubResource("InventoryPanelStyle")
-
-[node name="Margin" type="MarginContainer" parent="HUD/InventoryPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 15
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 15
-theme_override_constants/margin_bottom = 12
-
-[node name="VBox" type="VBoxContainer" parent="HUD/InventoryPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 9
-
-[node name="Header" type="HBoxContainer" parent="HUD/InventoryPanel/Margin/VBox"]
-layout_mode = 2
-
-[node name="InventoryTitle" type="Label" parent="HUD/InventoryPanel/Margin/VBox/Header"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
-theme_override_font_sizes/font_size = 21
-text = "TEST MARAUDER — TACTICAL INVENTORY"
-
-[node name="CloseButton" type="Button" parent="HUD/InventoryPanel/Margin/VBox/Header"]
-custom_minimum_size = Vector2(42, 32)
-layout_mode = 2
-text = "X"
-
-[node name="HeaderSeparator" type="HSeparator" parent="HUD/InventoryPanel/Margin/VBox"]
-layout_mode = 2
-
-[node name="Body" type="HBoxContainer" parent="HUD/InventoryPanel/Margin/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 10
-
-[node name="UnitInventoryPanel" type="PanelContainer" parent="HUD/InventoryPanel/Margin/VBox/Body"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("PanelMid")
-
-[node name="Margin" type="MarginContainer" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
-
-[node name="VBox" type="VBoxContainer" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 7
-
-[node name="UnitInventoryTitle" type="Label" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.63, 0.78, 0.88, 1)
-theme_override_font_sizes/font_size = 17
-text = "SELECTED UNIT"
-
-[node name="EquippedText" type="RichTextLabel" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 145)
-layout_mode = 2
-bbcode_enabled = true
-fit_content = true
-text = "[b]Equipped[/b]"
-
-[node name="QuickText" type="RichTextLabel" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 55)
-layout_mode = 2
-bbcode_enabled = true
-fit_content = true
-text = "[b]Quick access[/b]"
-
-[node name="PackedText" type="RichTextLabel" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 75)
-layout_mode = 2
-bbcode_enabled = true
-fit_content = true
-text = "[b]Packed inventory[/b]"
-
-[node name="WeightLabel" type="Label" parent="HUD/InventoryPanel/Margin/VBox/Body/UnitInventoryPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
-text = "Carried weight: 42 / 80 lb"
-
-[node name="LocalAccessPanel" type="PanelContainer" parent="HUD/InventoryPanel/Margin/VBox/Body"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("PanelMid")
-
-[node name="Margin" type="MarginContainer" parent="HUD/InventoryPanel/Margin/VBox/Body/LocalAccessPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
-
-[node name="VBox" type="VBoxContainer" parent="HUD/InventoryPanel/Margin/VBox/Body/LocalAccessPanel/Margin"]
-layout_mode = 2
-
-[node name="LocalAccessTitle" type="Label" parent="HUD/InventoryPanel/Margin/VBox/Body/LocalAccessPanel/Margin/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.87, 0.69, 0.30, 1)
-theme_override_font_sizes/font_size = 17
-text = "LOCAL ACCESS · CURRENT + ADJACENT TILES"
-
-[node name="LocalAccessText" type="RichTextLabel" parent="HUD/InventoryPanel/Margin/VBox/Body/LocalAccessPanel/Margin/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-bbcode_enabled = true
-text = "[b]Locally accessible[/b]"
-
-[node name="InventoryActionLabel" type="Label" parent="HUD/InventoryPanel/Margin/VBox"]
-custom_minimum_size = Vector2(0, 46)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.68, 0.73, 0.77, 1)
-autowrap_mode = 2
-text = "Opening and inspection are free."
-
-[node name="Footer" type="HBoxContainer" parent="HUD/InventoryPanel/Margin/VBox"]
-layout_mode = 2
-alignment = 2
-theme_override_constants/separation = 8
-
-[node name="ConfirmButton" type="Button" parent="HUD/InventoryPanel/Margin/VBox/Footer"]
-custom_minimum_size = Vector2(160, 38)
-layout_mode = 2
-disabled = true
-text = "CONFIRM TRANSFER"
-
-[node name="FooterCloseButton" type="Button" parent="HUD/InventoryPanel/Margin/VBox/Footer"]
-custom_minimum_size = Vector2(110, 38)
-layout_mode = 2
-text = "CLOSE"

@@ -1,0 +1,158 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://presentation/tactical/combat_log/tactical_combat_log.gd" id="1_log"]
+
+[sub_resource type="StyleBoxFlat" id="LogPanel"]
+bg_color = Color(0.025, 0.035, 0.045, 0.965)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.38, 0.18, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="ExpandedPanel"]
+bg_color = Color(0.018, 0.027, 0.037, 0.985)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.48, 0.20, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_left = 5
+corner_radius_bottom_right = 5
+
+[node name="TacticalCombatLog" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -350.0
+offset_top = -260.0
+offset_right = -10.0
+offset_bottom = -158.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 1
+script = ExtResource("1_log")
+
+[node name="CollapsedPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("LogPanel")
+
+[node name="Margin" type="MarginContainer" parent="CollapsedPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 5
+
+[node name="VBox" type="VBoxContainer" parent="CollapsedPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="HBoxContainer" parent="CollapsedPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="CollapsedPanel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
+theme_override_font_sizes/font_size = 12
+text = "TACTICAL LOG"
+
+[node name="ExpandButton" type="Button" parent="CollapsedPanel/Margin/VBox/Header"]
+custom_minimum_size = Vector2(30, 22)
+layout_mode = 2
+tooltip_text = "Expand tactical log (L)"
+text = "▲"
+
+[node name="RecentEntries" type="VBoxContainer" parent="CollapsedPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 1
+
+[node name="ExpandedPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("ExpandedPanel")
+
+[node name="Margin" type="MarginContainer" parent="ExpandedPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 9
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 9
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="ExpandedPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="ExpandedPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="ExpandedPanel/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.91, 0.82, 0.58, 1)
+theme_override_font_sizes/font_size = 16
+text = "TACTICAL EVENT & ROLL LOG"
+
+[node name="CollapseButton" type="Button" parent="ExpandedPanel/Margin/VBox/Header"]
+custom_minimum_size = Vector2(34, 28)
+layout_mode = 2
+tooltip_text = "Collapse tactical log (L)"
+text = "▼"
+
+[node name="Filters" type="HBoxContainer" parent="ExpandedPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AllButton" type="Button" parent="ExpandedPanel/Margin/VBox/Filters"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "ALL"
+
+[node name="RollsButton" type="Button" parent="ExpandedPanel/Margin/VBox/Filters"]
+layout_mode = 2
+toggle_mode = true
+text = "ROLLS"
+
+[node name="CombatButton" type="Button" parent="ExpandedPanel/Margin/VBox/Filters"]
+layout_mode = 2
+toggle_mode = true
+text = "COMBAT"
+
+[node name="EventsButton" type="Button" parent="ExpandedPanel/Margin/VBox/Filters"]
+layout_mode = 2
+toggle_mode = true
+text = "EVENTS"
+
+[node name="Scroll" type="ScrollContainer" parent="ExpandedPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Entries" type="VBoxContainer" parent="ExpandedPanel/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5

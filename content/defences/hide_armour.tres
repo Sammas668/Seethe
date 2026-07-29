@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DefenceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/defence_profile.gd" id="1_defence"]
+
+[resource]
+script = ExtResource("1_defence")
+id = &"defence.hide_armour"
+display_name = "Hide Armour"
+armour_class_bonus = 3
+defence_tags = Array[StringName]([&"armour", &"hide"])
+notes = "Read-only tactical profile; armour is assigned off-map."
