@@ -26,9 +26,9 @@ def main() -> int:
     require_tokens(
         "presentation/tactical/tactical_screen.gd",
         [
-            "Friendly and neutral units are selection/inspection targets",
+            "Friendly and neutral units remain selection/inspection targets",
             "not _facade.are_units_hostile(",
-            "_select_unit(target.unit_id)",
+            "_select_unit(clicked_unit.unit_id)",
             "Do not construct or display an invalid attack preview.",
             "_hide_attack_cursor_preview()",
             "Input.CURSOR_POINTING_HAND",
@@ -42,14 +42,10 @@ def main() -> int:
         "func _on_board_tile_left_clicked",
         "func _on_board_right_clicked",
     )
-    if "_execute_direct_attack(target)" not in click_handler:
-        failures.append("Hostile direct attacks were removed from the click handler.")
-    if click_handler.find("_select_unit(target.unit_id)") > click_handler.find(
-        "_execute_direct_attack(target)"
-    ):
-        failures.append(
-            "Friendly selection must be checked before direct attack execution."
-        )
+    if "_execute_direct_attack(clicked_unit)" not in click_handler:
+        failures.append("Hostile contextual attacks were removed from the click handler.")
+    if click_handler.find("_select_unit(clicked_unit.unit_id)") < 0:
+        failures.append("Friendly click selection was removed from the click handler.")
 
     hover_handler = between(
         screen_text,
@@ -74,7 +70,7 @@ def main() -> int:
         [
             "Friendly clicks select rather than attack.",
             "Friendly hover shows no hit-chance popup.",
-            "Hostile direct targeting remains unchanged.",
+            "Hostile contextual targeting remains available.",
         ],
     )
 

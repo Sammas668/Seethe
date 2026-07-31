@@ -41,14 +41,27 @@ func refresh_unit(
 	)
 
 	var state_text: String = "READY"
-	if unit.is_defeated():
-		state_text = "DEFEATED"
-	elif unit.action_budget.ended_activation:
-		state_text = "ENDED"
-	elif not unit.action_budget.has_any_option_remaining():
-		state_text = "SPENT"
-	elif not unit.action_budget.ordinary_attack_available:
-		state_text = "MOVE ONLY"
+	match unit.life_state_id():
+		TacticalUnitState.LIFE_STATE_DEAD:
+			state_text = "DEAD"
+		TacticalUnitState.LIFE_STATE_DYING:
+			state_text = "DYING %dS/%dF" % [
+				unit.dying_successes,
+				unit.dying_failures,
+			]
+		TacticalUnitState.LIFE_STATE_STABLE_UNCONSCIOUS:
+			state_text = "STABLE"
+		TacticalUnitState.LIFE_STATE_NONLETHAL_UNCONSCIOUS:
+			state_text = "UNCONSCIOUS"
+		TacticalUnitState.LIFE_STATE_DISABLED:
+			state_text = "DISABLED"
+		_:
+			if unit.action_budget.ended_activation:
+				state_text = "ENDED"
+			elif not unit.action_budget.has_any_option_remaining():
+				state_text = "SPENT"
+			elif not unit.action_budget.ordinary_attack_available:
+				state_text = "MOVE ONLY"
 
 	_status_label.text = "%d / %d ft · %s" % [
 		unit.action_budget.remaining_turn_capacity_feet,
@@ -58,11 +71,13 @@ func refresh_unit(
 	disabled = not player_phase
 	button_pressed = selected
 	tooltip_text = (
-		"%s\nHP %d / %d\nNonlethal damage %d\nCapacity %d / %d ft\nNormal attack: %s"
+		"%s\nHP %d / %d\nState: %s\n%s\nNonlethal damage %d\nCapacity %d / %d ft\nNormal attack: %s"
 		% [
 			unit.display_name,
 			unit.current_hp,
 			unit.maximum_hp,
+			String(unit.life_state_id()).replace("_", " ").capitalize(),
+			_life_state_detail(unit),
 			unit.nonlethal_damage,
 			unit.action_budget.remaining_turn_capacity_feet,
 			unit.action_budget.maximum_turn_capacity_feet,
@@ -71,6 +86,27 @@ func refresh_unit(
 				else "spent",
 		]
 	)
+
+
+func _life_state_detail(unit: TacticalUnitState) -> String:
+	match unit.life_state_id():
+		TacticalUnitState.LIFE_STATE_DYING:
+			return "Fort %+d vs DC %d · %d/3 successes · %d/3 failures · death at %d HP" % [
+				unit.fortitude_bonus(),
+				unit.dying_check_dc(),
+				unit.dying_successes,
+				unit.dying_failures,
+				unit.death_threshold_hp(),
+			]
+		TacticalUnitState.LIFE_STATE_STABLE_UNCONSCIOUS:
+			return "Stable and unconscious; no Dying check."
+		TacticalUnitState.LIFE_STATE_NONLETHAL_UNCONSCIOUS:
+			return "Unconscious from nonlethal damage; not Dying."
+		TacticalUnitState.LIFE_STATE_DISABLED:
+			return "Half capacity, no Reaction; strenuous actions cost 1 HP."
+		TacticalUnitState.LIFE_STATE_DEAD:
+			return "Dead."
+	return "Conscious."
 
 
 func _ensure_built() -> void:

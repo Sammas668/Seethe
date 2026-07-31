@@ -21,10 +21,9 @@ def main() -> int:
     require_tokens(
         "application/tactical/combat/attack_preview_query.gd",
         [
-            "SUPPORTED_ACTION_IDS",
-            "action.raiders_axe_attack",
-            "action.mace_attack",
-            "action.reaver_dagger_attack",
+            "_definition_is_supported",
+            "is_implemented_melee_weapon_attack",
+            "controller_can_use",
             "hit_chance_percent",
             "power_attack_value",
             "expected_state_revision",
@@ -36,7 +35,8 @@ def main() -> int:
     forbid_tokens(
         "application/tactical/combat/attack_preview_query.gd",
         [
-            "action.reaver_thrown_dagger_attack",
+            "SUPPORTED_ACTION_IDS",
+            "AI_SUPPORTED_ACTION_IDS",
         ],
         failures,
     )

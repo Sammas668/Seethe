@@ -36,8 +36,8 @@ def main() -> int:
             "_refresh_attack_cursor_preview",
             "Input.CURSOR_CROSS",
             "Input.CURSOR_FORBIDDEN",
-            "right-click a hostile",
-            "left-click attacks",
+            "Left-click a legal hostile to attack.",
+            "_contextual_attack_hover_active",
         ],
         failures,
     )
@@ -68,10 +68,10 @@ def main() -> int:
         "Stage 4.1.1",
         failures,
         [
-            "Held weapons directly select battlefield attack targeting.",
-            "Hovering a target shows hit chance, damage mode and cost beside the cursor.",
-            "Left-click attacks and right-click cycles lethal/nonlethal mode.",
-            "The old visible Attack tab is removed.",
+            "Held weapons provide direct contextual battlefield attacks.",
+            "Hovering a hostile shows hit chance, damage mode and cost beside the cursor.",
+            "Left-clicking a legal hostile attacks with the selected hand.",
+            "The old visible Attack tab remains removed.",
         ],
     )
 

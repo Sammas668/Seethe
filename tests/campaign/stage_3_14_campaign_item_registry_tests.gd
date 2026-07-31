@@ -46,7 +46,9 @@ static func _test_equipment_is_derived_from_locations(
 	campaign.add_character(character)
 	CharacterFactory.add_default_loadout_to_campaign(campaign, character, template)
 
-	var resolver: CharacterResolutionService = CharacterResolutionService.new(catalogue)
+	var resolver: CharacterResolutionService = CharacterResolutionService.new()
+
+	resolver.configure(catalogue)
 	var equipped_snapshot: ResolvedCharacterSnapshot = resolver.resolve_character(
 		character,
 		[],

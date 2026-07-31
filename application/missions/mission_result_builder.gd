@@ -21,6 +21,9 @@ static func build_result(
 	result.source_campaign_revision = setup.source_campaign_revision
 	result.completed = true
 	result.successful = successful
+	result.mission_outcome = (
+		MissionOutcome.VICTORY if successful else MissionOutcome.DEFEAT
+	)
 	var extracted_item_ids: Dictionary = {}
 
 	for mission_character: PersistentCharacterState in setup.get_characters():
@@ -109,6 +112,295 @@ static func build_result(
 		)
 
 	return result
+
+
+static func build_extraction_result(
+		result_id: StringName,
+		setup: MissionSetupSnapshot,
+		state: TacticalState,
+		manifest: TacticalExtractionManifest
+) -> MissionResult:
+	var result := MissionResult.new()
+	result.result_id = result_id
+	if (
+		setup == null
+		or state == null
+		or manifest == null
+		or not setup.is_finalized()
+	):
+		return result
+
+	result.mission_id = setup.mission_id
+	result.source_campaign_revision = setup.source_campaign_revision
+	result.completed = true
+	result.mission_outcome = manifest.mission_outcome
+	result.successful = manifest.mission_outcome == MissionOutcome.VICTORY
+	result.extracted_zone_id = manifest.zone_id
+	result.protagonist_extracted = manifest.protagonist_extracted
+	result.abandoned_item_ids = manifest.abandoned_item_ids.duplicate()
+	if manifest.required_objectives_complete:
+		result.completed_objective_ids.append(setup.primary_objective_id)
+	else:
+		result.failed_objective_ids.append(setup.primary_objective_id)
+	if (
+		not setup.optional_captive_objective_id.is_empty()
+		and not manifest.captured_enemy_unit_ids.is_empty()
+	):
+		result.optional_objective_ids.append(setup.optional_captive_objective_id)
+	result.summary_event_ids = [
+		&"mission.extraction.confirmed",
+		&"mission.result.committed",
+	]
+	result.mission_statistics = _mission_statistics(state, manifest)
+
+	var extracted_item_ids: Dictionary = {}
+	var campaign_destination_by_item_id: Dictionary = {}
+	for item_id: StringName in manifest.extracted_item_ids:
+		var tactical_item: TacticalItemInstanceState = state.get_item(item_id)
+		if tactical_item == null or tactical_item.is_body():
+			continue
+		var destination: CampaignItemLocationState = _extraction_destination_for_item(
+			tactical_item, state, manifest
+		)
+		var campaign_item: CampaignItemState = _campaign_item_from_tactical(
+			tactical_item, destination
+		)
+		_append_extracted_item(result, extracted_item_ids, campaign_item)
+		campaign_destination_by_item_id[item_id] = destination
+		if setup.get_item(item_id) == null:
+			result.authorize_generated_item(
+				item_id,
+				StringName("%s.extraction.%s" % [setup.mission_id, item_id]),
+				"Extracted mission-generated item.",
+				tactical_item.definition_id,
+				tactical_item.quantity,
+				tactical_item.condition,
+				tactical_item.tactical_modifiers
+			)
+
+	for mission_character: PersistentCharacterState in setup.get_characters():
+		var character_result := MissionCharacterResult.new()
+		character_result.character_id = mission_character.character_id
+		character_result.was_deployed = setup.was_deployed(
+			mission_character.character_id
+		)
+		var unit: TacticalUnitState = state.get_unit(mission_character.character_id)
+		character_result.current_hp = unit.current_hp if unit != null else 0
+		if not character_result.was_deployed:
+			character_result.outcome_state = MissionCharacterResult.OUTCOME_NOT_DEPLOYED
+			character_result.survived = true
+			result.add_character_result(character_result)
+			continue
+
+		var body: TacticalItemInstanceState = (
+			state.body_item_for_unit(mission_character.character_id)
+		)
+		var body_extracted: bool = (
+			body != null and manifest.has_extracted_body_item(body.item_id)
+		)
+		var standing_extracted: bool = manifest.has_extracted_unit(
+			mission_character.character_id
+		)
+		var captured: bool = manifest.captured_enemy_unit_ids.has(
+			mission_character.character_id
+		)
+		character_result.extracted = standing_extracted or body_extracted or captured
+		character_result.body_recovered = body_extracted or captured
+		character_result.captured = captured
+
+		if unit == null:
+			character_result.survived = false
+			character_result.outcome_state = MissionCharacterResult.OUTCOME_TEMPORARY_UNIT_REMOVED
+		elif captured:
+			character_result.survived = true
+			character_result.outcome_state = MissionCharacterResult.OUTCOME_CAPTURED_ENEMY
+		elif unit.is_dead():
+			character_result.survived = false
+			character_result.outcome_state = (
+				MissionCharacterResult.OUTCOME_EXTRACTED_DEAD
+				if body_extracted
+				else MissionCharacterResult.OUTCOME_DEAD_UNRECOVERED
+			)
+		elif character_result.extracted:
+			character_result.survived = true
+			if unit.requires_body_item():
+				character_result.outcome_state = MissionCharacterResult.OUTCOME_EXTRACTED_CRITICAL
+				character_result.injury_entries.append("Gravely Wounded")
+			elif unit.current_hp < unit.maximum_hp:
+				character_result.outcome_state = MissionCharacterResult.OUTCOME_EXTRACTED_WOUNDED
+				character_result.injury_entries.append("Wounded")
+			else:
+				character_result.outcome_state = MissionCharacterResult.OUTCOME_EXTRACTED_READY
+		else:
+			character_result.survived = true
+			character_result.outcome_state = (
+				MissionCharacterResult.OUTCOME_TEMPORARY_UNIT_REMOVED
+				if mission_character.persistence_scope == PersistentCharacterState.PERSISTENCE_MISSION
+				else MissionCharacterResult.OUTCOME_ALIVE_UNRECOVERED
+			)
+			if (
+				character_result.outcome_state
+				== MissionCharacterResult.OUTCOME_ALIVE_UNRECOVERED
+			):
+				character_result.injury_entries.append("Missing / Unrecovered")
+
+		if (
+			character_result.extracted
+			and character_result.survived
+			and not character_result.captured
+		):
+			for item_id: StringName in manifest.extracted_item_ids:
+				var destination: CampaignItemLocationState = (
+					campaign_destination_by_item_id.get(item_id)
+					as CampaignItemLocationState
+				)
+				if (
+					destination == null
+					or not destination.belongs_to_character(
+						mission_character.character_id
+					)
+				):
+					continue
+				character_result.equipment_item_ids.append(item_id)
+				var setup_item: CampaignItemState = setup.get_item(item_id)
+				if (
+					setup_item == null
+					or setup_item.location == null
+					or not setup_item.location.belongs_to_character(
+						mission_character.character_id
+					)
+				):
+					character_result.loot_item_ids.append(item_id)
+
+		character_result.history_entry = _extraction_history_entry(
+			setup.mission_id, character_result
+		)
+		result.add_character_result(character_result)
+
+	for captive_unit_id: StringName in manifest.captured_enemy_unit_ids:
+		var captive_unit: TacticalUnitState = state.get_unit(captive_unit_id)
+		var source_character: PersistentCharacterState = setup.get_character(
+			captive_unit_id
+		)
+		var captive_body: TacticalItemInstanceState = state.body_item_for_unit(
+			captive_unit_id
+		)
+		if captive_unit == null or source_character == null or captive_body == null:
+			continue
+		var captive_result := MissionCaptiveResult.new()
+		captive_result.character_id = captive_unit_id
+		captive_result.source_definition_id = source_character.template_id
+		captive_result.display_name = captive_unit.display_name
+		captive_result.body_item_id = captive_body.item_id
+		captive_result.restraint_item_id = captive_unit.restraint_item_id
+		captive_result.condition_at_extraction = captive_unit.life_state_id()
+		captive_result.current_hp = captive_unit.current_hp
+		captive_result.faction_id = captive_unit.faction_id
+		captive_result.captured_mission_id = setup.mission_id
+		for item_id: StringName in manifest.extracted_item_ids:
+			var item: TacticalItemInstanceState = state.get_item(item_id)
+			if item == null or item.location == null:
+				continue
+			if (
+				item.location.owner_id == captive_unit_id
+				and item_id != captive_result.restraint_item_id
+			):
+				captive_result.equipment_item_ids.append(item_id)
+		result.add_captive_result(captive_result)
+
+	return result
+
+
+static func _mission_statistics(
+		state: TacticalState,
+		manifest: TacticalExtractionManifest
+) -> Dictionary:
+	var enemies_killed: int = 0
+	var enemies_incapacitated: int = 0
+	for enemy: TacticalUnitState in state.get_enemy_units():
+		if enemy == null or not enemy.counts_for_victory:
+			continue
+		if enemy.is_dead():
+			enemies_killed += 1
+		elif enemy.requires_body_item():
+			enemies_incapacitated += 1
+	return {
+		"enemies_killed": enemies_killed,
+		"enemies_incapacitated": enemies_incapacitated,
+		"captives_taken": manifest.captured_enemy_unit_ids.size(),
+		"allies_stabilised": 0,
+		"allies_extracted": (
+			manifest.extracted_friendly_unit_ids.size()
+			+ manifest.extracted_friendly_body_item_ids.size()
+		),
+		"allies_abandoned": (
+			manifest.abandoned_friendly_unit_ids.size()
+			+ manifest.abandoned_friendly_body_item_ids.size()
+		),
+		"items_extracted": manifest.extracted_item_ids.size(),
+		"items_abandoned": manifest.abandoned_item_ids.size(),
+	}
+
+
+static func _extraction_destination_for_item(
+		item: TacticalItemInstanceState,
+		state: TacticalState,
+		manifest: TacticalExtractionManifest
+) -> CampaignItemLocationState:
+	if item == null or item.location == null:
+		return CampaignItemLocationState.stronghold_storage()
+	if item.location.location_type in [
+		TacticalItemLocationState.LOCATION_UNIT_EQUIPMENT,
+		TacticalItemLocationState.LOCATION_UNIT_INVENTORY,
+	]:
+		var owner: TacticalUnitState = state.get_unit(item.location.owner_id)
+		if (
+			owner != null
+			and owner.team_id == &"player"
+			and not owner.is_dead()
+			and (
+				manifest.has_extracted_unit(owner.unit_id)
+				or _manifest_contains_linked_body(state, manifest, owner.unit_id)
+			)
+		):
+			return CampaignItemLocationState.character_slot(
+				owner.persistent_character_id,
+				item.location.container_kind,
+				item.location.grid_position
+			)
+	return CampaignItemLocationState.stronghold_storage()
+
+
+static func _manifest_contains_linked_body(
+		state: TacticalState,
+		manifest: TacticalExtractionManifest,
+		unit_id: StringName
+) -> bool:
+	var body: TacticalItemInstanceState = state.body_item_for_unit(unit_id)
+	return body != null and manifest.has_extracted_body_item(body.item_id)
+
+
+static func _extraction_history_entry(
+		mission_id: StringName,
+		character_result: MissionCharacterResult
+) -> String:
+	match character_result.outcome_state:
+		MissionCharacterResult.OUTCOME_EXTRACTED_READY:
+			return "Returned safely from mission %s." % mission_id
+		MissionCharacterResult.OUTCOME_EXTRACTED_WOUNDED:
+			return "Returned wounded from mission %s." % mission_id
+		MissionCharacterResult.OUTCOME_EXTRACTED_CRITICAL:
+			return "Was recovered in critical condition from mission %s." % mission_id
+		MissionCharacterResult.OUTCOME_EXTRACTED_DEAD:
+			return "Died during mission %s; body recovered." % mission_id
+		MissionCharacterResult.OUTCOME_DEAD_UNRECOVERED:
+			return "Died during mission %s; body unrecovered." % mission_id
+		MissionCharacterResult.OUTCOME_ALIVE_UNRECOVERED:
+			return "Was left behind during mission %s." % mission_id
+		MissionCharacterResult.OUTCOME_CAPTURED_ENEMY:
+			return "Was captured during mission %s." % mission_id
+		_:
+			return "Participated in mission %s." % mission_id
 
 
 static func _unit_items(

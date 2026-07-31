@@ -19,6 +19,42 @@ const TACTICAL_DICE_ROLLER_SCRIPT: Script = preload(
 const ENEMY_TURN_HANDLER_SCRIPT: Script = preload(
 	"res://application/tactical/ai/enemy_turn_handler.gd"
 )
+const VISIBILITY_SERVICE_SCRIPT: Script = preload(
+	"res://application/tactical/visibility/tactical_visibility_service.gd"
+)
+const DETECTION_SERVICE_SCRIPT: Script = preload(
+	"res://application/tactical/awareness/tactical_detection_service.gd"
+)
+const STEALTH_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/awareness/stealth_handler.gd"
+)
+const INITIATIVE_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/initiative/initiative_turn_handler.gd"
+)
+const FACING_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/facing/facing_handler.gd"
+)
+const LIFE_STATE_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/life/tactical_life_state_handler.gd"
+)
+const BODY_ACTION_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/body/tactical_body_action_handler.gd"
+)
+const RESOLVE_TACTICAL_MISSION_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/extraction/resolve_tactical_mission_handler.gd"
+)
+const TACTICAL_OPENING_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/environment/tactical_opening_handler.gd"
+)
+const TACTICAL_STRUCTURE_ATTACK_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/environment/tactical_structure_attack_handler.gd"
+)
+const TACTICAL_GEOMETRY_CACHE_SERVICE_SCRIPT: Script = preload(
+	"res://application/tactical/queries/tactical_geometry_cache_service.gd"
+)
+const TACTICAL_REACTION_SERVICE_SCRIPT: Script = preload(
+	"res://application/tactical/reactions/tactical_reaction_service.gd"
+)
 
 var state_store: TacticalStateStore
 var map_definition: TacticalMapDefinition
@@ -32,9 +68,22 @@ var sprint_handler: SprintMoveHandler
 var end_phase_handler: EndPhaseHandler
 var inventory_transfer_handler: TacticalInventoryTransferHandler
 var attack_preview_query: RefCounted
+var geometry_cache_service: TacticalGeometryCacheService
 var attack_handler: RefCounted
 var combat_dice_roller: RefCounted
 var enemy_turn_handler: RefCounted
+var visibility_service: RefCounted
+var detection_service: TacticalDetectionService
+var stealth_handler: StealthHandler
+var initiative_handler: InitiativeTurnHandler
+var facing_handler: FacingHandler
+var life_state_handler
+var body_action_handler: TacticalBodyActionHandler
+var mission_resolution_handler: ResolveTacticalMissionHandler
+var opening_handler: TacticalOpeningHandler
+var structure_attack_handler: TacticalStructureAttackHandler
+var reaction_service: TacticalReactionService
+var campaign_store: RefCounted
 var player_unit_order: Array[StringName] = []
 var screen_facade
 
@@ -45,8 +94,18 @@ func _init(
 		unit_order_value: Array[StringName],
 		content_catalogue_value: ContentCatalogue,
 		mission_setup_value: MissionSetupSnapshot,
-		resolution_service_value: CharacterResolutionService
+		resolution_service_value: CharacterResolutionService,
+		campaign_store_value: RefCounted = null
 ) -> void:
+	_ensure_player_perception_squad(initial_state)
+	initial_state.configure_extraction_zones(map_definition_value)
+	initial_state.configure_environment(map_definition_value)
+	initial_state.configure_knowledge_grid(
+		map_definition_value.grid_size
+		if map_definition_value != null
+		else Vector2i.ZERO
+	)
+	initial_state.synchronise_body_items(map_definition_value)
 	state_store = TacticalStateStore.new(initial_state)
 	map_definition = map_definition_value
 	content_catalogue = content_catalogue_value
@@ -56,6 +115,7 @@ func _init(
 		else MissionSetupSnapshot.new()
 	)
 	character_resolution_service = resolution_service_value
+	campaign_store = campaign_store_value
 	if character_resolution_service == null:
 		push_error(
 			"TacticalSession requires a CharacterResolutionService supplied by composition."
@@ -89,13 +149,71 @@ func _init(
 		map_definition,
 		event_journal
 	)
+	visibility_service = VISIBILITY_SERVICE_SCRIPT.new() as RefCounted
+	visibility_service.call("configure", state_store, map_definition)
 	combat_dice_roller = TACTICAL_DICE_ROLLER_SCRIPT.new() as RefCounted
+	life_state_handler = LIFE_STATE_HANDLER_SCRIPT.new()
+	life_state_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller
+	)
+	body_action_handler = BODY_ACTION_HANDLER_SCRIPT.new() as TacticalBodyActionHandler
+	body_action_handler.configure(
+		state_store, map_definition, event_journal, life_state_handler
+	)
+	detection_service = DETECTION_SERVICE_SCRIPT.new() as TacticalDetectionService
+	detection_service.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller,
+		visibility_service
+	)
+	movement_handler.configure_detection(
+		detection_service,
+		combat_dice_roller as TacticalDiceRoller
+	)
+	sprint_handler.configure_detection(
+		detection_service,
+		combat_dice_roller as TacticalDiceRoller
+	)
+	stealth_handler = STEALTH_HANDLER_SCRIPT.new() as StealthHandler
+	stealth_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		detection_service,
+		combat_dice_roller as TacticalDiceRoller
+	)
+	facing_handler = FACING_HANDLER_SCRIPT.new() as FacingHandler
+	facing_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		detection_service
+	)
+	initiative_handler = INITIATIVE_HANDLER_SCRIPT.new() as InitiativeTurnHandler
+	initiative_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		life_state_handler
+	)
+	geometry_cache_service = (
+		TACTICAL_GEOMETRY_CACHE_SERVICE_SCRIPT.new()
+		as TacticalGeometryCacheService
+	)
+	geometry_cache_service.configure(state_store, map_definition)
 	attack_preview_query = ATTACK_PREVIEW_QUERY_SCRIPT.new() as RefCounted
 	attack_preview_query.call(
 		"configure",
 		state_store,
 		map_definition,
-		content_catalogue
+		content_catalogue,
+		visibility_service,
+		geometry_cache_service
 	)
 	attack_handler = ATTACK_HANDLER_SCRIPT.new() as RefCounted
 	attack_handler.call(
@@ -105,8 +223,21 @@ func _init(
 		content_catalogue,
 		event_journal,
 		attack_preview_query,
-		combat_dice_roller
+		combat_dice_roller,
+		detection_service
 	)
+	reaction_service = TACTICAL_REACTION_SERVICE_SCRIPT.new() as TacticalReactionService
+	reaction_service.configure(
+		state_store,
+		map_definition,
+		content_catalogue,
+		event_journal,
+		attack_preview_query,
+		attack_handler,
+		visibility_service
+	)
+	movement_handler.configure_reactions(reaction_service)
+	sprint_handler.configure_reactions(reaction_service)
 	enemy_turn_handler = ENEMY_TURN_HANDLER_SCRIPT.new() as RefCounted
 	enemy_turn_handler.call(
 		"configure",
@@ -115,7 +246,40 @@ func _init(
 		content_catalogue,
 		event_journal,
 		attack_preview_query,
-		attack_handler
+		attack_handler,
+		detection_service
+	)
+	enemy_turn_handler.call("configure_body_actions", body_action_handler)
+	if enemy_turn_handler.has_method("configure_reactions"):
+		enemy_turn_handler.call("configure_reactions", reaction_service)
+	mission_resolution_handler = (
+		RESOLVE_TACTICAL_MISSION_HANDLER_SCRIPT.new()
+		as ResolveTacticalMissionHandler
+	)
+	mission_resolution_handler.configure(
+		state_store,
+		map_definition,
+		mission_setup,
+		campaign_store,
+		content_catalogue,
+		event_journal
+	)
+	opening_handler = TACTICAL_OPENING_HANDLER_SCRIPT.new() as TacticalOpeningHandler
+	opening_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller,
+		visibility_service,
+		detection_service
+	)
+	structure_attack_handler = TACTICAL_STRUCTURE_ATTACK_HANDLER_SCRIPT.new() as TacticalStructureAttackHandler
+	structure_attack_handler.configure(
+		state_store,
+		map_definition,
+		content_catalogue,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller
 	)
 	screen_facade = TACTICAL_SCREEN_FACADE_SCRIPT.new()
 	screen_facade.configure(
@@ -133,7 +297,20 @@ func _init(
 		attack_preview_query,
 		attack_handler,
 		combat_dice_roller,
-		enemy_turn_handler
+		enemy_turn_handler,
+		visibility_service,
+		detection_service,
+		stealth_handler,
+		initiative_handler,
+		facing_handler,
+		life_state_handler,
+		body_action_handler,
+		mission_setup,
+		mission_resolution_handler,
+		opening_handler,
+		structure_attack_handler,
+		geometry_cache_service,
+		reaction_service
 	)
 
 	event_journal.call(
@@ -151,6 +328,34 @@ func _init(
 			],
 		}
 	)
+
+
+func _ensure_player_perception_squad(state: TacticalState) -> void:
+	if state == null:
+		return
+	var player_ids: Array[StringName] = []
+	for unit: TacticalUnitState in state.get_player_units():
+		player_ids.append(unit.unit_id)
+	if player_ids.is_empty():
+		return
+	var squad: TacticalSquadState = state.get_squad(
+		TacticalSquadState.PLAYER_TEAM_SQUAD_ID
+	)
+	if squad == null:
+		squad = TacticalSquadState.new(
+			TacticalSquadState.PLAYER_TEAM_SQUAD_ID,
+			&"player",
+			player_ids
+		)
+		squad.make_aware()
+		state.add_squad(squad, false)
+	else:
+		for unit_id: StringName in player_ids:
+			squad.add_member(unit_id)
+			var unit: TacticalUnitState = state.get_unit(unit_id)
+			if unit != null:
+				unit.squad_id = squad.squad_id
+		squad.make_aware()
 
 
 func navigation_for(unit_id: StringName) -> TacticalNavigationSnapshot:
@@ -274,12 +479,42 @@ func build_mission_result(
 
 
 func validate_session() -> Array[String]:
-	var errors := state_store.state.validate_all(map_definition)
+	var errors: Array[String] = []
+	if map_definition == null:
+		errors.append("TacticalSession has no TacticalMapDefinition.")
+	else:
+		errors.append_array(state_store.state.validate_all(map_definition))
+		errors.append_array(map_definition.validate_definition())
 	if content_catalogue == null:
 		errors.append("TacticalSession has no ContentCatalogue.")
 		return errors
+	if campaign_store == null:
+		errors.append("TacticalSession has no campaign state store for mission resolution.")
+	if mission_resolution_handler == null:
+		errors.append("TacticalSession has no mission resolution handler.")
 
 	errors.append_array(content_catalogue.validate_catalogue())
+	if map_definition != null:
+		for opening: TacticalOpeningDefinition in map_definition.openings:
+			if (
+				opening != null
+				and not opening.salvage_item_definition_id.is_empty()
+				and content_catalogue.item_definition(opening.salvage_item_definition_id) == null
+			):
+				errors.append(
+					"Opening %s references unknown salvage definition %s."
+					% [opening.opening_id, opening.salvage_item_definition_id]
+				)
+		for structure: TacticalStructureDefinition in map_definition.structures:
+			if (
+				structure != null
+				and not structure.salvage_item_definition_id.is_empty()
+				and content_catalogue.item_definition(structure.salvage_item_definition_id) == null
+			):
+				errors.append(
+					"Structure %s references unknown salvage definition %s."
+					% [structure.structure_id, structure.salvage_item_definition_id]
+				)
 	errors.append_array(mission_setup.validate_snapshot())
 	if not mission_setup.is_finalized():
 		errors.append("TacticalSession requires a finalized MissionSetupSnapshot.")

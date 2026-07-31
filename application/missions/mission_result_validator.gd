@@ -37,6 +37,7 @@ static func validate(
 	_validate_character_outcomes(result, setup, extracted_items, errors)
 	_validate_extracted_destinations(result, extracted_items, errors)
 	_validate_generated_item_sources(result, setup, errors)
+	_validate_extraction_semantics(result, setup, extracted_items, errors)
 	return errors
 
 
@@ -341,6 +342,72 @@ static func _validate_generated_item_sources(
 				errors.append(
 					"Generated item %s cites unknown source item %s."
 					% [item_id, source_id]
+				)
+
+
+static func _validate_extraction_semantics(
+		result: MissionResult,
+		setup: MissionSetupSnapshot,
+		extracted_items: Dictionary,
+		errors: Array[String]
+) -> void:
+	if result.successful != (result.mission_outcome == MissionOutcome.VICTORY):
+		errors.append("Mission successful flag disagrees with the mission outcome.")
+	var uses_extraction_contract: bool = (
+		not result.extracted_zone_id.is_empty()
+		or not result.completed_objective_ids.is_empty()
+		or not result.failed_objective_ids.is_empty()
+		or not result.get_captive_results().is_empty()
+	)
+	if not uses_extraction_contract:
+		return
+	if setup.extraction_zone(result.extracted_zone_id) == null:
+		errors.append(
+			"Mission result references unknown extraction zone %s."
+			% result.extracted_zone_id
+		)
+	if (
+		result.mission_outcome in [MissionOutcome.VICTORY, MissionOutcome.WITHDRAWAL]
+		and setup.requires_protagonist_extraction
+		and not result.protagonist_extracted
+	):
+		errors.append("Mission result did not extract the required protagonist.")
+	if result.mission_outcome == MissionOutcome.VICTORY:
+		if not result.completed_objective_ids.has(setup.primary_objective_id):
+			errors.append("Victory result did not complete the primary objective.")
+	if result.mission_outcome == MissionOutcome.WITHDRAWAL:
+		if not setup.allows_withdrawal:
+			errors.append("Mission result withdraws from a mission that forbids it.")
+		if not result.failed_objective_ids.has(setup.primary_objective_id):
+			errors.append("Withdrawal result does not record the failed primary objective.")
+
+	var seen_captive_ids: Dictionary = {}
+	for captive: MissionCaptiveResult in result.get_captive_results():
+		if seen_captive_ids.has(captive.character_id):
+			errors.append("Mission result duplicates captive %s." % captive.character_id)
+		seen_captive_ids[captive.character_id] = true
+		var source: PersistentCharacterState = setup.get_character(captive.character_id)
+		if source == null:
+			errors.append("Captive %s was not part of the mission setup." % captive.character_id)
+		elif source.template_id != captive.source_definition_id:
+			errors.append("Captive %s changed source definition." % captive.character_id)
+		var character_result: MissionCharacterResult = result.get_character_result(
+			captive.character_id
+		)
+		if (
+			character_result == null
+			or not character_result.captured
+			or character_result.outcome_state
+			!= MissionCharacterResult.OUTCOME_CAPTURED_ENEMY
+		):
+			errors.append("Captive %s has no matching captured character result." % captive.character_id)
+		if not extracted_items.has(captive.restraint_item_id):
+			errors.append("Captive %s restraint was not extracted." % captive.character_id)
+		for item_id: StringName in captive.equipment_item_ids:
+			if not extracted_items.has(item_id):
+				errors.append(
+					"Captive %s references unextracted item %s."
+					% [captive.character_id, item_id]
 				)
 
 

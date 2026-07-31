@@ -20,6 +20,9 @@ var footprint: Vector2i = Vector2i.ONE
 var accepts_items: bool = true
 var selected: bool = false
 var valid_target: bool = false
+var instance_kind: StringName = &"item"
+var _status_snapshot: Dictionary = {}
+var _status_overlay: TacticalBodyStatusOverlay
 
 
 func _ready() -> void:
@@ -38,7 +41,8 @@ func configure(
 		slot_label_value: String,
 		item: TacticalItemInstanceState,
 		accepts_items_value: bool = true,
-		reserved_text: String = ""
+		reserved_text: String = "",
+		status_snapshot_value: Dictionary = {}
 ) -> void:
 	slot_kind = slot_kind_value
 	slot_label = slot_label_value
@@ -48,6 +52,8 @@ func configure(
 		item_id = &""
 		item_name = ""
 		footprint = Vector2i.ONE
+		instance_kind = &"item"
+		_status_snapshot = {}
 		text = (
 			"%s\n%s" % [slot_label, reserved_text]
 			if not reserved_text.is_empty()
@@ -57,10 +63,20 @@ func configure(
 		item_id = item.item_id
 		item_name = item.display_name
 		footprint = item.footprint
-		text = "%s\n%s" % [slot_label, item_name]
+		instance_kind = item.instance_kind
+		_status_snapshot = status_snapshot_value.duplicate(true)
+		var item_line: String = item_name
+		if (
+			item.is_body()
+			and item.location != null
+			and item.location.transport_mode == &"dragging"
+		):
+			item_line = "Dragging %s" % item_name
+		text = "%s\n%s" % [slot_label, item_line]
 
 	disabled = not accepts_items and item_name.is_empty()
 	tooltip_text = text.replace("\n", ": ")
+	_refresh_status_overlay()
 	_refresh_style()
 
 
@@ -86,20 +102,29 @@ func _get_drag_data(_position: Vector2) -> Variant:
 	if item_name.is_empty():
 		return null
 
+	var preview_root := Control.new()
+	preview_root.custom_minimum_size = Vector2(200.0, 52.0)
 	var preview := PanelContainer.new()
-	preview.custom_minimum_size = Vector2(200.0, 42.0)
+	preview_root.add_child(preview)
+	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var label := Label.new()
 	label.text = item_name
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	preview.add_child(label)
-	set_drag_preview(preview)
+	if instance_kind == &"body":
+		var preview_overlay := TacticalBodyStatusOverlay.new()
+		preview_root.add_child(preview_overlay)
+		preview_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		preview_overlay.configure(_status_snapshot)
+	set_drag_preview(preview_root)
 
 	return {
 		"source_kind": slot_kind,
 		"source_item_id": item_id,
 		"item_name": item_name,
 		"footprint": footprint,
+		"instance_kind": instance_kind,
 	}
 
 
@@ -148,3 +173,17 @@ func _refresh_style() -> void:
 	add_theme_stylebox_override("hover", style)
 	add_theme_stylebox_override("pressed", style)
 	add_theme_font_size_override("font_size", 12)
+
+
+func _refresh_status_overlay() -> void:
+	if instance_kind != &"body" or item_id.is_empty():
+		if _status_overlay != null:
+			_status_overlay.visible = false
+		return
+	if _status_overlay == null:
+		_status_overlay = TacticalBodyStatusOverlay.new()
+		add_child(_status_overlay)
+		_status_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_status_overlay.z_index = 20
+	_status_overlay.visible = true
+	_status_overlay.configure(_status_snapshot)

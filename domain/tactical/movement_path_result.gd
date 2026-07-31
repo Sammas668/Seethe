@@ -6,6 +6,7 @@ var path: Array[Vector2i] = []
 var cost_feet: int = 0
 var diagonal_steps: int = 0
 var failure_reason: String = ""
+var reaction_events: Array[Dictionary] = []
 
 
 static func completed(

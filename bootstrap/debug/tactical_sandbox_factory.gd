@@ -19,23 +19,30 @@ const MARAUDER_ID: StringName = &"character.reaver.marauder.0001"
 const ARCHER_ID: StringName = &"character.prototype.archer.0001"
 const SCOUT_ID: StringName = &"character.prototype.scout.0001"
 const ENEMY_ID: StringName = &"character.example.enemy_guard.0001"
+const ENEMY_TWO_ID: StringName = &"character.example.enemy_guard.0002"
 const NEUTRAL_ID: StringName = &"character.example.neutral_farmhand.0001"
 const PRACTICE_DUMMY_ID: StringName = &"character.example.practice_dummy.0001"
+const GUARD_SQUAD_A_ID: StringName = &"squad.settlement_watch.a"
+const GUARD_SQUAD_B_ID: StringName = &"squad.settlement_watch.b"
 
 const MARAUDER_TEMPLATE_ID: StringName = &"character_template.reaver.marauder_tier_1"
 const ARCHER_TEMPLATE_ID: StringName = &"character_template.prototype.archer"
 const SCOUT_TEMPLATE_ID: StringName = &"character_template.prototype.scout"
 const ENEMY_TEMPLATE_ID: StringName = &"character_template.prototype.enemy_guard"
+const ENEMY_ARCHER_TEMPLATE_ID: StringName = &"character_template.prototype.enemy_archer"
 const NEUTRAL_TEMPLATE_ID: StringName = &"character_template.prototype.neutral_farmhand"
 const PRACTICE_DUMMY_TEMPLATE_ID: StringName = &"character_template.prototype.practice_dummy"
 
 const HAKON_PORTRAIT_ID: StringName = &"portrait.hakon_rusk"
 
 
-static func create_session(persist_roster: bool = true) -> TacticalSession:
+static func create_session(
+		persist_roster: bool = true,
+		campaign_save_path: String = CampaignRepository.DEFAULT_SAVE_PATH
+) -> TacticalSession:
 	var catalogue: ContentCatalogue = SandboxContentCatalogueFactory.create_catalogue()
 	var repository: CampaignRepository = JsonCampaignRepository.new(
-		CampaignRepository.DEFAULT_SAVE_PATH,
+		campaign_save_path,
 		persist_roster,
 		catalogue
 	)
@@ -88,6 +95,9 @@ static func create_session(persist_roster: bool = true) -> TacticalSession:
 		player_ids,
 		SANDBOX_MISSION_ID
 	)
+	MISSION_SETUP_BUILDER_SCRIPT.configure_mission_definition(
+		setup, MOVEMENT_TEST_MAP, MARAUDER_ID
+	)
 	_add_non_player_mission_characters(setup, catalogue)
 	_add_sandbox_ground_items(setup)
 	var intended_participants: Array[StringName] = [
@@ -95,6 +105,7 @@ static func create_session(persist_roster: bool = true) -> TacticalSession:
 		ARCHER_ID,
 		SCOUT_ID,
 		ENEMY_ID,
+		ENEMY_TWO_ID,
 		NEUTRAL_ID,
 		PRACTICE_DUMMY_ID,
 	]
@@ -119,6 +130,12 @@ static func create_session(persist_roster: bool = true) -> TacticalSession:
 		)
 	)
 	var state: TacticalState = TacticalState.new()
+	# Stage 4.3.3 extraction-zone invariants must exist before assembly
+	# deployment validates the state. TacticalSession is constructed only
+	# after every mission character has been deployed.
+	state.configure_extraction_zones(MOVEMENT_TEST_MAP)
+	state.configure_environment(MOVEMENT_TEST_MAP)
+	state.configure_knowledge_grid(MOVEMENT_TEST_MAP.grid_size)
 
 	_deploy_or_error(
 		deployment_service,
@@ -159,10 +176,18 @@ static func create_session(persist_roster: bool = true) -> TacticalSession:
 		deployment_service,
 		state,
 		setup,
+		ENEMY_TWO_ID,
+		Vector2i(7, 6)
+	)
+	_deploy_or_error(
+		deployment_service,
+		state,
+		setup,
 		NEUTRAL_ID,
 		Vector2i(18, 16)
 	)
 	_configure_active_enemy(state)
+	_configure_guard_squads(state)
 	_configure_training_dummy(state)
 	_instantiate_ground_items(catalogue, state, setup)
 
@@ -172,7 +197,8 @@ static func create_session(persist_roster: bool = true) -> TacticalSession:
 		setup.player_unit_order(),
 		catalogue,
 		setup,
-		resolution_service
+		resolution_service,
+		campaign_store
 	)
 	var errors: Array[String] = session.validate_session()
 	if not errors.is_empty():
@@ -280,6 +306,9 @@ static func _add_non_player_mission_characters(
 	var enemy_template: CharacterTemplateDefinition = catalogue.character_template(
 		ENEMY_TEMPLATE_ID
 	)
+	var enemy_archer_template: CharacterTemplateDefinition = catalogue.character_template(
+		ENEMY_ARCHER_TEMPLATE_ID
+	)
 	var neutral_template: CharacterTemplateDefinition = catalogue.character_template(
 		NEUTRAL_TEMPLATE_ID
 	)
@@ -287,6 +316,12 @@ static func _add_non_player_mission_characters(
 		enemy_template,
 		ENEMY_ID,
 		"Generated Settlement Guard",
+		&"faction.settlement_watch"
+	)
+	var enemy_two: PersistentCharacterState = CharacterFactory.create_enemy_character(
+		enemy_archer_template,
+		ENEMY_TWO_ID,
+		"Generated Settlement Archer",
 		&"faction.settlement_watch"
 	)
 	var neutral: PersistentCharacterState = CharacterFactory.create_neutral_character(
@@ -305,6 +340,11 @@ static func _add_non_player_mission_characters(
 		&"faction.training_target"
 	)
 	MISSION_SETUP_BUILDER_SCRIPT.add_isolated_character(setup, enemy, enemy_template)
+	MISSION_SETUP_BUILDER_SCRIPT.add_isolated_character(
+		setup,
+		enemy_two,
+		enemy_archer_template
+	)
 	MISSION_SETUP_BUILDER_SCRIPT.add_isolated_character(setup, neutral, neutral_template)
 	MISSION_SETUP_BUILDER_SCRIPT.add_isolated_character(setup, dummy, dummy_template)
 
@@ -312,16 +352,55 @@ static func _add_non_player_mission_characters(
 static func _configure_active_enemy(state: TacticalState) -> void:
 	if state == null:
 		return
-	var guard: TacticalUnitState = state.get_unit(ENEMY_ID)
-	if guard == null:
-		push_error("Settlement Guard was not deployed.")
+	for guard_id: StringName in [ENEMY_ID, ENEMY_TWO_ID]:
+		var guard: TacticalUnitState = state.get_unit(guard_id)
+		if guard == null:
+			push_error("Settlement Guard %s was not deployed." % guard_id)
+			continue
+		guard.configure_tactical_control(
+			TacticalUnitState.CONTROLLER_AI,
+			TacticalUnitState.TURN_BEHAVIOR_STANDARD,
+			true,
+			true
+		)
+
+
+static func _configure_guard_squads(state: TacticalState) -> void:
+	if state == null:
 		return
-	guard.configure_tactical_control(
-		TacticalUnitState.CONTROLLER_AI,
-		TacticalUnitState.TURN_BEHAVIOR_STANDARD,
-		true,
-		true
-	)
+	var guard: TacticalUnitState = state.get_unit(ENEMY_ID)
+	var archer: TacticalUnitState = state.get_unit(ENEMY_TWO_ID)
+	var dummy: TacticalUnitState = state.get_unit(PRACTICE_DUMMY_ID)
+	var watch_members: Array[StringName] = []
+	if guard != null:
+		guard.set_facing(Vector2i(0, 1))
+		watch_members.append(guard.unit_id)
+	if archer != null:
+		archer.set_facing(Vector2i(0, 1))
+		watch_members.append(archer.unit_id)
+	if not watch_members.is_empty():
+		# The generated melee guard and archer are one authored settlement-watch
+		# squad. Detection by either member therefore alerts both members, while
+		# revelation remains specific to the player character actually seen.
+		state.add_squad(
+			TacticalSquadState.new(
+				GUARD_SQUAD_A_ID,
+				&"enemy",
+				watch_members
+			),
+			false
+		)
+	if dummy != null:
+		# Keep a separate authored enemy squad in the sandbox so squad-limited
+		# awareness can still be tested without separating the guard and archer.
+		state.add_squad(
+			TacticalSquadState.new(
+				GUARD_SQUAD_B_ID,
+				&"enemy",
+				[PRACTICE_DUMMY_ID]
+			),
+			false
+		)
 
 
 static func _configure_training_dummy(state: TacticalState) -> void:
@@ -362,6 +441,14 @@ static func _add_sandbox_ground_items(setup: MissionSetupSnapshot) -> void:
 		&"item.bandage",
 		Vector2i(3, 4),
 		2,
+		1.0,
+		"Ground"
+	)
+	setup.add_ground_item(
+		&"instance.ground.healing_potion",
+		&"item.minor_healing_potion",
+		Vector2i(4, 4),
+		1,
 		1.0,
 		"Ground"
 	)

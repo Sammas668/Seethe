@@ -2,6 +2,14 @@ class_name MissionSetupSnapshot
 extends RefCounted
 
 var mission_id: StringName = &""
+var mission_display_name: String = "Tactical Mission"
+var protagonist_character_id: StringName = &""
+var primary_objective_id: StringName = &"objective.primary"
+var primary_objective_text: String = "Complete the mission objective."
+var optional_captive_objective_id: StringName = &""
+var optional_captive_objective_text: String = ""
+var allows_withdrawal: bool = true
+var requires_protagonist_extraction: bool = true
 var source_campaign_revision: int = 0
 var source_roster_revision: int:
 	get:
@@ -14,8 +22,56 @@ var _characters_by_id: Dictionary = {}
 var _items_by_id: Dictionary = {}
 var _player_unit_order: Array[StringName] = []
 var _deployed_character_ids: Array[StringName] = []
+var _extraction_zone_definitions_by_id: Dictionary = {}
 var _finalized: bool = false
 var _finalized_setup_hash: int = 0
+
+
+func configure_mission_definition(
+		map_definition: TacticalMapDefinition,
+		protagonist_id: StringName
+) -> bool:
+	if _finalized or map_definition == null:
+		return false
+	mission_display_name = map_definition.mission_display_name
+	protagonist_character_id = protagonist_id
+	primary_objective_id = map_definition.primary_objective_id
+	primary_objective_text = map_definition.primary_objective_text
+	optional_captive_objective_id = map_definition.optional_captive_objective_id
+	optional_captive_objective_text = map_definition.optional_captive_objective_text
+	allows_withdrawal = map_definition.allows_withdrawal
+	requires_protagonist_extraction = map_definition.requires_protagonist_extraction
+	_extraction_zone_definitions_by_id.clear()
+	for zone: TacticalExtractionZoneDefinition in map_definition.extraction_zones:
+		if zone == null or zone.zone_id.is_empty():
+			continue
+		_extraction_zone_definitions_by_id[zone.zone_id] = (
+			TacticalExtractionZoneDefinition.from_dictionary(zone.to_dictionary())
+		)
+	return true
+
+
+func extraction_zone(zone_id: StringName) -> TacticalExtractionZoneDefinition:
+	var zone: TacticalExtractionZoneDefinition = (
+		_extraction_zone_definitions_by_id.get(zone_id)
+		as TacticalExtractionZoneDefinition
+	)
+	if zone == null:
+		return null
+	return TacticalExtractionZoneDefinition.from_dictionary(zone.to_dictionary())
+
+
+func extraction_zones() -> Array[TacticalExtractionZoneDefinition]:
+	var result: Array[TacticalExtractionZoneDefinition] = []
+	for raw_zone: Variant in _extraction_zone_definitions_by_id.values():
+		var zone: TacticalExtractionZoneDefinition = raw_zone as TacticalExtractionZoneDefinition
+		if zone != null:
+			result.append(TacticalExtractionZoneDefinition.from_dictionary(zone.to_dictionary()))
+	result.sort_custom(
+		func(a: TacticalExtractionZoneDefinition, b: TacticalExtractionZoneDefinition) -> bool:
+			return String(a.zone_id) < String(b.zone_id)
+	)
+	return result
 
 
 func is_finalized() -> bool:
@@ -249,6 +305,18 @@ func validate_snapshot(require_finalized: bool = true) -> Array[String]:
 		errors.append("MissionSetupSnapshot has not been finalized.")
 	if mission_id.is_empty():
 		errors.append("MissionSetupSnapshot has no mission ID.")
+	if mission_display_name.strip_edges().is_empty():
+		errors.append("MissionSetupSnapshot has no mission display name.")
+	if primary_objective_id.is_empty():
+		errors.append("MissionSetupSnapshot has no primary objective ID.")
+	if requires_protagonist_extraction and protagonist_character_id.is_empty():
+		errors.append("MissionSetupSnapshot requires a protagonist but has no protagonist ID.")
+	if not protagonist_character_id.is_empty() and _character_reference(protagonist_character_id) == null:
+		errors.append("MissionSetupSnapshot protagonist %s is missing." % protagonist_character_id)
+	if _extraction_zone_definitions_by_id.is_empty():
+		errors.append("MissionSetupSnapshot has no extraction zones.")
+	for zone: TacticalExtractionZoneDefinition in extraction_zones():
+		errors.append_array(zone.validate_definition())
 
 	for value: Variant in _characters_by_id.values():
 		var character: PersistentCharacterState = value as PersistentCharacterState
@@ -328,8 +396,20 @@ func _canonical_dictionary() -> Dictionary:
 		func(a: Dictionary, b: Dictionary) -> bool:
 			return String(a.get("item_id", "")) < String(b.get("item_id", ""))
 	)
+	var zones: Array[Dictionary] = []
+	for zone: TacticalExtractionZoneDefinition in extraction_zones():
+		zones.append(zone.to_dictionary())
 	return {
 		"mission_id": String(mission_id),
+		"mission_display_name": mission_display_name,
+		"protagonist_character_id": String(protagonist_character_id),
+		"primary_objective_id": String(primary_objective_id),
+		"primary_objective_text": primary_objective_text,
+		"optional_captive_objective_id": String(optional_captive_objective_id),
+		"optional_captive_objective_text": optional_captive_objective_text,
+		"allows_withdrawal": allows_withdrawal,
+		"requires_protagonist_extraction": requires_protagonist_extraction,
+		"extraction_zones": zones,
 		"source_campaign_revision": source_campaign_revision,
 		"characters": characters,
 		"items": items,

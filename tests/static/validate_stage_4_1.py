@@ -8,6 +8,8 @@ def main() -> int:
 
     for path in [
         "application/tactical/ai/enemy_turn_handler.gd",
+        "application/tactical/ai/enemy_action_planner.gd",
+        "application/tactical/ai/enemy_action_plan.gd",
         "application/tactical/combat/attack_preview_query.gd",
         "application/tactical/combat/attack_handler.gd",
         "domain/tactical/tactical_unit_state.gd",
@@ -20,12 +22,11 @@ def main() -> int:
         "application/tactical/ai/enemy_turn_handler.gd",
         [
             "TURN_BEHAVIOR_STANDARD",
-            "_best_target_plan",
-            "_best_path_to_attack_position",
-            "_furthest_affordable_destination",
+            "ENEMY_ACTION_PLANNER_SCRIPT",
+            "plan_activation",
             "_commit_enemy_move",
             "execute_preview",
-            "TacticalStateStore",
+            "_recover_activation_failure",
             "unit_turn_started",
             "unit_turn_ended",
             "unit_passed",
@@ -33,11 +34,20 @@ def main() -> int:
         failures,
     )
     require_tokens(
+        "application/tactical/ai/enemy_action_planner.gd",
+        [
+            "_best_path_to_attack_position",
+            "_furthest_affordable_destination",
+            "state.get_units()",
+            "TEAM_RELATIONS_SCRIPT.are_hostile",
+        ],
+        failures,
+    )
+    require_tokens(
         "application/tactical/combat/attack_preview_query.gd",
         [
-            "AI_SUPPORTED_ACTION_IDS",
-            "action.training_spear_attack",
             "is_supported_ai_action",
+            "_definition_is_supported",
             "state.phase_state.is_enemy_turn",
             "attacker.is_ai_controlled",
             "attacker.is_defeated",
@@ -53,7 +63,7 @@ def main() -> int:
             "combat_state",
             "func is_defeated()",
             "func can_take_actions()",
-            "_sync_combat_state_from_hp",
+            "func life_state_id()",
         ],
         failures,
     )
@@ -86,7 +96,7 @@ def main() -> int:
         [
             "_test_guard_is_active_ai",
             "_test_guard_moves_and_attacks",
-            "_test_defeated_units_skip",
+            "_test_downed_units_skip",
             "action.training_spear_attack",
         ],
         failures,
@@ -103,8 +113,8 @@ def main() -> int:
         [
             "The Settlement Guard uses Standard Combat AI during the Enemy Turn.",
             "Enemy movement and attacks use TacticalStateStore and the shared attack pipeline.",
-            "The Guard targets active hostile player units only.",
-            "Units reduced to 0 HP become Defeated and skip future activations.",
+            "The Guard targets active hostile units through team relations.",
+            "Units below 0 HP become Dying and skip ordinary activations.",
         ],
     )
 

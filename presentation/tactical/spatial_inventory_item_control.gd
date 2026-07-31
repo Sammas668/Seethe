@@ -5,6 +5,10 @@ signal item_activated(
 	item_control: SpatialInventoryItemControl,
 	mouse_button: int
 )
+signal item_dropped_onto(
+	target_item_id: StringName,
+	drag_data: Dictionary
+)
 
 var source_kind: StringName = &""
 var item_id: StringName = &""
@@ -12,6 +16,9 @@ var item_name: String = ""
 var footprint: Vector2i = Vector2i.ONE
 var selected: bool = false
 var visual_category: StringName = &"misc"
+var instance_kind: StringName = &"item"
+var _status_snapshot: Dictionary = {}
+var _status_overlay: TacticalBodyStatusOverlay
 
 
 func _ready() -> void:
@@ -30,15 +37,20 @@ func configure(
 		item_id_value: StringName,
 		item_name_value: String,
 		footprint_value: Vector2i,
-		visual_category_value: StringName = &"misc"
+		visual_category_value: StringName = &"misc",
+		instance_kind_value: StringName = &"item",
+		status_snapshot_value: Dictionary = {}
 ) -> void:
 	source_kind = source_kind_value
 	item_id = item_id_value
 	item_name = item_name_value
 	footprint = footprint_value
 	visual_category = visual_category_value
+	instance_kind = instance_kind_value
+	_status_snapshot = status_snapshot_value.duplicate(true)
 	text = item_name
 	tooltip_text = item_name
+	_refresh_status_overlay()
 	_refresh_style()
 
 
@@ -59,25 +71,46 @@ func _get_drag_data(_position: Vector2) -> Variant:
 	if item_name.is_empty():
 		return null
 
-	var preview := PanelContainer.new()
-	preview.custom_minimum_size = Vector2(
+	var preview_root := Control.new()
+	preview_root.custom_minimum_size = Vector2(
 		maxf(120.0, size.x),
 		maxf(38.0, size.y * 0.55)
 	)
+	var preview := PanelContainer.new()
+	preview_root.add_child(preview)
+	preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var preview_label := Label.new()
 	preview_label.text = item_name
 	preview_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	preview_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	preview.add_child(preview_label)
-	set_drag_preview(preview)
+	if instance_kind == &"body":
+		var preview_overlay := TacticalBodyStatusOverlay.new()
+		preview_root.add_child(preview_overlay)
+		preview_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		preview_overlay.configure(_status_snapshot)
+	set_drag_preview(preview_root)
 
 	return {
 		"source_kind": source_kind,
 		"source_item_id": item_id,
 		"item_name": item_name,
 		"footprint": footprint,
+		"instance_kind": instance_kind,
 	}
+
+
+func _can_drop_data(_position: Vector2, data: Variant) -> bool:
+	if instance_kind != &"body" or not data is Dictionary:
+		return false
+	return StringName(data.get("source_item_id", &"")) != item_id
+
+
+func _drop_data(_position: Vector2, data: Variant) -> void:
+	if not data is Dictionary:
+		return
+	item_dropped_onto.emit(item_id, (data as Dictionary).duplicate(true))
 
 
 func _refresh_style() -> void:
@@ -110,6 +143,20 @@ func _refresh_style() -> void:
 	add_theme_color_override("font_color", Color(0.94, 0.94, 0.91, 1.0))
 
 
+func _refresh_status_overlay() -> void:
+	if instance_kind != &"body":
+		if _status_overlay != null:
+			_status_overlay.visible = false
+		return
+	if _status_overlay == null:
+		_status_overlay = TacticalBodyStatusOverlay.new()
+		add_child(_status_overlay)
+		_status_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_status_overlay.z_index = 20
+	_status_overlay.visible = true
+	_status_overlay.configure(_status_snapshot)
+
+
 func _item_colour() -> Color:
 	match visual_category:
 		&"medical":
@@ -120,5 +167,7 @@ func _item_colour() -> Color:
 			return Color(0.25, 0.18, 0.09, 0.98)
 		&"weapon":
 			return Color(0.13, 0.19, 0.22, 0.98)
+		&"body":
+			return Color(0.18, 0.10, 0.11, 0.98)
 		_:
 			return Color(0.15, 0.17, 0.19, 0.98)

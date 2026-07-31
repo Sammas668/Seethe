@@ -1,13 +1,11 @@
-[gd_resource type="Resource" script_class="AttackDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://d2vlj482c67mh"]
 
-[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
-[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
-[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
 
 [sub_resource type="Resource" id="Damage"]
 script = ExtResource("2_damage")
-dice_count = 1
-die_size = 4
 damage_type = &"piercing"
 
 [sub_resource type="Resource" id="Range"]
@@ -18,17 +16,16 @@ maximum_increments = 5
 
 [resource]
 script = ExtResource("1_attack")
-id = &"action.reaver_thrown_dagger_attack"
-display_name = "Thrown Dagger"
-description = "A dagger thrown at a nearby target."
-action_cost_type = &"half"
-action_tags = Array[StringName]([&"attack", &"weapon_attack", &"thrown"])
 attack_kind = &"ranged"
 attack_ability = &"dexterity"
 damage_ability = &"strength"
 damage_profile = SubResource("Damage")
 range_profile = SubResource("Range")
-targeting_rule_id = &"target.single_creature"
 critical_threat_minimum = 19
-critical_multiplier = 2
 attack_tags = Array[StringName]([&"weapon", &"dagger", &"ranged", &"thrown"])
+implementation_profile_id = &"combat.ranged_weapon"
+supports_power_attack = false
+id = &"action.reaver_thrown_dagger_attack"
+display_name = "Thrown Dagger"
+description = "A dagger thrown at a nearby target."
+action_tags = Array[StringName]([&"attack", &"weapon_attack", &"thrown"])

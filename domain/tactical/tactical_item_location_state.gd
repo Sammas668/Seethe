@@ -5,6 +5,7 @@ const LOCATION_UNIT_EQUIPMENT: StringName = &"unit_equipment"
 const LOCATION_UNIT_INVENTORY: StringName = &"unit_inventory"
 const LOCATION_TACTICAL_GROUND: StringName = &"tactical_ground"
 const LOCATION_TACTICAL_CONTAINER: StringName = &"tactical_container"
+const LOCATION_BODY_ATTACHMENT: StringName = &"body_attachment"
 const LOCATION_DESTROYED: StringName = &"destroyed"
 
 const CONTAINER_PRIMARY_HAND: StringName = &"main_hand"
@@ -12,6 +13,7 @@ const CONTAINER_SECONDARY_HAND: StringName = &"off_hand"
 const CONTAINER_BELT: StringName = &"belt"
 const CONTAINER_BACKPACK: StringName = &"backpack"
 const CONTAINER_GROUND: StringName = &"ground"
+const CONTAINER_RESTRAINT: StringName = &"restraint"
 
 var location_type: StringName
 var owner_id: StringName
@@ -19,6 +21,8 @@ var container_kind: StringName
 var grid_position: Vector2i
 var map_position: Vector2i
 var source_label: String
+# A body in a Hand remains on the ground and follows the actor.
+var transport_mode: StringName = &""
 
 
 func _init(
@@ -76,7 +80,7 @@ static func ground(
 
 
 func clone() -> TacticalItemLocationState:
-	return TacticalItemLocationState.new(
+	var result := TacticalItemLocationState.new(
 		location_type,
 		owner_id,
 		container_kind,
@@ -84,6 +88,8 @@ func clone() -> TacticalItemLocationState:
 		map_position,
 		source_label
 	)
+	result.transport_mode = transport_mode
+	return result
 
 
 func matches(other: TacticalItemLocationState) -> bool:
@@ -95,4 +101,26 @@ func matches(other: TacticalItemLocationState) -> bool:
 		and container_kind == other.container_kind
 		and grid_position == other.grid_position
 		and map_position == other.map_position
+		and transport_mode == other.transport_mode
+	)
+
+
+static func dragged_body(
+		unit_id: StringName,
+		hand_kind: StringName,
+		body_cell: Vector2i
+) -> TacticalItemLocationState:
+	var result := unit_hand(unit_id, hand_kind)
+	result.transport_mode = &"dragging"
+	result.map_position = body_cell
+	return result
+
+
+static func body_attachment(
+		unit_id: StringName
+) -> TacticalItemLocationState:
+	return TacticalItemLocationState.new(
+		LOCATION_BODY_ATTACHMENT,
+		unit_id,
+		CONTAINER_RESTRAINT
 	)

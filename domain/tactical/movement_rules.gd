@@ -67,6 +67,8 @@ static func find_path(
 				continue
 
 			var diagonal := direction.x != 0 and direction.y != 0
+			if not diagonal and navigation.is_step_blocked(current_tile, next_tile):
+				continue
 			if diagonal and _diagonal_corner_is_sealed(current_tile, direction, navigation):
 				continue
 
@@ -76,7 +78,10 @@ static func find_path(
 				base_cost = 5 if current_parity == 0 else 10
 				next_parity = 1 - current_parity
 
-			var step_cost := base_cost * navigation.movement_multiplier(next_tile)
+			var step_cost := (
+				base_cost * navigation.movement_multiplier(next_tile)
+				+ navigation.additional_step_cost(current_tile, next_tile)
+			)
 			var next_key := _make_key(next_tile, next_parity)
 			var tentative_cost := int(g_score[current_key]) + step_cost
 			var known_cost := int(g_score.get(next_key, 1_000_000_000))
@@ -117,6 +122,8 @@ static func calculate_path_cost(
 			return MovementPathResult.failed("The path crosses a blocked tile.")
 
 		var diagonal := delta.x != 0 and delta.y != 0
+		if not diagonal and navigation.is_step_blocked(previous, current):
+			return MovementPathResult.failed("The path crosses a closed or blocked opening.")
 		if diagonal and _diagonal_corner_is_sealed(previous, delta, navigation):
 			return MovementPathResult.failed("The path cuts through a sealed corner.")
 
@@ -126,9 +133,39 @@ static func calculate_path_cost(
 			parity = 1 - parity
 			diagonal_steps += 1
 
-		cost += base_cost * navigation.movement_multiplier(current)
+		cost += (
+			base_cost * navigation.movement_multiplier(current)
+			+ navigation.additional_step_cost(previous, current)
+		)
 
 	return MovementPathResult.completed(path, cost, diagonal_steps)
+
+
+static func movement_step_cost(
+		previous: Vector2i,
+		current: Vector2i,
+		navigation: TacticalNavigationSnapshot,
+		diagonal_parity: int = 0
+) -> int:
+	if navigation == null:
+		return -1
+	var delta: Vector2i = current - previous
+	if absi(delta.x) > 1 or absi(delta.y) > 1 or delta == Vector2i.ZERO:
+		return -1
+	if navigation.is_blocked(current):
+		return -1
+	var diagonal: bool = delta.x != 0 and delta.y != 0
+	if not diagonal and navigation.is_step_blocked(previous, current):
+		return -1
+	if diagonal and _diagonal_corner_is_sealed(previous, delta, navigation):
+		return -1
+	var base_cost: int = 5
+	if diagonal:
+		base_cost = 5 if diagonal_parity % 2 == 0 else 10
+	return (
+		base_cost * navigation.movement_multiplier(current)
+		+ navigation.additional_step_cost(previous, current)
+	)
 
 
 static func _make_key(tile: Vector2i, parity: int) -> Vector3i:
@@ -162,10 +199,15 @@ static func _diagonal_corner_is_sealed(
 ) -> bool:
 	var horizontal_side := current_tile + Vector2i(direction.x, 0)
 	var vertical_side := current_tile + Vector2i(0, direction.y)
-	return (
+	var horizontal_blocked: bool = (
 		navigation.is_blocked(horizontal_side)
-		and navigation.is_blocked(vertical_side)
+		or navigation.is_step_blocked(current_tile, horizontal_side)
 	)
+	var vertical_blocked: bool = (
+		navigation.is_blocked(vertical_side)
+		or navigation.is_step_blocked(current_tile, vertical_side)
+	)
+	return horizontal_blocked and vertical_blocked
 
 
 static func _build_result(

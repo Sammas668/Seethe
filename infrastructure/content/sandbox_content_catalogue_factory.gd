@@ -11,6 +11,7 @@ const ITEM_DEFINITIONS = [
 	preload("res://content/items/sling.tres"),
 	preload("res://content/items/buckler.tres"),
 	preload("res://content/items/bandage.tres"),
+	preload("res://content/items/minor_healing_potion.tres"),
 	preload("res://content/items/rope.tres"),
 	preload("res://content/items/manacles.tres"),
 	preload("res://content/items/rations.tres"),
@@ -23,6 +24,10 @@ const ITEM_DEFINITIONS = [
 	preload("res://content/items/raiders_axe.tres"),
 	preload("res://content/items/mace.tres"),
 	preload("res://content/items/reaver_dagger.tres"),
+	preload("res://content/items/broken_timber.tres"),
+	preload("res://content/items/stone_rubble.tres"),
+	preload("res://content/items/scrap_metal.tres"),
+	preload("res://content/items/glass_shards.tres"),
 ]
 
 const ACTION_DEFINITIONS = [
@@ -34,6 +39,7 @@ const ACTION_DEFINITIONS = [
 	preload("res://content/actions/sling_attack.tres"),
 	preload("res://content/actions/unarmed_strike.tres"),
 	preload("res://content/actions/overwatch.tres"),
+	preload("res://content/actions/brace.tres"),
 	preload("res://content/actions/use_bandage.tres"),
 	preload("res://content/actions/use_smoke_pellet.tres"),
 	preload("res://content/actions/raiders_axe_attack.tres"),
@@ -55,6 +61,7 @@ const CHARACTER_TEMPLATES = [
 	preload("res://content/characters/prototypes/archer.tres"),
 	preload("res://content/characters/prototypes/scout.tres"),
 	preload("res://content/characters/prototypes/guard_enemy.tres"),
+	preload("res://content/characters/prototypes/guard_archer_enemy.tres"),
 	preload("res://content/characters/prototypes/farmhand_neutral.tres"),
 	preload("res://content/characters/prototypes/practice_dummy.tres"),
 ]

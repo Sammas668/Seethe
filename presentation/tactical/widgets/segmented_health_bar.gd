@@ -41,7 +41,7 @@ func set_values(
 		nonlethal_damage: int = 0
 ) -> void:
 	_maximum_hp = maxi(1, maximum_hp)
-	_current_hp = clampi(current_hp, 0, _maximum_hp)
+	_current_hp = mini(current_hp, _maximum_hp)
 	_nonlethal_damage = maxi(0, nonlethal_damage)
 	_ensure_built()
 	_update_visuals()
@@ -133,7 +133,11 @@ func _layout_segments() -> void:
 	_value_label.position = Vector2.ZERO
 	_value_label.size = full_size
 
-	var health_ratio: float = float(_current_hp) / float(_maximum_hp)
+	var health_ratio: float = clampf(
+		float(_current_hp) / float(_maximum_hp),
+		0.0,
+		1.0
+	)
 	var nonlethal_ratio: float = clampf(
 		float(_nonlethal_damage) / float(_maximum_hp),
 		0.0,

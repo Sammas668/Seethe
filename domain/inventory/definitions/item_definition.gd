@@ -20,6 +20,14 @@ const HANDEDNESS_NONE: StringName = &"not_equippable"
 @export var defence_profile_id: StringName = &""
 @export var stat_modifiers: Dictionary = {}
 @export var tactical_visual_category: StringName = &"misc"
+# Stage 4.3.2 direct-use body interactions. These fields keep medical,
+# healing and restraint behaviour data-driven while the UI only sends intent.
+@export var permits_first_aid: bool = false
+@export var first_aid_bonus: int = 0
+@export var first_aid_uses_consumed: int = 1
+@export var permits_administered_healing: bool = false
+@export var healing_amount: int = 0
+@export var is_restraint: bool = false
 
 
 func is_two_handed() -> bool:
@@ -55,6 +63,10 @@ func validate_definition() -> Array[String]:
 		HANDEDNESS_NONE,
 	]:
 		errors.append("Item %s has unknown handedness: %s." % [id, handedness])
+	if first_aid_uses_consumed < 1:
+		errors.append("Item %s consumes fewer than one First Aid use." % id)
+	if healing_amount < 0:
+		errors.append("Item %s has negative administered healing." % id)
 	if maximum_stack_size < 1:
 		errors.append("Item %s has a maximum stack size below 1." % id)
 	if not stackable and maximum_stack_size != 1:

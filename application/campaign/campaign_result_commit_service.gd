@@ -61,6 +61,13 @@ func commit_result(
 			"Mission result %s was already applied." % result.result_id,
 			campaign
 		)
+	if campaign.has_resolved_mission(result.mission_id):
+		return OperationResult.new(
+			true,
+			&"mission_already_resolved",
+			"Mission %s was already resolved." % result.mission_id,
+			campaign
+		)
 
 	if campaign.revision != result.source_campaign_revision:
 		return OperationResult.fail(
@@ -126,6 +133,35 @@ func _apply_result_to_candidate(
 				"An extracted mission item could not be restored to the campaign."
 			)
 		candidate.upsert_item(item)
+
+	for captive_result: MissionCaptiveResult in result.get_captive_results():
+		var captive := CampaignCaptiveState.new()
+		captive.captive_id = StringName(
+			"captive.%s.%s" % [result.mission_id, captive_result.character_id]
+		)
+		captive.source_character_id = captive_result.character_id
+		captive.source_definition_id = captive_result.source_definition_id
+		captive.display_name = captive_result.display_name
+		captive.current_hp = captive_result.current_hp
+		captive.condition_ids = [
+			captive_result.condition_at_extraction,
+			&"restrained",
+		]
+		captive.equipment_item_ids = captive_result.equipment_item_ids.duplicate()
+		captive.restraint_item_id = captive_result.restraint_item_id
+		captive.captured_mission_id = result.mission_id
+		captive.faction_id = captive_result.faction_id
+		if not candidate.upsert_captive(captive):
+			return OperationResult.fail(
+				&"mission_captive_apply_failed",
+				"Captive %s could not enter campaign holding." % captive.display_name
+			)
+
+	if not candidate.record_mission_result(result):
+		return OperationResult.fail(
+			&"mission_history_apply_failed",
+			"Mission %s could not be recorded exactly once." % result.mission_id
+		)
 
 	if not candidate.mark_result_applied(result.result_id):
 		return OperationResult.fail(

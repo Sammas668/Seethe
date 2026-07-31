@@ -16,3 +16,4 @@ stackable = false
 maximum_stack_size = 1
 equipment_tags = Array[StringName]([&"tool", &"rope"])
 tactical_visual_category = &"tool"
+is_restraint = true

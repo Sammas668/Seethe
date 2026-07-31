@@ -15,4 +15,5 @@ backpack_allowed = true
 stackable = false
 maximum_stack_size = 1
 equipment_tags = Array[StringName]([&"tool", &"lockpick"])
+stat_modifiers = {"skill.thievery": 2}
 tactical_visual_category = &"tool"

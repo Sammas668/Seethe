@@ -70,7 +70,7 @@ static func _test_marauder_baseline_resolution(
 	for value: Variant in fixture.get("items", []):
 		items.append(value as CampaignItemState)
 	var snapshot: ResolvedCharacterSnapshot = (
-		CharacterResolutionService.new(catalogue).resolve_character(
+		_resolution_service(catalogue).resolve_character(
 			character,
 			[],
 			items
@@ -112,7 +112,7 @@ static func _test_rage_recalculates_from_sources(
 	var items: Array = fixture.get("items", [])
 	var modifiers: Array[StringName] = [&"effect.rage"]
 	var snapshot: ResolvedCharacterSnapshot = (
-		CharacterResolutionService.new(catalogue).resolve_character(
+		_resolution_service(catalogue).resolve_character(
 			character,
 			modifiers,
 			items
@@ -251,7 +251,8 @@ static func _test_deployment_and_redeployment(
 	var items: Array[CampaignItemState] = []
 	for value: Variant in fixture.get("items", []):
 		items.append(value as CampaignItemState)
-	var service: CharacterResolutionService = CharacterResolutionService.new(catalogue)
+	var service: CharacterResolutionService = CharacterResolutionService.new()
+	service.configure(catalogue)
 	var deployer: TacticalCharacterDeploymentService = TacticalCharacterDeploymentService.new(catalogue, service)
 
 	var first_state: TacticalState = TacticalState.new()
@@ -294,7 +295,8 @@ static func _test_runtime_recalculation_preserves_spent_state(
 	var items: Array[CampaignItemState] = []
 	for value: Variant in fixture.get("items", []):
 		items.append(value as CampaignItemState)
-	var service: CharacterResolutionService = CharacterResolutionService.new(catalogue)
+	var service: CharacterResolutionService = CharacterResolutionService.new()
+	service.configure(catalogue)
 	var state: TacticalState = TacticalState.new()
 	var unit: TacticalUnitState = TacticalCharacterDeploymentService.new(
 		catalogue,
@@ -344,7 +346,8 @@ static func _test_portrait_resolution_and_persistence(
 	var template: CharacterTemplateDefinition = fixture.get("template") as CharacterTemplateDefinition
 	var character: PersistentCharacterState = fixture.get("character") as PersistentCharacterState
 	template.portrait_id = &"portrait.test.template"
-	var service: CharacterResolutionService = CharacterResolutionService.new(catalogue)
+	var service: CharacterResolutionService = CharacterResolutionService.new()
+	service.configure(catalogue)
 	var fallback_snapshot: ResolvedCharacterSnapshot = service.resolve_character(character)
 	_expect(fallback_snapshot.portrait_id == &"portrait.test.template", "Template portrait fallback must resolve.", failures)
 	character.set_portrait_override_id(TacticalSandboxFactory.HAKON_PORTRAIT_ID)
@@ -361,3 +364,11 @@ static func _expect(
 ) -> void:
 	if not condition:
 		failures.append(message)
+
+
+static func _resolution_service(
+		catalogue: ContentCatalogue
+) -> CharacterResolutionService:
+	var service: CharacterResolutionService = CharacterResolutionService.new()
+	service.configure(catalogue)
+	return service

@@ -84,8 +84,10 @@ static func _phase_label(phase_id: StringName) -> String:
 	match phase_id:
 		&"player":
 			return "PLAYER PHASE"
-		&"world":
+		&"enemy":
 			return "ENEMY TURN"
+		&"world":
+			return "WORLD PHASE"
 		_:
 			return str(phase_id).replace("_", " ").capitalize()
 

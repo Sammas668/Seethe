@@ -15,6 +15,10 @@ signal empty_cell_activated(
 	target_kind: StringName,
 	target_cell_index: int
 )
+signal item_dropped_onto(
+	target_item_id: StringName,
+	drag_data: Dictionary
+)
 
 var container_kind: StringName = &""
 var grid_width: int = 1
@@ -52,7 +56,8 @@ func configure(
 
 
 func render_inventory_items(
-		items: Array[TacticalItemInstanceState]
+		items: Array[TacticalItemInstanceState],
+		state: TacticalState = null
 ) -> void:
 	_clear_items()
 
@@ -62,13 +67,20 @@ func render_inventory_items(
 			item.compact_display_name(),
 			item.footprint,
 			item.location.grid_position,
-			item.definition.tactical_visual_category if item.definition != null else &"misc"
+			item.definition.tactical_visual_category if item.definition != null else &"misc",
+			item.instance_kind,
+			TacticalStatusBadgeProvider.for_body_item(state, item)
+			if item.is_body()
+			else {}
 		)
 
 	queue_redraw()
 
 
-func render_ground_items(items: Array[TacticalItemInstanceState]) -> void:
+func render_ground_items(
+		items: Array[TacticalItemInstanceState],
+		state: TacticalState = null
+) -> void:
 	_clear_items()
 
 	for ground_item: TacticalItemInstanceState in items:
@@ -81,7 +93,11 @@ func render_ground_items(items: Array[TacticalItemInstanceState]) -> void:
 			ground_item.compact_display_name(),
 			ground_item.footprint,
 			position,
-			ground_item.definition.tactical_visual_category if ground_item.definition != null else &"misc"
+			ground_item.definition.tactical_visual_category if ground_item.definition != null else &"misc",
+			ground_item.instance_kind,
+			TacticalStatusBadgeProvider.for_body_item(state, ground_item)
+			if ground_item.is_body()
+			else {}
 		)
 
 	queue_redraw()
@@ -206,7 +222,9 @@ func _add_item_control(
 		item_name: String,
 		footprint: Vector2i,
 		grid_position: Vector2i,
-		visual_category: StringName = &"misc"
+		visual_category: StringName = &"misc",
+		instance_kind: StringName = &"item",
+		status_snapshot: Dictionary = {}
 ) -> void:
 	var item_control := SpatialInventoryItemControl.new()
 	add_child(item_control)
@@ -223,11 +241,17 @@ func _add_item_control(
 		item_id,
 		item_name,
 		footprint,
-		visual_category
+		visual_category,
+		instance_kind,
+		status_snapshot
 	)
 	item_control.item_activated.connect(
 		func(control: SpatialInventoryItemControl, mouse_button: int) -> void:
 			item_activated.emit(control, mouse_button)
+	)
+	item_control.item_dropped_onto.connect(
+		func(target_item_id: StringName, drag_data: Dictionary) -> void:
+			item_dropped_onto.emit(target_item_id, drag_data)
 	)
 
 	_item_controls.append(item_control)

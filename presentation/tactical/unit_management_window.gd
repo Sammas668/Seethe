@@ -14,6 +14,11 @@ const KIND_BELT: StringName = &"belt"
 const KIND_BACKPACK: StringName = &"backpack"
 const KIND_GROUND: StringName = &"ground"
 
+const BODY_MENU_LOOT: int = 0
+const BODY_MENU_FIRST_AID: int = 1
+const BODY_MENU_FINISH_OFF: int = 2
+const BODY_MENU_UNTIE: int = 3
+
 @onready var _previous_button: Button = $Modal/Margin/VBox/Header/PreviousUnitButton
 @onready var _unit_title: Label = $Modal/Margin/VBox/Header/UnitTitle
 @onready var _inventory_tab_button: Button = $Modal/Margin/VBox/Header/TabGroup/InventoryTabButton
@@ -56,11 +61,19 @@ var _selected_source_item_id: StringName = &""
 var _expanded_breakdowns: Dictionary = {}
 var _inventory_portrait_texture: TextureRect
 var _character_portrait_texture: TextureRect
+var _body_context_menu: PopupMenu
+var _body_context_item_id: StringName = &""
+var _loot_popup: PopupPanel
+var _loot_list: ItemList
+var _loot_body_item_id: StringName = &""
+var _loot_take_button: Button
+var _loot_search_button: Button
 
 
 func _ready() -> void:
 	set_process_unhandled_key_input(false)
 	_initialize_portrait_views()
+	_initialize_body_interaction_ui()
 
 	_previous_button.pressed.connect(func() -> void: _change_unit(-1))
 	_next_button.pressed.connect(func() -> void: _change_unit(1))
@@ -104,6 +117,52 @@ func _ready() -> void:
 		grid.item_activated.connect(_on_grid_item_activated)
 		grid.transfer_requested.connect(_on_transfer_requested)
 		grid.empty_cell_activated.connect(_on_empty_cell_activated)
+		grid.item_dropped_onto.connect(_on_item_dropped_onto)
+
+
+func _initialize_body_interaction_ui() -> void:
+	_body_context_menu = PopupMenu.new()
+	add_child(_body_context_menu)
+	_body_context_menu.add_item("Loot Equipment", BODY_MENU_LOOT)
+	_body_context_menu.add_item("Administer First Aid", BODY_MENU_FIRST_AID)
+	_body_context_menu.add_item("Finish Off", BODY_MENU_FINISH_OFF)
+	_body_context_menu.add_item("Untie", BODY_MENU_UNTIE)
+	_body_context_menu.id_pressed.connect(_on_body_context_action)
+
+	_loot_popup = PopupPanel.new()
+	_loot_popup.name = "BodyLootPopup"
+	_loot_popup.size = Vector2i(520, 420)
+	add_child(_loot_popup)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	_loot_popup.add_child(margin)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var vbox := VBoxContainer.new()
+	margin.add_child(vbox)
+	var title := Label.new()
+	title.text = "LOOT EQUIPMENT"
+	title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title)
+	_loot_list = ItemList.new()
+	_loot_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_loot_list)
+	var actions := HBoxContainer.new()
+	vbox.add_child(actions)
+	_loot_take_button = Button.new()
+	_loot_take_button.text = "Take Selected"
+	_loot_take_button.pressed.connect(_take_selected_body_item)
+	actions.add_child(_loot_take_button)
+	_loot_search_button = Button.new()
+	_loot_search_button.text = "Search — drop all to floor"
+	_loot_search_button.pressed.connect(_search_open_body)
+	actions.add_child(_loot_search_button)
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.pressed.connect(_loot_popup.hide)
+	actions.add_child(close_button)
 
 
 func _initialize_portrait_views() -> void:
@@ -288,13 +347,16 @@ func _render_inventory_tab(unit: TacticalUnitState) -> void:
 	)
 
 	_belt_grid.render_inventory_items(
-		state.get_unit_container_items(unit.unit_id, KIND_BELT)
+		state.get_unit_container_items(unit.unit_id, KIND_BELT),
+		state
 	)
 	_backpack_grid.render_inventory_items(
-		state.get_unit_container_items(unit.unit_id, KIND_BACKPACK)
+		state.get_unit_container_items(unit.unit_id, KIND_BACKPACK),
+		state
 	)
 	_reach_grid.render_ground_items(
-		_facade.state().get_accessible_ground_items(unit)
+		state.get_accessible_ground_items(unit),
+		state
 	)
 
 	_refresh_inventory_stats(unit)
@@ -319,7 +381,10 @@ func _create_hand_slot(
 		label_text,
 		item,
 		accepts_items,
-		reserved_text
+		reserved_text,
+		TacticalStatusBadgeProvider.for_body_item(_facade.state(), item)
+		if item != null and item.is_body()
+		else {}
 	)
 	slot.item_activated.connect(_on_hand_slot_activated)
 	slot.transfer_requested.connect(_on_transfer_requested)
@@ -633,10 +698,130 @@ func _on_grid_item_activated(
 		mouse_button: int
 ) -> void:
 	if mouse_button == MOUSE_BUTTON_RIGHT:
-		_quick_move(item_control.source_kind, item_control.item_id)
+		var item: TacticalItemInstanceState = _facade.state().get_item(
+			item_control.item_id
+		)
+		if item != null and item.is_body():
+			_open_body_context_menu(item.item_id)
+		else:
+			_quick_move(item_control.source_kind, item_control.item_id)
 		return
 
 	_select_source(item_control.source_kind, item_control.item_id)
+
+
+func _on_item_dropped_onto(
+		target_item_id: StringName,
+		drag_data: Dictionary
+) -> void:
+	if not _current_unit_is_player_controlled():
+		return
+	var source_item_id := StringName(drag_data.get("source_item_id", &""))
+	if source_item_id.is_empty() or source_item_id == target_item_id:
+		return
+	var result: OperationResult = _facade.apply_item_to_body(
+		_current_unit_id, source_item_id, target_item_id
+	)
+	message_requested.emit(result.message)
+	if result.success:
+		_clear_selection()
+		refresh()
+
+
+func _open_body_context_menu(body_item_id: StringName) -> void:
+	_body_context_item_id = body_item_id
+	var action_ids: Array[StringName] = [
+		TacticalBodyActionHandler.ACTION_LOOT,
+		TacticalBodyActionHandler.ACTION_FIRST_AID,
+		TacticalBodyActionHandler.ACTION_FINISH_OFF,
+		TacticalBodyActionHandler.ACTION_UNTIE,
+	]
+	for index: int in range(action_ids.size()):
+		var reason: String = _facade.body_action_unavailable_reason(
+			_current_unit_id, body_item_id, action_ids[index]
+		)
+		_body_context_menu.set_item_disabled(index, not reason.is_empty())
+		_body_context_menu.set_item_tooltip(index, reason)
+	_body_context_menu.position = Vector2i(get_viewport().get_mouse_position())
+	_body_context_menu.popup()
+
+
+func _on_body_context_action(action_id: int) -> void:
+	if _body_context_item_id.is_empty():
+		return
+	match action_id:
+		BODY_MENU_LOOT:
+			_open_body_loot(_body_context_item_id)
+		BODY_MENU_FIRST_AID:
+			_report_body_result(_facade.body_administer_first_aid(
+				_current_unit_id, _body_context_item_id
+			))
+		BODY_MENU_FINISH_OFF:
+			_report_body_result(_facade.finish_off_body(
+				_current_unit_id, _body_context_item_id
+			))
+		BODY_MENU_UNTIE:
+			_report_body_result(_facade.untie_body(
+				_current_unit_id, _body_context_item_id
+			))
+
+
+func _report_body_result(result: OperationResult) -> void:
+	message_requested.emit(result.message)
+	_action_preview.text = result.message
+	refresh()
+
+
+func _open_body_loot(body_item_id: StringName) -> void:
+	_loot_body_item_id = body_item_id
+	_refresh_body_loot_list()
+	_loot_popup.position = Vector2i(
+		get_viewport_rect().size * 0.5 - Vector2(260.0, 210.0)
+	)
+	_loot_popup.popup()
+
+
+func _refresh_body_loot_list() -> void:
+	_loot_list.clear()
+	for item: TacticalItemInstanceState in _facade.equipment_for_body(
+		_loot_body_item_id
+	):
+		var index: int = _loot_list.add_item(item.display_line())
+		_loot_list.set_item_metadata(index, item.item_id)
+	var has_items: bool = _loot_list.item_count > 0
+	_loot_take_button.disabled = not has_items
+	_loot_search_button.disabled = not has_items
+
+
+func _take_selected_body_item() -> void:
+	var selected: PackedInt32Array = _loot_list.get_selected_items()
+	if selected.is_empty():
+		message_requested.emit("Select an item to loot.")
+		return
+	var item_id := StringName(_loot_list.get_item_metadata(selected[0]))
+	var item: TacticalItemInstanceState = _facade.state().get_item(item_id)
+	if item == null or item.location == null:
+		return
+	var target_index: int = _facade.first_fit_for_item(
+		_current_unit_id, item, KIND_BACKPACK
+	)
+	if target_index < 0:
+		message_requested.emit("The item does not fit in the acting character's Backpack.")
+		return
+	_execute_transfer(
+		item.location.container_kind, item.item_id, KIND_BACKPACK, target_index
+	)
+	_refresh_body_loot_list()
+
+
+func _search_open_body() -> void:
+	var result: OperationResult = _facade.search_body_inventory(
+		_current_unit_id, _loot_body_item_id
+	)
+	message_requested.emit(result.message)
+	_action_preview.text = result.message
+	_refresh_body_loot_list()
+	refresh()
 
 
 func _on_empty_cell_activated(
@@ -894,12 +1079,13 @@ func _refresh_footer() -> void:
 		if item.definition != null
 		else "Portable tactical item."
 	)
+	var displayed_weight: float = _facade.state().effective_item_weight(item)
 	_item_details.text = (
 		"[b]%s[/b] · %.1f lb · %d × %d%s%s
 %s"
 	) % [
 		item.display_name,
-		item.weight_lb,
+		displayed_weight,
 		item.footprint.x,
 		item.footprint.y,
 		quantity_text,

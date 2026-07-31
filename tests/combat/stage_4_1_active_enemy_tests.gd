@@ -11,7 +11,7 @@ static func run_all() -> Array[String]:
 	var failures: Array[String] = []
 	_test_guard_is_active_ai(failures)
 	_test_guard_moves_and_attacks(failures)
-	_test_defeated_units_skip(failures)
+	_test_downed_units_skip(failures)
 	return failures
 
 
@@ -67,7 +67,7 @@ static func _test_guard_moves_and_attacks(failures: Array[String]) -> void:
 	_expect(saw_guard_attack, "The tactical log must contain the Guard's resolved attack.", failures)
 
 
-static func _test_defeated_units_skip(failures: Array[String]) -> void:
+static func _test_downed_units_skip(failures: Array[String]) -> void:
 	var session: TacticalSession = TacticalSandboxFactory.create_session(false)
 	var state: TacticalState = session.state_store.state
 	var guard: TacticalUnitState = state.get_unit(GUARD_ID)
@@ -88,17 +88,17 @@ static func _test_defeated_units_skip(failures: Array[String]) -> void:
 		return
 	var result: OperationResult = session.screen_facade.execute_attack_preview(preview)
 	_expect(result.success, "The defeating attack must commit.", failures)
-	_expect(guard.current_hp == 0, "The Guard must reach 0 HP.", failures)
-	_expect(guard.is_defeated(), "A unit at 0 HP must enter the Defeated state.", failures)
+	_expect(guard.current_hp < 0, "The Guard must be reduced below 0 HP.", failures)
+	_expect(guard.is_dying(), "A living unit below 0 HP must become Dying.", failures)
 
 	var guard_position: Vector2i = guard.grid_position
 	var begin_result: OperationResult = session.screen_facade.begin_world_phase()
-	_expect(begin_result.success, "The Enemy Turn must begin after the Guard is defeated.", failures)
+	_expect(begin_result.success, "The Enemy Turn must begin after the Guard is downed.", failures)
 	var enemy_result: OperationResult = session.screen_facade.resolve_enemy_turn()
-	_expect(enemy_result.success, "Defeated enemy activations must skip safely.", failures)
-	_expect(guard.grid_position == guard_position, "A Defeated Guard must not move.", failures)
-	_expect(guard.action_budget.ended_activation, "A Defeated Guard must finish its skipped activation.", failures)
-	_expect(hakon.current_hp == hakon.maximum_hp, "A Defeated Guard must not attack Hakon.", failures)
+	_expect(enemy_result.success, "Downed enemy activations must skip safely.", failures)
+	_expect(guard.grid_position == guard_position, "A downed Guard must not move.", failures)
+	_expect(guard.action_budget.ended_activation, "A downed Guard must finish its skipped activation.", failures)
+	_expect(hakon.current_hp == hakon.maximum_hp, "A downed Guard must not attack Hakon.", failures)
 
 
 static func _expect(

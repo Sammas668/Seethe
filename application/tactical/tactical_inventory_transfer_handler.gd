@@ -109,17 +109,24 @@ func execute_plan(
 		"remaining": unit.action_budget.remaining_turn_capacity_feet,
 		"spent": unit.action_budget.normal_capacity_spent_feet,
 		"quick": unit.action_budget.quick_action_available,
-		"reaction": unit.action_budget.reaction_available,
+		"reaction": unit.action_budget.reaction_snapshot(),
 		"ended": unit.action_budget.ended_activation,
 	}
+	var life_snapshot: Dictionary = unit.life_state_snapshot()
+	var unit_was_disabled: bool = unit.is_disabled()
 	var source_snapshot: TacticalItemLocationState = item.location.clone()
+	var cancel_reaction_reservation: bool = _transfer_cancels_reaction_reservation(
+		unit, item, plan
+	)
 
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"inventory_transfer",
 		plan.expected_state_revision
 	)
 	changes.stage(
-		Callable(self, "_apply_inventory_cost").bind(unit, plan),
+		Callable(self, "_apply_inventory_cost").bind(
+			unit, plan, cancel_reaction_reservation
+		),
 		Callable(self, "_restore_budget").bind(unit, budget_snapshot),
 		"The inventory-transfer action cost could not be paid.",
 		&"inventory_cost_failed"
@@ -136,6 +143,16 @@ func execute_plan(
 		"The item could not be placed in that destination.",
 		&"inventory_destination_failed"
 	)
+	if (
+		unit_was_disabled
+		and ActionEconomyRules.is_disabled_strenuous_cost(plan.action_cost)
+	):
+		changes.stage(
+			Callable(self, "_apply_disabled_inventory_strain").bind(unit),
+			Callable(unit, "restore_life_state").bind(life_snapshot),
+			"Disabled inventory strain could not be applied.",
+			&"disabled_inventory_strain_failed"
+		)
 	changes.require(
 		Callable(self, "_run_post_commit_test_hook").bind(
 			state,
@@ -169,7 +186,8 @@ func execute_plan(
 
 func _apply_inventory_cost(
 		unit: TacticalUnitState,
-		plan: TacticalInventoryTransferPlan
+		plan: TacticalInventoryTransferPlan,
+		cancel_reaction_reservation: bool = false
 ) -> bool:
 	var spent: int = ActionEconomyRules.spend(unit, plan.action_cost)
 	if spent < 0:
@@ -181,7 +199,38 @@ func _apply_inventory_cost(
 		)
 		if quick_spent < 0:
 			return false
+	if cancel_reaction_reservation:
+		unit.action_budget.cancel_reaction_reservation()
 	return true
+
+
+func _transfer_cancels_reaction_reservation(
+		unit: TacticalUnitState,
+		item: TacticalItemInstanceState,
+		plan: TacticalInventoryTransferPlan
+) -> bool:
+	if (
+		unit == null
+		or item == null
+		or plan == null
+		or unit.action_budget.reaction_state != ReactionResourceState.RESERVED
+		or unit.action_budget.reaction_reservation == null
+	):
+		return false
+	var reservation: ReactionReservationState = unit.action_budget.reaction_reservation
+	if (
+		not reservation.reserved_weapon_item_id.is_empty()
+		and reservation.reserved_weapon_item_id == item.item_id
+	):
+		return true
+	return plan.source_location.container_kind in [KIND_PRIMARY_HAND, KIND_SECONDARY_HAND] or plan.target_location.container_kind in [KIND_PRIMARY_HAND, KIND_SECONDARY_HAND]
+
+
+func _apply_disabled_inventory_strain(unit: TacticalUnitState) -> bool:
+	# The transfer and all of its action costs resolve first. The 1 HP loss is
+	# the final gameplay stage for a strenuous Disabled inventory action.
+	unit.apply_disabled_strain()
+	return unit.is_dying() or unit.is_dead()
 
 
 func _move_item(
@@ -242,7 +291,22 @@ func resolve_source_item(
 	if item.location.container_kind != command.source_kind:
 		return null
 	if command.source_kind != KIND_GROUND and item.location.owner_id != command.unit_id:
-		return null
+		var source_owner: TacticalUnitState = _state_store.state.get_unit(
+			item.location.owner_id
+		)
+		var source_body: TacticalItemInstanceState = (
+			_state_store.state.body_item_for_unit(source_owner.unit_id)
+			if source_owner != null
+			else null
+		)
+		var actor: TacticalUnitState = _state_store.state.get_unit(command.unit_id)
+		if (
+			source_owner == null
+			or source_body == null
+			or actor == null
+			or not _state_store.state.body_is_accessible_to_unit(source_body, actor)
+		):
+			return null
 	return item
 
 
@@ -319,17 +383,30 @@ func _build_plan(command: TacticalInventoryTransferCommand) -> OperationResult:
 
 	var current_weight := state.calculated_carried_weight(unit.unit_id)
 	var resulting_weight := current_weight
-	var source_is_carried := item.location.owner_id == unit.unit_id
-	var target_is_carried := target_location.owner_id == unit.unit_id
+	var source_is_carried: bool = state.item_counts_as_carried_by(
+		item, unit.unit_id, item.location
+	)
+	var target_is_carried: bool = state.item_counts_as_carried_by(
+		item, unit.unit_id, target_location
+	)
 	if not source_is_carried and target_is_carried:
-		resulting_weight += item.weight_lb
+		resulting_weight += state.effective_item_weight(item)
 	elif source_is_carried and not target_is_carried:
-		resulting_weight -= item.weight_lb
+		resulting_weight -= state.effective_item_weight(item)
 
 	if resulting_weight > unit.inventory.maximum_weight_lb + 0.001:
 		return OperationResult.fail(
 			&"carrying_limit",
-			"Picking up this item would exceed the carrying limit."
+			"Packing this item would exceed the carrying limit."
+		)
+	if (
+		item.is_body()
+		and target_location.transport_mode == &"dragging"
+		and state.effective_item_weight(item) > state.maximum_drag_weight(unit) + 0.001
+	):
+		return OperationResult.fail(
+			&"dragging_limit",
+			"This body is too heavy for the character to drag."
 		)
 
 	var cost := _normal_cost(command, item)
@@ -369,7 +446,10 @@ func _target_location(
 	var state := _state_store.state
 	match command.target_kind:
 		KIND_PRIMARY_HAND:
-			if item.definition == null or not item.definition.can_equip_in_hand():
+			if (
+				item.definition == null
+				or (not item.definition.can_equip_in_hand() and not item.is_body())
+			):
 				return OperationResult.fail(
 					&"not_hand_equipment",
 					"That item cannot be equipped in a hand."
@@ -386,11 +466,19 @@ func _target_location(
 					&"two_hand_blocked",
 					"A two-handed item requires both hands to be empty."
 				)
-			return OperationResult.ok(
-				TacticalItemLocationState.unit_hand(unit.unit_id, KIND_PRIMARY_HAND)
+			var primary_location: TacticalItemLocationState = (
+				TacticalItemLocationState.dragged_body(
+					unit.unit_id, KIND_PRIMARY_HAND, _body_drop_cell(unit, item)
+				)
+				if item.is_body()
+				else TacticalItemLocationState.unit_hand(unit.unit_id, KIND_PRIMARY_HAND)
 			)
+			return OperationResult.ok(primary_location)
 		KIND_SECONDARY_HAND:
-			if item.definition == null or not item.definition.can_equip_in_hand():
+			if (
+				item.definition == null
+				or (not item.definition.can_equip_in_hand() and not item.is_body())
+			):
 				return OperationResult.fail(
 					&"not_hand_equipment",
 					"That item cannot be equipped in a hand."
@@ -412,10 +500,18 @@ func _target_location(
 					&"secondary_occupied",
 					"Secondary Hand is already occupied."
 				)
-			return OperationResult.ok(
-				TacticalItemLocationState.unit_hand(unit.unit_id, KIND_SECONDARY_HAND)
+			var secondary_location: TacticalItemLocationState = (
+				TacticalItemLocationState.dragged_body(
+					unit.unit_id, KIND_SECONDARY_HAND, _body_drop_cell(unit, item)
+				)
+				if item.is_body()
+				else TacticalItemLocationState.unit_hand(unit.unit_id, KIND_SECONDARY_HAND)
 			)
+			return OperationResult.ok(secondary_location)
 		KIND_BELT, KIND_BACKPACK:
+			# Body items use the ordinary spatial fit rule. A Medium body cannot
+			# fit the current Belt, while a future Tiny body may legally fit and
+			# then counts as packed just as it does in the Backpack.
 			if command.target_kind == KIND_BELT and not item.belt_allowed:
 				return OperationResult.fail(
 					&"belt_forbidden",
@@ -477,6 +573,14 @@ func _target_location(
 			)
 
 
+func _body_drop_cell(
+		actor: TacticalUnitState,
+		body_item: TacticalItemInstanceState
+) -> Vector2i:
+	var existing_cell: Vector2i = _state_store.state.body_ground_cell(body_item)
+	return existing_cell if existing_cell.x >= 0 else actor.grid_position
+
+
 func _cell_to_position(
 		container_kind: StringName,
 		cell_index: int
@@ -497,7 +601,7 @@ func _normal_cost(
 	if command.source_kind == KIND_GROUND:
 		if command.target_kind == KIND_BACKPACK:
 			return ActionCost.half_action()
-		if item.weight_lb >= 15.0:
+		if _state_store.state.effective_item_weight(item) >= 15.0:
 			return ActionCost.half_action()
 		return ActionCost.minor_interaction()
 
@@ -548,6 +652,16 @@ func _action_name(
 		command: TacticalInventoryTransferCommand,
 		item_name: String
 ) -> String:
+	var body_item: TacticalItemInstanceState = _state_store.state.get_item(
+		command.source_item_id
+	)
+	if body_item != null and body_item.is_body():
+		if command.target_kind == KIND_BACKPACK:
+			return "Carry %s" % item_name
+		if command.target_kind in [KIND_PRIMARY_HAND, KIND_SECONDARY_HAND]:
+			return "Drag %s" % item_name
+		if command.target_kind == KIND_GROUND:
+			return "Place %s on the ground" % item_name
 	if command.source_kind == KIND_GROUND:
 		if command.target_kind == KIND_BELT:
 			return "Pick up %s and stow it on the Belt" % item_name
@@ -591,7 +705,7 @@ func _restore_budget(unit: TacticalUnitState, snapshot: Dictionary) -> void:
 	unit.action_budget.remaining_turn_capacity_feet = int(snapshot["remaining"])
 	unit.action_budget.normal_capacity_spent_feet = int(snapshot["spent"])
 	unit.action_budget.quick_action_available = bool(snapshot["quick"])
-	unit.action_budget.reaction_available = bool(snapshot["reaction"])
+	unit.action_budget.restore_reaction_snapshot(snapshot.get("reaction", {}))
 	unit.action_budget.ended_activation = bool(snapshot["ended"])
 
 

@@ -78,9 +78,14 @@ theme_override_font_sizes/font_size = 16
 text = "ROUND 1 · PLAYER PHASE"
 
 [node name="HintLabel" type="Label" parent="HUD/TopBar/Margin/Row"]
+custom_minimum_size = Vector2(500, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.68, 0.73, 1)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 11
 text = "1–3 Select · I Inventory · Esc Cancel"
+horizontal_alignment = 2
+text_overrun_behavior = 3
 
 [node name="AttackCursorPreview" type="PanelContainer" parent="HUD"]
 visible = false
@@ -304,14 +309,14 @@ theme_override_constants/separation = 4
 custom_minimum_size = Vector2(144, 54)
 layout_mode = 2
 toggle_mode = true
-tooltip_text = "Click to select the Secondary Hand weapon for direct battlefield targeting."
+tooltip_text = "Click to keep the Secondary Hand selected for contextual basic attacks."
 text = "SECONDARY\nEmpty"
 
 [node name="RightHandButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/HandBlock/HandRow"]
 custom_minimum_size = Vector2(144, 54)
 layout_mode = 2
 toggle_mode = true
-tooltip_text = "Click to select the Primary Hand weapon for direct battlefield targeting."
+tooltip_text = "Click to keep the Primary Hand selected for contextual basic attacks."
 text = "PRIMARY\nTraining Axe"
 
 [node name="Divider2" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
@@ -415,6 +420,13 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 11
 text = "Action 5"
 
+[node name="Action6" type="Button" parent="HUD/BottomDeck/Margin/MainRow/CommandBlock/ContextTray/Margin/Actions"]
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "Action 6"
+
 [node name="Divider3" type="VSeparator" parent="HUD/BottomDeck/Margin/MainRow"]
 layout_mode = 2
 
@@ -428,6 +440,12 @@ layout_mode = 2
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 12
 text = "Round 1\nPLAYER PHASE"
+
+[node name="ExtractButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/PhaseBlock"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "EXTRACT"
 
 [node name="EndPhaseButton" type="Button" parent="HUD/BottomDeck/Margin/MainRow/PhaseBlock"]
 custom_minimum_size = Vector2(0, 46)

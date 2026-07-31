@@ -29,6 +29,18 @@ static func create_from_campaign(
 	return result
 
 
+static func configure_mission_definition(
+		setup: MissionSetupSnapshot,
+		map_definition: TacticalMapDefinition,
+		protagonist_character_id: StringName
+) -> bool:
+	if setup == null or setup.is_finalized():
+		return false
+	return setup.configure_mission_definition(
+		map_definition, protagonist_character_id
+	)
+
+
 static func add_isolated_character(
 		setup: MissionSetupSnapshot,
 		character: PersistentCharacterState,

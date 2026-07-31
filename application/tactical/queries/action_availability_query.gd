@@ -26,8 +26,8 @@ func unavailable_reason(
 	var unit: TacticalUnitState = _state_store.state.get_unit(unit_id)
 	if unit == null:
 		return "Select a unit first."
-	if not _state_store.state.phase_state.is_player_phase():
-		return "Unavailable during the World Phase."
+	if not _state_store.state.can_unit_act(unit_id):
+		return "This unit is not active in the current turn mode."
 	var definition: ActionDefinition = (
 		_catalogue.action_definition(action_id)
 		if _catalogue != null

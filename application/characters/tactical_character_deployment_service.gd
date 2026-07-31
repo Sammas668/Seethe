@@ -79,6 +79,8 @@ func prepare_deployment(
 			&"deployment_input_missing",
 			"A tactical state, character and content catalogue are required."
 		)
+	if map_definition != null:
+		state.configure_knowledge_grid(map_definition.grid_size)
 
 	var snapshot: ResolvedCharacterSnapshot = (
 		_resolution_service.resolve_character(

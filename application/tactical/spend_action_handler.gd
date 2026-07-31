@@ -14,15 +14,14 @@ func _init(
 
 
 func execute(command: SpendActionCommand) -> OperationResult:
-	if not _state_store.state.phase_state.is_player_phase():
-		return OperationResult.fail(
-			&"wrong_phase",
-			"Actions are unavailable outside the Player Phase."
-		)
-
 	var unit: TacticalUnitState = _state_store.state.get_unit(command.unit_id)
 	if unit == null:
 		return OperationResult.fail(&"unknown_unit", "The selected unit does not exist.")
+	if not _state_store.state.can_unit_act(command.unit_id):
+		return OperationResult.fail(
+			&"wrong_active_unit",
+			"This unit is not active in the current turn mode."
+		)
 
 	var reason: String = ActionEconomyRules.unavailable_reason(
 		unit,
@@ -32,6 +31,7 @@ func execute(command: SpendActionCommand) -> OperationResult:
 		return OperationResult.fail(&"action_unavailable", reason)
 
 	var budget_snapshot: Dictionary = _budget_snapshot(unit)
+	var life_snapshot: Dictionary = unit.life_state_snapshot()
 	var spent_result: Dictionary = {"value": -1}
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"action_spent",
@@ -43,7 +43,11 @@ func execute(command: SpendActionCommand) -> OperationResult:
 			command.action_cost,
 			spent_result
 		),
-		Callable(self, "_restore_budget").bind(unit, budget_snapshot),
+		Callable(self, "_restore_action_state").bind(
+			unit,
+			budget_snapshot,
+			life_snapshot
+		),
 		"The action cost could not be paid for.",
 		&"action_failed"
 	)
@@ -121,7 +125,7 @@ func _budget_snapshot(unit: TacticalUnitState) -> Dictionary:
 		"remaining": unit.action_budget.remaining_turn_capacity_feet,
 		"spent": unit.action_budget.normal_capacity_spent_feet,
 		"quick": unit.action_budget.quick_action_available,
-		"reaction": unit.action_budget.reaction_available,
+		"reaction": unit.action_budget.reaction_snapshot(),
 		"ended": unit.action_budget.ended_activation,
 	}
 
@@ -131,9 +135,21 @@ func _apply_action_cost(
 		action_cost: ActionCost,
 		spent_result: Dictionary
 ) -> bool:
-	var spent_feet: int = ActionEconomyRules.spend(unit, action_cost)
+	var spent_feet: int = ActionEconomyRules.spend_with_disabled_strain(
+		unit,
+		action_cost
+	)
 	spent_result["value"] = spent_feet
 	return spent_feet >= 0
+
+
+func _restore_action_state(
+	unit: TacticalUnitState,
+	budget_snapshot: Dictionary,
+	life_snapshot: Dictionary
+) -> void:
+	_restore_budget(unit, budget_snapshot)
+	unit.restore_life_state(life_snapshot)
 
 
 func _restore_budget(
@@ -143,7 +159,7 @@ func _restore_budget(
 	unit.action_budget.remaining_turn_capacity_feet = int(snapshot["remaining"])
 	unit.action_budget.normal_capacity_spent_feet = int(snapshot["spent"])
 	unit.action_budget.quick_action_available = bool(snapshot["quick"])
-	unit.action_budget.reaction_available = bool(snapshot["reaction"])
+	unit.action_budget.restore_reaction_snapshot(snapshot.get("reaction", {}))
 	unit.action_budget.ended_activation = bool(snapshot["ended"])
 
 

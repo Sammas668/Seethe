@@ -17,3 +17,6 @@ maximum_stack_size = 5
 equipment_tags = Array[StringName]([&"medical", &"consumable"])
 granted_action_ids = Array[StringName]([&"action.use_bandage"])
 tactical_visual_category = &"medical"
+permits_first_aid = true
+first_aid_bonus = 2
+first_aid_uses_consumed = 1

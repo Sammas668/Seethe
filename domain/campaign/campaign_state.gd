@@ -8,13 +8,61 @@ const CAMPAIGN_ITEM_LOCATION_STATE_SCRIPT = preload(
 	"res://domain/campaign/campaign_item_location_state.gd"
 )
 
-const CURRENT_SAVE_VERSION: int = 3
+const CURRENT_SAVE_VERSION: int = 4
 
 var items_by_id: Dictionary = {}
+var captives_by_id: Dictionary = {}
+var mission_history_by_id: Dictionary = {}
 
 
 func _init() -> void:
 	save_version = CURRENT_SAVE_VERSION
+
+
+func upsert_captive(captive: CampaignCaptiveState) -> bool:
+	if captive == null or captive.captive_id.is_empty():
+		return false
+	captives_by_id[captive.captive_id] = captive
+	revision += 1
+	return true
+
+
+func get_captive(captive_id: StringName) -> CampaignCaptiveState:
+	return captives_by_id.get(captive_id) as CampaignCaptiveState
+
+
+func get_captives() -> Array[CampaignCaptiveState]:
+	var result: Array[CampaignCaptiveState] = []
+	for raw_value: Variant in captives_by_id.values():
+		var captive: CampaignCaptiveState = raw_value as CampaignCaptiveState
+		if captive != null:
+			result.append(captive)
+	result.sort_custom(
+		func(a: CampaignCaptiveState, b: CampaignCaptiveState) -> bool:
+			return String(a.captive_id) < String(b.captive_id)
+	)
+	return result
+
+
+func has_resolved_mission(mission_id: StringName) -> bool:
+	return not mission_id.is_empty() and mission_history_by_id.has(mission_id)
+
+
+func record_mission_result(result: MissionResult) -> bool:
+	if (
+		result == null
+		or result.mission_id.is_empty()
+		or has_resolved_mission(result.mission_id)
+	):
+		return false
+	mission_history_by_id[result.mission_id] = result.to_dictionary()
+	revision += 1
+	return true
+
+
+func mission_history(mission_id: StringName) -> Dictionary:
+	var raw: Variant = mission_history_by_id.get(mission_id, {})
+	return (raw as Dictionary).duplicate(true) if raw is Dictionary else {}
 
 
 func add_item(item) -> bool:
@@ -167,13 +215,32 @@ func validate_campaign() -> Array[String]:
 				"Campaign item %s references missing character %s."
 				% [item.item_id, item.location.owner_id]
 			)
+	for captive: CampaignCaptiveState in get_captives():
+		errors.append_array(captive.validate_state())
+		if (
+			not captive.restraint_item_id.is_empty()
+			and get_item(captive.restraint_item_id) == null
+		):
+			errors.append(
+				"Campaign captive %s references missing restraint %s."
+				% [captive.captive_id, captive.restraint_item_id]
+			)
+		for item_id: StringName in captive.equipment_item_ids:
+			if get_item(item_id) == null:
+				errors.append(
+					"Campaign captive %s references missing item %s."
+					% [captive.captive_id, item_id]
+				)
 	return errors
+
 
 
 func restore_from_dictionary(data: Dictionary) -> void:
 	var restored: CampaignState = CampaignState.from_dictionary(data)
 	characters_by_id = restored.characters_by_id
 	items_by_id = restored.items_by_id
+	captives_by_id = restored.captives_by_id
+	mission_history_by_id = restored.mission_history_by_id
 	save_version = restored.save_version
 	revision = restored.revision
 	applied_result_ids = restored.applied_result_ids
@@ -192,8 +259,13 @@ func to_dictionary() -> Dictionary:
 			):
 				continue
 		serialized_items.append(item.to_dictionary())
+	var serialized_captives: Array[Dictionary] = []
+	for captive: CampaignCaptiveState in get_captives():
+		serialized_captives.append(captive.to_dictionary())
 	base["save_version"] = CURRENT_SAVE_VERSION
 	base["items"] = serialized_items
+	base["captives"] = serialized_captives
+	base["mission_history"] = mission_history_by_id.duplicate(true)
 	return base
 
 
@@ -236,6 +308,27 @@ static func from_dictionary(data: Dictionary) -> CampaignState:
 		campaign,
 		data.get("campaign_loot_entries", [])
 	)
+	var raw_captives: Variant = data.get("captives", [])
+	if raw_captives is Array:
+		for raw_captive: Variant in raw_captives as Array:
+			if not raw_captive is Dictionary:
+				continue
+			var captive: CampaignCaptiveState = CampaignCaptiveState.from_dictionary(
+				raw_captive as Dictionary
+			)
+			if not captive.captive_id.is_empty():
+				campaign.captives_by_id[captive.captive_id] = captive
+	var raw_history: Variant = data.get("mission_history", {})
+	if raw_history is Dictionary:
+		for raw_mission_id: Variant in (raw_history as Dictionary).keys():
+			var mission_id: StringName = StringName(raw_mission_id)
+			var raw_entry: Variant = (raw_history as Dictionary).get(
+				raw_mission_id, {}
+			)
+			if not mission_id.is_empty() and raw_entry is Dictionary:
+				campaign.mission_history_by_id[mission_id] = (
+					(raw_entry as Dictionary).duplicate(true)
+				)
 	campaign.save_version = CURRENT_SAVE_VERSION
 	return campaign
 
