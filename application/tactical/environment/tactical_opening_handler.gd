@@ -96,7 +96,11 @@ func toggle_opening(unit_id: StringName, opening_id: StringName) -> OperationRes
 	var capacity_before: int = unit.action_budget.remaining_turn_capacity_feet
 	var spent_before: int = unit.action_budget.normal_capacity_spent_feet
 	var opening_was_open: bool = runtime.is_open()
-	var changes := TacticalChangeSet.new(&"opening_state_changed", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"opening_state_changed",
+		_state_store.state.revision,
+		TacticalInvalidationContract.environment_interaction(unit.unit_id)
+	)
 	changes.stage(
 		func() -> bool:
 			unit.action_budget.spend_normal_capacity(definition.operation_cost_feet)
@@ -148,7 +152,11 @@ func pick_lock(unit_id: StringName, opening_id: StringName) -> OperationResult:
 	var spent_before: int = unit.action_budget.normal_capacity_spent_feet
 	var life_before: Dictionary = unit.life_state_snapshot()
 	var unit_was_disabled: bool = unit.is_disabled()
-	var changes := TacticalChangeSet.new(&"opening_state_changed", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"opening_state_changed",
+		_state_store.state.revision,
+		TacticalInvalidationContract.environment_interaction(unit.unit_id)
+	)
 	changes.stage(
 		func() -> bool:
 			unit.action_budget.spend_normal_capacity(cost_feet)

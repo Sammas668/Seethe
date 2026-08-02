@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.guidance"
+display_name = "Guidance"
+description = "Quick Action, touch. +1 to the next attack, save, manoeuvre, Medicine or ability check before the end of the target’s next activation."
+action_cost_type = &"quick"
+implementation_profile_id = &"ability.apply_bonus"
+targeting_rule_id = &"target.touch_creature"
+range_feet = 5
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &""
+resource_cost = 0
+spell_rank = 0
+caster_level = 3
+school_tags = Array[StringName]([&"bonus"])
+dice_count = 0
+die_size = 0
+flat_bonus = 0
+damage_channel = &""
+save_type = &""
+save_dc = 0
+half_on_save = false
+condition_id = &"effect.guidance"
+duration_rounds = 2
+concentration = false
+bonus_value = 1
+effect_tags = Array[StringName]([&"bonus"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])

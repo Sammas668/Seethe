@@ -6,7 +6,7 @@
 script = ExtResource("1_modifier")
 id = &"effect.rage"
 display_name = "Rage"
-description = "The Marauder enters a violent battle state."
+description = "Quick Action; one use per mission; seven rounds. Strength +4, Constitution +4, Will +2 and Armour Class -2. Constitution raises current and maximum HP by 6. Calm-concentration abilities are unavailable. Fatigued after Rage ends."
 ability_modifiers = {"CON": 4, "STR": 4}
 stat_modifiers = {"armour_class": -2, "will": 2}
-sheet_condition_text = "Rage — active: +4 Strength, +4 Constitution, +2 Will, −2 Armour Class."
+sheet_condition_text = "Rage — active: Strength +4, Constitution +4, Will +2, Armour Class -2; Constitution provides +6 current/maximum HP and +2 Fortitude; melee attack/damage and Grapple gain +2."

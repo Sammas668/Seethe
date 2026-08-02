@@ -64,7 +64,8 @@ func enter_stealth(unit_id: StringName) -> OperationResult:
 		)
 	var changes := TacticalChangeSet.new(
 		&"unit_entered_stealth",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.token_status([unit.unit_id])
 	)
 	changes.stage(
 		Callable(self, "_apply_stealth").bind(

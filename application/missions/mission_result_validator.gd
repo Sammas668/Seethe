@@ -6,7 +6,8 @@ static func validate(
 		result: MissionResult,
 		setup: MissionSetupSnapshot,
 		campaign: CampaignState,
-		catalogue: ContentCatalogue
+		catalogue: ContentCatalogue,
+		authority_snapshot: MissionAuthoritySnapshot = null
 ) -> Array[String]:
 	var errors: Array[String] = []
 	if result == null:
@@ -26,17 +27,18 @@ static func validate(
 		errors.append("Mission result validation requires the ContentCatalogue.")
 		return errors
 
-	_validate_identity_and_revision(result, setup, errors)
+	_validate_identity_and_revision(result, setup, authority_snapshot, errors)
 	var extracted_items: Dictionary = _validate_extracted_items(
 		result,
 		setup,
 		campaign,
 		catalogue,
+		authority_snapshot,
 		errors
 	)
 	_validate_character_outcomes(result, setup, extracted_items, errors)
 	_validate_extracted_destinations(result, extracted_items, errors)
-	_validate_generated_item_sources(result, setup, errors)
+	_validate_generated_item_sources(result, setup, authority_snapshot, extracted_items, errors)
 	_validate_extraction_semantics(result, setup, extracted_items, errors)
 	return errors
 
@@ -44,8 +46,11 @@ static func validate(
 static func _validate_identity_and_revision(
 		result: MissionResult,
 		setup: MissionSetupSnapshot,
+		authority_snapshot: MissionAuthoritySnapshot,
 		errors: Array[String]
 ) -> void:
+	if not setup.verify_integrity():
+		errors.append("Mission setup integrity verification failed.")
 	if result.mission_id != setup.mission_id:
 		errors.append(
 			"Mission result %s belongs to %s, not setup %s."
@@ -56,6 +61,17 @@ static func _validate_identity_and_revision(
 			"Mission result source revision %d does not match setup revision %d."
 			% [result.source_campaign_revision, setup.source_campaign_revision]
 		)
+	if result.source_setup_hash.is_empty():
+		errors.append("Mission result source setup hash is missing.")
+	elif result.source_setup_hash != setup.finalized_setup_hash():
+		errors.append("Mission result source setup hash does not match its setup.")
+	if authority_snapshot != null:
+		if not authority_snapshot.verify_integrity():
+			errors.append("Mission authority snapshot failed integrity verification.")
+		elif authority_snapshot.mission_id != setup.mission_id:
+			errors.append("Mission authority snapshot belongs to another mission.")
+		elif authority_snapshot.source_setup_hash != setup.finalized_setup_hash():
+			errors.append("Mission authority snapshot uses another setup hash.")
 
 
 static func _validate_extracted_items(
@@ -63,6 +79,7 @@ static func _validate_extracted_items(
 		setup: MissionSetupSnapshot,
 		campaign: CampaignState,
 		catalogue: ContentCatalogue,
+		authority_snapshot: MissionAuthoritySnapshot,
 		errors: Array[String]
 ) -> Dictionary:
 	var extracted_items: Dictionary = {}
@@ -74,18 +91,34 @@ static func _validate_extracted_items(
 
 		var setup_item: CampaignItemState = setup.get_item(item.item_id)
 		if setup_item == null:
-			var provenance: Variant = (
-				result.generated_item_provenance_by_id.get(item.item_id)
-			)
-			if not _valid_generated_item_provenance(provenance):
+			if authority_snapshot == null:
 				errors.append(
-					(
-						"Extracted item %s was not part of mission setup %s "
-						+ "and has no valid provenance."
-					) % [item.item_id, setup.mission_id]
+					"Extracted item %s was not part of setup %s and has no trusted mission authority snapshot."
+					% [item.item_id, setup.mission_id]
 				)
 				continue
-			_validate_generated_item_authority(item, provenance as Dictionary, errors)
+			var provenance: TacticalGeneratedItemProvenance = (
+				authority_snapshot.provenance_for_item(item.item_id)
+			)
+			if provenance == null:
+				errors.append(
+					"Extracted generated item %s has no trusted provenance record."
+					% item.item_id
+				)
+				continue
+			if not result.generated_item_provenance_ids.has(provenance.provenance_id):
+				errors.append(
+					"Extracted generated item %s does not reference provenance %s."
+					% [item.item_id, provenance.provenance_id]
+				)
+			if not provenance.validate_record().is_empty():
+				errors.append("Generated item %s has invalid trusted provenance." % item.item_id)
+			elif provenance.mission_id != setup.mission_id:
+				errors.append("Generated item %s provenance belongs to another mission." % item.item_id)
+			elif provenance.source_setup_hash != setup.finalized_setup_hash():
+				errors.append("Generated item %s provenance uses another setup hash." % item.item_id)
+			elif not provenance.matches_campaign_item(item):
+				errors.append("Generated item %s does not match its trusted provenance values." % item.item_id)
 		else:
 			_validate_existing_item_conservation(item, setup_item, errors)
 
@@ -95,12 +128,7 @@ static func _validate_extracted_items(
 				% [item.item_id, item.definition_id]
 			)
 		errors.append_array(
-			CampaignItemValidator.validate_item(
-				item,
-				campaign,
-				catalogue,
-				false
-			)
+			CampaignItemValidator.validate_item(item, campaign, catalogue, false)
 		)
 
 		var existing: CampaignItemState = campaign.get_item(item.item_id)
@@ -117,41 +145,6 @@ static func _validate_extracted_items(
 				% [item.item_id, existing.definition_id]
 			)
 	return extracted_items
-
-
-static func _validate_generated_item_authority(
-		item: CampaignItemState,
-		provenance: Dictionary,
-		errors: Array[String]
-) -> void:
-	var authorised_definition_id: StringName = StringName(
-		provenance.get("definition_id", &"")
-	)
-	var authorised_quantity: int = int(provenance.get("quantity", 0))
-	var authorised_condition: float = float(provenance.get("condition", -1.0))
-	var authorised_modifiers: Dictionary = (
-		provenance.get("persistent_modifiers", {}) as Dictionary
-	).duplicate(true)
-	if item.definition_id != authorised_definition_id:
-		errors.append(
-			"Generated item %s does not match its authorised definition."
-			% item.item_id
-		)
-	if item.quantity != authorised_quantity:
-		errors.append(
-			"Generated item %s quantity %d does not match authorised quantity %d."
-			% [item.item_id, item.quantity, authorised_quantity]
-		)
-	if absf(item.condition - authorised_condition) > 0.0001:
-		errors.append(
-			"Generated item %s condition does not match its authorised condition."
-			% item.item_id
-		)
-	if item.persistent_modifiers != authorised_modifiers:
-		errors.append(
-			"Generated item %s modifiers do not match their authorised values."
-			% item.item_id
-		)
 
 
 static func _validate_existing_item_conservation(
@@ -321,27 +314,32 @@ static func _validate_extracted_destinations(
 static func _validate_generated_item_sources(
 		result: MissionResult,
 		setup: MissionSetupSnapshot,
+		authority_snapshot: MissionAuthoritySnapshot,
+		extracted_items: Dictionary,
 		errors: Array[String]
 ) -> void:
-	for raw_id: Variant in result.generated_item_provenance_by_id.keys():
-		var item_id: StringName = StringName(raw_id)
-		var raw_entry: Variant = result.generated_item_provenance_by_id.get(
-			raw_id,
-			{}
+	if result.generated_item_provenance_ids.is_empty():
+		return
+	if authority_snapshot == null:
+		errors.append("Mission result references generated items without a trusted authority snapshot.")
+		return
+	for provenance_id: StringName in result.generated_item_provenance_ids:
+		var provenance: TacticalGeneratedItemProvenance = authority_snapshot.provenance(
+			provenance_id
 		)
-		if not _valid_generated_item_provenance(raw_entry):
+		if provenance == null:
+			errors.append("Mission result references unknown provenance %s." % provenance_id)
 			continue
-		var entry: Dictionary = raw_entry as Dictionary
-		var raw_sources: Variant = entry.get("source_item_ids", [])
-		if not raw_sources is Array:
-			errors.append("Generated item %s has invalid source-item provenance." % item_id)
-			continue
-		for raw_source_id: Variant in raw_sources as Array:
-			var source_id: StringName = StringName(raw_source_id)
+		if not extracted_items.has(provenance.generated_item_id):
+			errors.append(
+				"Provenance %s does not authorise an extracted generated item."
+				% provenance_id
+			)
+		for source_id: StringName in provenance.source_item_ids:
 			if setup.get_item(source_id) == null:
 				errors.append(
 					"Generated item %s cites unknown source item %s."
-					% [item_id, source_id]
+					% [provenance.generated_item_id, source_id]
 				)
 
 
@@ -410,18 +408,3 @@ static func _validate_extraction_semantics(
 					% [captive.character_id, item_id]
 				)
 
-
-static func _valid_generated_item_provenance(value: Variant) -> bool:
-	if not value is Dictionary:
-		return false
-	var entry: Dictionary = value as Dictionary
-	var condition: float = float(entry.get("condition", -1.0))
-	return (
-		not String(entry.get("source_event_id", "")).strip_edges().is_empty()
-		and not String(entry.get("reason", "")).strip_edges().is_empty()
-		and not String(entry.get("definition_id", "")).strip_edges().is_empty()
-		and int(entry.get("quantity", 0)) > 0
-		and condition >= 0.0
-		and condition <= 1.0
-		and entry.get("persistent_modifiers", {}) is Dictionary
-	)

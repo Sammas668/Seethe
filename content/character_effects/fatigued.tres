@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CharacterModifierDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_modifier_definition.gd" id="1_modifier"]
+
+[resource]
+script = ExtResource("1_modifier")
+id = &"effect.fatigued"
+display_name = "Fatigued"
+description = "Remainder of encounter after Rage: Strength -2, Dexterity -2 and Sprint unavailable."
+ability_modifiers = {"DEX": -2, "STR": -2}
+sheet_condition_text = "Fatigued — Strength -2, Dexterity -2; cannot Sprint or enter Rage."

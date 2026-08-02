@@ -55,11 +55,22 @@ const TACTICAL_GEOMETRY_CACHE_SERVICE_SCRIPT: Script = preload(
 const TACTICAL_REACTION_SERVICE_SCRIPT: Script = preload(
 	"res://application/tactical/reactions/tactical_reaction_service.gd"
 )
+const MISSION_OBJECTIVE_SERVICE_SCRIPT: Script = preload(
+	"res://application/missions/mission_objective_service.gd"
+)
+const TACTICAL_ABILITY_SERVICE_SCRIPT: Script = preload(
+	"res://application/tactical/abilities/tactical_ability_service.gd"
+)
+const GRAPPLE_HANDLER_SCRIPT: Script = preload(
+	"res://application/tactical/combat/grapple_handler.gd"
+)
 
 var state_store: TacticalStateStore
 var map_definition: TacticalMapDefinition
 var content_catalogue: ContentCatalogue
 var mission_setup: MissionSetupSnapshot
+var mission_definition: MissionDefinition
+var mission_objective_service: MissionObjectiveService
 var character_resolution_service: CharacterResolutionService
 var event_journal: RefCounted
 var movement_handler: TacticalCommandHandler
@@ -83,6 +94,8 @@ var mission_resolution_handler: ResolveTacticalMissionHandler
 var opening_handler: TacticalOpeningHandler
 var structure_attack_handler: TacticalStructureAttackHandler
 var reaction_service: TacticalReactionService
+var ability_service: TacticalAbilityService
+var grapple_handler: GrappleHandler
 var campaign_store: RefCounted
 var player_unit_order: Array[StringName] = []
 var screen_facade
@@ -95,7 +108,8 @@ func _init(
 		content_catalogue_value: ContentCatalogue,
 		mission_setup_value: MissionSetupSnapshot,
 		resolution_service_value: CharacterResolutionService,
-		campaign_store_value: RefCounted = null
+		campaign_store_value: RefCounted = null,
+		mission_definition_value: MissionDefinition = null
 ) -> void:
 	_ensure_player_perception_squad(initial_state)
 	initial_state.configure_extraction_zones(map_definition_value)
@@ -107,6 +121,7 @@ func _init(
 	)
 	initial_state.synchronise_body_items(map_definition_value)
 	state_store = TacticalStateStore.new(initial_state)
+	state_store.state_changed.connect(_on_session_state_changed)
 	map_definition = map_definition_value
 	content_catalogue = content_catalogue_value
 	mission_setup = (
@@ -114,6 +129,15 @@ func _init(
 		if mission_setup_value != null
 		else MissionSetupSnapshot.new()
 	)
+	mission_definition = mission_definition_value
+	if mission_setup.verify_integrity():
+		if not initial_state.bind_mission_authority(
+			mission_setup.mission_id,
+			mission_setup.finalized_setup_hash()
+		):
+			push_error("TacticalSession could not bind mission authority.")
+	else:
+		push_error("TacticalSession requires an integrity-verified mission setup.")
 	character_resolution_service = resolution_service_value
 	campaign_store = campaign_store_value
 	if character_resolution_service == null:
@@ -125,6 +149,16 @@ func _init(
 	player_unit_order.clear()
 	for unit_id: StringName in unit_order_value:
 		player_unit_order.append(unit_id)
+
+	if mission_definition != null:
+		mission_objective_service = MISSION_OBJECTIVE_SERVICE_SCRIPT.new() as MissionObjectiveService
+		mission_objective_service.configure(
+			state_store,
+			map_definition,
+			mission_definition,
+			mission_setup,
+			event_journal
+		)
 
 	movement_handler = TacticalCommandHandler.new(
 		state_store,
@@ -152,6 +186,14 @@ func _init(
 	visibility_service = VISIBILITY_SERVICE_SCRIPT.new() as RefCounted
 	visibility_service.call("configure", state_store, map_definition)
 	combat_dice_roller = TACTICAL_DICE_ROLLER_SCRIPT.new() as RefCounted
+	ability_service = TACTICAL_ABILITY_SERVICE_SCRIPT.new() as TacticalAbilityService
+	ability_service.configure(
+		state_store,
+		map_definition,
+		content_catalogue,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller
+	)
 	life_state_handler = LIFE_STATE_HANDLER_SCRIPT.new()
 	life_state_handler.configure(
 		state_store,
@@ -224,7 +266,15 @@ func _init(
 		event_journal,
 		attack_preview_query,
 		combat_dice_roller,
-		detection_service
+		detection_service,
+		visibility_service
+	)
+	grapple_handler = GRAPPLE_HANDLER_SCRIPT.new() as GrappleHandler
+	grapple_handler.configure(
+		state_store,
+		map_definition,
+		event_journal,
+		combat_dice_roller as TacticalDiceRoller
 	)
 	reaction_service = TACTICAL_REACTION_SERVICE_SCRIPT.new() as TacticalReactionService
 	reaction_service.configure(
@@ -247,9 +297,12 @@ func _init(
 		event_journal,
 		attack_preview_query,
 		attack_handler,
-		detection_service
+		detection_service,
+		visibility_service
 	)
 	enemy_turn_handler.call("configure_body_actions", body_action_handler)
+	if enemy_turn_handler.has_method("configure_abilities"):
+		enemy_turn_handler.call("configure_abilities", ability_service)
 	if enemy_turn_handler.has_method("configure_reactions"):
 		enemy_turn_handler.call("configure_reactions", reaction_service)
 	mission_resolution_handler = (
@@ -310,7 +363,9 @@ func _init(
 		opening_handler,
 		structure_attack_handler,
 		geometry_cache_service,
-		reaction_service
+		reaction_service,
+		ability_service,
+		grapple_handler
 	)
 
 	event_journal.call(
@@ -358,6 +413,109 @@ func _ensure_player_perception_squad(state: TacticalState) -> void:
 		squad.make_aware()
 
 
+func _on_session_state_changed(_reason: StringName) -> void:
+	var pending_units: Array[TacticalUnitState] = []
+	for unit: TacticalUnitState in state_store.state.get_units():
+		if (
+			unit != null
+			and unit.character_resolution_refresh_pending
+			and not unit.persistent_character_id.is_empty()
+		):
+			pending_units.append(unit)
+	if pending_units.is_empty():
+		return
+	var contract := TacticalInvalidationContract.no_visual_change()
+	for unit: TacticalUnitState in pending_units:
+		contract.token_status_changed = true
+		contract.action_budget_changed = true
+		contract.affected_unit_ids.append(unit.unit_id)
+	var changes := TacticalChangeSet.new(
+		&"character_effect_expired",
+		state_store.state.revision,
+		contract
+	)
+	changes.deferred_deduplication_key = &"character_effect_resolution_refresh"
+	for unit: TacticalUnitState in pending_units:
+		var character: PersistentCharacterState = mission_setup.get_character(
+			unit.persistent_character_id
+		)
+		if character == null:
+			continue
+		var snapshot: Dictionary = _character_resolution_runtime_snapshot(unit)
+		changes.stage(
+			Callable(self, "_refresh_expired_character_effect").bind(unit, character),
+			Callable(self, "_restore_character_resolution_runtime").bind(unit, snapshot),
+			"An expired character effect could not refresh the resolved sheet.",
+			&"character_effect_refresh_failed"
+		)
+	state_store.commit_after_notifications(changes, map_definition)
+
+
+func _refresh_expired_character_effect(
+		unit: TacticalUnitState,
+		character: PersistentCharacterState
+) -> bool:
+	character_resolution_service.refresh_tactical_unit(
+		unit,
+		character,
+		_tactical_items_for_unit(unit.unit_id)
+	)
+	state_store.state.refresh_unit_encumbrance(unit.unit_id)
+	unit.character_resolution_refresh_pending = false
+	return unit.resolved_character != null
+
+
+func _character_resolution_runtime_snapshot(unit: TacticalUnitState) -> Dictionary:
+	return {
+		"resolved": unit.resolved_character,
+		"sheet": unit.character_sheet,
+		"maximum_hp": unit.maximum_hp,
+		"current_hp": unit.current_hp,
+		"armour_class": unit.armour_class,
+		"base_armour_class": unit.base_armour_class,
+		"maximum_weight_lb": unit.inventory.maximum_weight_lb,
+		"budget_maximum": unit.action_budget.maximum_turn_capacity_feet,
+		"budget_remaining": unit.action_budget.remaining_turn_capacity_feet,
+		"budget_spent": unit.action_budget.normal_capacity_spent_feet,
+		"carried_weight_lb": unit.carried_weight_lb,
+		"load_category": unit.load_category,
+		"sprint_distance_feet": unit.sprint_distance_feet,
+		"fast_movement_active": unit.fast_movement_active,
+		"refresh_pending": unit.character_resolution_refresh_pending,
+	}
+
+
+func _restore_character_resolution_runtime(
+		unit: TacticalUnitState,
+		snapshot: Dictionary
+) -> void:
+	unit.resolved_character = snapshot.get("resolved") as ResolvedCharacterSnapshot
+	unit.character_sheet = snapshot.get("sheet") as TacticalCharacterSheetState
+	unit.maximum_hp = int(snapshot.get("maximum_hp", unit.maximum_hp))
+	unit.current_hp = int(snapshot.get("current_hp", unit.current_hp))
+	unit.armour_class = int(snapshot.get("armour_class", unit.armour_class))
+	unit.base_armour_class = int(snapshot.get("base_armour_class", unit.base_armour_class))
+	unit.inventory.maximum_weight_lb = float(
+		snapshot.get("maximum_weight_lb", unit.inventory.maximum_weight_lb)
+	)
+	unit.action_budget.maximum_turn_capacity_feet = int(
+		snapshot.get("budget_maximum", unit.action_budget.maximum_turn_capacity_feet)
+	)
+	unit.action_budget.remaining_turn_capacity_feet = int(
+		snapshot.get("budget_remaining", unit.action_budget.remaining_turn_capacity_feet)
+	)
+	unit.action_budget.normal_capacity_spent_feet = int(
+		snapshot.get("budget_spent", unit.action_budget.normal_capacity_spent_feet)
+	)
+	unit.carried_weight_lb = float(snapshot.get("carried_weight_lb", unit.carried_weight_lb))
+	unit.load_category = StringName(snapshot.get("load_category", unit.load_category))
+	unit.sprint_distance_feet = int(snapshot.get("sprint_distance_feet", unit.sprint_distance_feet))
+	unit.fast_movement_active = bool(snapshot.get("fast_movement_active", unit.fast_movement_active))
+	unit.character_resolution_refresh_pending = bool(
+		snapshot.get("refresh_pending", false)
+	)
+
+
 func navigation_for(unit_id: StringName) -> TacticalNavigationSnapshot:
 	return TacticalNavigationSnapshot.new(
 		map_definition,
@@ -389,9 +547,16 @@ func set_character_modifier_active(
 	var previous_modifier_ids: Array[StringName] = (
 		unit.active_character_modifier_ids.duplicate()
 	)
+	var previous_ability_uses: Dictionary = unit.ability_uses_remaining.duplicate(true)
+	var previous_rage_rounds: int = unit.rage_rounds_remaining
+	var previous_fatigued: bool = unit.fatigued_after_rage
+	var previous_refresh_pending: bool = unit.character_resolution_refresh_pending
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"character_resolved",
-		state_store.state.revision
+		state_store.state.revision,
+		TacticalInvalidationContract.character_resolution(
+			unit.unit_id, unit.team_id
+		)
 	)
 	changes.stage(
 		Callable(self, "_apply_character_modifier").bind(
@@ -403,7 +568,11 @@ func set_character_modifier_active(
 		Callable(self, "_restore_character_modifiers").bind(
 			unit,
 			character,
-			previous_modifier_ids
+			previous_modifier_ids,
+			previous_ability_uses,
+			previous_rage_rounds,
+			previous_fatigued,
+			previous_refresh_pending
 		),
 		"The character modifier could not be resolved.",
 		&"character_resolution_failed"
@@ -421,26 +590,43 @@ func _apply_character_modifier(
 		modifier_id: StringName,
 		active: bool
 ) -> bool:
-	unit.set_character_modifier_active(modifier_id, active)
+	if modifier_id == &"effect.rage":
+		if active:
+			if not unit.begin_rage():
+				return false
+		else:
+			unit.end_rage()
+	else:
+		unit.set_character_modifier_active(modifier_id, active)
 	character_resolution_service.refresh_tactical_unit(
 		unit,
 		character,
 		_tactical_items_for_unit(unit.unit_id)
 	)
+	state_store.state.refresh_unit_encumbrance(unit.unit_id)
 	return unit.resolved_character != null
 
 
 func _restore_character_modifiers(
 		unit: TacticalUnitState,
 		character: PersistentCharacterState,
-		previous_modifier_ids: Array[StringName]
+		previous_modifier_ids: Array[StringName],
+		previous_ability_uses: Dictionary,
+		previous_rage_rounds: int,
+		previous_fatigued: bool,
+		previous_refresh_pending: bool
 ) -> void:
 	unit.active_character_modifier_ids = previous_modifier_ids.duplicate()
+	unit.restore_ability_resources(previous_ability_uses)
+	unit.rage_rounds_remaining = previous_rage_rounds
+	unit.fatigued_after_rage = previous_fatigued
+	unit.character_resolution_refresh_pending = previous_refresh_pending
 	character_resolution_service.refresh_tactical_unit(
 		unit,
 		character,
 		_tactical_items_for_unit(unit.unit_id)
 	)
+	state_store.state.refresh_unit_encumbrance(unit.unit_id)
 
 
 func _tactical_items_for_unit(
@@ -485,6 +671,12 @@ func validate_session() -> Array[String]:
 	else:
 		errors.append_array(state_store.state.validate_all(map_definition))
 		errors.append_array(map_definition.validate_definition())
+	if mission_definition != null:
+		errors.append_array(mission_definition.validate_definition())
+		if state_store.state.mission_runtime_state == null:
+			errors.append("Authored TacticalSession has no MissionRuntimeState.")
+		elif state_store.state.mission_runtime_state.mission_definition_id != mission_definition.mission_definition_id:
+			errors.append("MissionRuntimeState does not match the authored MissionDefinition.")
 	if content_catalogue == null:
 		errors.append("TacticalSession has no ContentCatalogue.")
 		return errors

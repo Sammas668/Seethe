@@ -40,17 +40,28 @@ static func validate_item(
 	match location.location_type:
 		CampaignItemLocationState.LOCATION_CHARACTER_EQUIPMENT:
 			_validate_character_owner(item, campaign, errors)
-			if not definition.can_equip_in_hand():
-				errors.append("Item %s cannot be equipped in a hand." % item.item_id)
-			if (
-				definition.is_two_handed()
-				and location.container_id
-				== CampaignItemLocationState.CONTAINER_SECONDARY_HAND
-			):
-				errors.append(
-					"Two-handed item %s cannot occupy Secondary Hand."
-					% item.item_id
-				)
+			match location.container_id:
+				CampaignItemLocationState.CONTAINER_PRIMARY_HAND, CampaignItemLocationState.CONTAINER_SECONDARY_HAND:
+					if not definition.can_equip_in_hand():
+						errors.append(
+							"Item %s cannot be equipped in a hand."
+							% item.item_id
+						)
+					if (
+						definition.is_two_handed()
+						and location.container_id
+						== CampaignItemLocationState.CONTAINER_SECONDARY_HAND
+					):
+						errors.append(
+							"Two-handed item %s cannot occupy Secondary Hand."
+							% item.item_id
+						)
+				CampaignItemLocationState.CONTAINER_ARMOUR, CampaignItemLocationState.CONTAINER_WORN_UTILITY:
+					if not definition.can_equip_in_slot(location.container_id):
+						errors.append(
+							"Item %s cannot occupy equipment slot %s."
+							% [item.item_id, location.container_id]
+						)
 		CampaignItemLocationState.LOCATION_CHARACTER_INVENTORY:
 			_validate_character_owner(item, campaign, errors)
 			if (

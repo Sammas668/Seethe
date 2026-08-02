@@ -42,7 +42,8 @@ func spawn_character(
 	)
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"runtime_spawn",
-		plan.expected_state_revision
+		plan.expected_state_revision,
+		TacticalInvalidationContract.spawn(plan.unit.unit_id, plan.unit.team_id)
 	)
 	changes.stage(
 		Callable(self, "_add_unit").bind(plan.unit),

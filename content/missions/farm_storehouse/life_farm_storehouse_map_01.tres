@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="TacticalMapDefinition" load_steps=19 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/tactical_map_definition.gd" id="1_map"]
+[ext_resource type="Script" path="res://domain/tactical/extraction/tactical_extraction_zone_definition.gd" id="2_extract"]
+[ext_resource type="Script" path="res://domain/tactical/maps/map_zone_definition.gd" id="3_zone"]
+[ext_resource type="Script" path="res://domain/tactical/maps/patrol_path_definition.gd" id="4_patrol"]
+[ext_resource type="Script" path="res://domain/tactical/maps/map_anchor_definition.gd" id="5_anchor"]
+[ext_resource type="Script" path="res://domain/tactical/maps/lighting_region_definition.gd" id="6_light"]
+
+[sub_resource type="Resource" id="ExtractionPlayer"]
+script = ExtResource("2_extract")
+zone_id = &"extraction.farm.west_road"
+display_name = "Western Escape Route"
+tile_coordinates = Array[Vector2i]([Vector2i(1, 15), Vector2i(1, 16), Vector2i(1, 17), Vector2i(1, 18), Vector2i(1, 19), Vector2i(1, 20), Vector2i(1, 21), Vector2i(1, 22), Vector2i(2, 15), Vector2i(2, 16), Vector2i(2, 17), Vector2i(2, 18), Vector2i(2, 19), Vector2i(2, 20), Vector2i(2, 21), Vector2i(2, 22), Vector2i(3, 15), Vector2i(3, 16), Vector2i(3, 17), Vector2i(3, 18), Vector2i(3, 19), Vector2i(3, 20), Vector2i(3, 21), Vector2i(3, 22), Vector2i(4, 15), Vector2i(4, 16), Vector2i(4, 17), Vector2i(4, 18), Vector2i(4, 19), Vector2i(4, 20), Vector2i(4, 21), Vector2i(4, 22), Vector2i(5, 15), Vector2i(5, 16), Vector2i(5, 17), Vector2i(5, 18), Vector2i(5, 19), Vector2i(5, 20), Vector2i(5, 21), Vector2i(5, 22)])
+
+[sub_resource type="Resource" id="DeploymentPlayer"]
+script = ExtResource("3_zone")
+zone_id = &"deployment.farm.west_road"
+display_name = "Western Hedgerow"
+zone_kind = &"deployment"
+tile_coordinates = Array[Vector2i]([Vector2i(2, 16), Vector2i(2, 17), Vector2i(2, 18), Vector2i(2, 19), Vector2i(2, 20), Vector2i(2, 21), Vector2i(3, 16), Vector2i(3, 17), Vector2i(3, 18), Vector2i(3, 19), Vector2i(3, 20), Vector2i(3, 21), Vector2i(4, 16), Vector2i(4, 17), Vector2i(4, 18), Vector2i(4, 19), Vector2i(4, 20), Vector2i(4, 21), Vector2i(5, 16), Vector2i(5, 17), Vector2i(5, 18), Vector2i(5, 19), Vector2i(5, 20), Vector2i(5, 21), Vector2i(6, 16), Vector2i(6, 17), Vector2i(6, 18), Vector2i(6, 19), Vector2i(6, 20), Vector2i(6, 21)])
+allowed_team_ids = Array[StringName]([&"player"])
+tags = Array[StringName]([&"player_entry", &"western_approach"])
+
+[sub_resource type="Resource" id="GuardPatrol"]
+script = ExtResource("4_patrol")
+patrol_path_id = &"patrol.storehouse_guard"
+ordered_positions = Array[Vector2i]([Vector2i(18, 15), Vector2i(18, 11), Vector2i(24, 8), Vector2i(31, 12), Vector2i(31, 18), Vector2i(24, 23), Vector2i(18, 19)])
+loop = true
+
+[sub_resource type="Resource" id="FarmhandWork"]
+script = ExtResource("4_patrol")
+patrol_path_id = &"patrol.farmhand_work"
+ordered_positions = Array[Vector2i]([Vector2i(12, 18), Vector2i(15, 18), Vector2i(15, 15), Vector2i(12, 15)])
+loop = true
+
+[sub_resource type="Resource" id="StorehouseObjectiveAnchor"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.objective.storehouse_supplies"
+position = Vector2i(25, 15)
+anchor_kind = &"objective"
+tags = Array[StringName]([&"mission_supply", &"storehouse"])
+
+[sub_resource type="Resource" id="SupplyAnchorA"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.supply.crate_a"
+position = Vector2i(23, 13)
+anchor_kind = &"recoverable_prop"
+tags = Array[StringName]([&"mission_supply"])
+
+[sub_resource type="Resource" id="SupplyAnchorB"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.supply.crate_b"
+position = Vector2i(25, 15)
+anchor_kind = &"recoverable_prop"
+tags = Array[StringName]([&"mission_supply"])
+
+[sub_resource type="Resource" id="SupplyAnchorC"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.supply.sack_c"
+position = Vector2i(27, 18)
+anchor_kind = &"recoverable_prop"
+tags = Array[StringName]([&"mission_supply"])
+
+[sub_resource type="Resource" id="FurnitureAnchor"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.furniture.table"
+position = Vector2i(24, 17)
+anchor_kind = &"recoverable_prop"
+tags = Array[StringName]([&"furniture"])
+
+[sub_resource type="Resource" id="ReinforcementAnchor"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.reinforcement.east_road"
+position = Vector2i(38, 16)
+anchor_kind = &"reinforcement"
+tags = Array[StringName]([&"east_road"])
+
+[sub_resource type="Resource" id="CivilianWorkAnchor"]
+script = ExtResource("5_anchor")
+anchor_id = &"anchor.work.farmyard"
+position = Vector2i(13, 18)
+anchor_kind = &"civilian_work"
+tags = Array[StringName]([&"farm_work"])
+
+[sub_resource type="Resource" id="BrightRegion"]
+script = ExtResource("6_light")
+region_id = &"lighting.farm.daylight"
+light_category = &"bright"
+tile_coordinates = Array[Vector2i]([])
+
+[resource]
+script = ExtResource("1_map")
+definition_id = &"map.life.farm_storehouse_raid_01"
+grid_size = Vector2i(40, 40)
+starting_tile = Vector2i(3, 18)
+player_starting_tiles = Array[Vector2i]([Vector2i(3, 17), Vector2i(3, 19), Vector2i(5, 18)])
+difficult_tiles = Array[Vector2i]([Vector2i(8, 13), Vector2i(9, 13), Vector2i(10, 13), Vector2i(8, 14), Vector2i(9, 14), Vector2i(10, 14), Vector2i(33, 23), Vector2i(34, 23), Vector2i(33, 24), Vector2i(34, 24)])
+wood_wall_tiles = Array[Vector2i]([Vector2i(6, 7), Vector2i(6, 32), Vector2i(7, 7), Vector2i(7, 32), Vector2i(8, 7), Vector2i(8, 32), Vector2i(9, 7), Vector2i(9, 32), Vector2i(10, 7), Vector2i(10, 22), Vector2i(10, 23), Vector2i(10, 24), Vector2i(10, 25), Vector2i(10, 26), Vector2i(10, 27), Vector2i(10, 28), Vector2i(10, 32), Vector2i(11, 7), Vector2i(11, 22), Vector2i(11, 28), Vector2i(11, 32), Vector2i(12, 22), Vector2i(12, 28), Vector2i(13, 22), Vector2i(14, 7), Vector2i(14, 22), Vector2i(14, 28), Vector2i(14, 32), Vector2i(15, 7), Vector2i(15, 22), Vector2i(15, 28), Vector2i(15, 32), Vector2i(16, 7), Vector2i(16, 22), Vector2i(16, 23), Vector2i(16, 24), Vector2i(16, 25), Vector2i(16, 26), Vector2i(16, 27), Vector2i(16, 28), Vector2i(16, 32), Vector2i(17, 7), Vector2i(17, 32), Vector2i(18, 7), Vector2i(18, 32), Vector2i(19, 7), Vector2i(19, 32), Vector2i(20, 7), Vector2i(20, 10), Vector2i(20, 11), Vector2i(20, 12), Vector2i(20, 13), Vector2i(20, 14), Vector2i(20, 16), Vector2i(20, 17), Vector2i(20, 18), Vector2i(20, 19), Vector2i(20, 20), Vector2i(20, 32), Vector2i(21, 7), Vector2i(21, 10), Vector2i(21, 20), Vector2i(21, 32), Vector2i(22, 7), Vector2i(22, 10), Vector2i(22, 20), Vector2i(22, 32), Vector2i(23, 7), Vector2i(23, 10), Vector2i(23, 20), Vector2i(23, 32), Vector2i(24, 10), Vector2i(24, 20), Vector2i(25, 10), Vector2i(25, 20), Vector2i(26, 7), Vector2i(26, 10), Vector2i(26, 20), Vector2i(26, 32), Vector2i(27, 7), Vector2i(27, 10), Vector2i(27, 20), Vector2i(27, 32), Vector2i(28, 7), Vector2i(28, 10), Vector2i(28, 20), Vector2i(28, 32), Vector2i(29, 7), Vector2i(29, 10), Vector2i(29, 11), Vector2i(29, 12), Vector2i(29, 13), Vector2i(29, 14), Vector2i(29, 15), Vector2i(29, 16), Vector2i(29, 17), Vector2i(29, 18), Vector2i(29, 19), Vector2i(29, 20), Vector2i(29, 32), Vector2i(30, 7), Vector2i(30, 32), Vector2i(31, 7), Vector2i(31, 32), Vector2i(32, 7), Vector2i(32, 32), Vector2i(33, 7), Vector2i(33, 32)])
+mission_display_name = "Raid the Ilyran Storehouse"
+primary_objective_id = &"objective.farm.extract_supplies"
+primary_objective_text = "Extract two storehouse supply items."
+primary_objective_tiles = Array[Vector2i]([Vector2i(23, 13), Vector2i(25, 15), Vector2i(27, 18)])
+optional_captive_objective_id = &"objective.farm.capture_guard"
+optional_captive_objective_text = "Extract one living settlement guard captive."
+allows_withdrawal = true
+requires_protagonist_extraction = true
+extraction_zones = Array[ExtResource("2_extract")]([SubResource("ExtractionPlayer")])
+deployment_zones = Array[ExtResource("3_zone")]([SubResource("DeploymentPlayer")])
+patrol_paths = Array[ExtResource("4_patrol")]([SubResource("GuardPatrol"), SubResource("FarmhandWork")])
+objective_anchors = Array[ExtResource("5_anchor")]([SubResource("StorehouseObjectiveAnchor")])
+recoverable_prop_anchors = Array[ExtResource("5_anchor")]([SubResource("SupplyAnchorA"), SubResource("SupplyAnchorB"), SubResource("SupplyAnchorC"), SubResource("FurnitureAnchor")])
+reinforcement_anchors = Array[ExtResource("5_anchor")]([SubResource("ReinforcementAnchor")])
+civilian_work_anchors = Array[ExtResource("5_anchor")]([SubResource("CivilianWorkAnchor")])
+lighting_regions = Array[ExtResource("6_light")]([SubResource("BrightRegion")])

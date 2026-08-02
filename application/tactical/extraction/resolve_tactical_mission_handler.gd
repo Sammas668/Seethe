@@ -102,8 +102,12 @@ func resolve(
 	var lock_result: OperationResult = _commit_resolution_lock(result_id)
 	if not lock_result.success:
 		return lock_result
-	var committed: OperationResult = _commit_service.commit_result(
-		result, _setup, _catalogue
+	var authority_snapshot := MissionAuthoritySnapshot.from_tactical_state(
+		_state_store.state, _setup
+	)
+	var envelope := MissionCommitEnvelope.new(_setup, result, authority_snapshot)
+	var committed: OperationResult = _commit_service.commit_envelope(
+		envelope, _catalogue
 	)
 	if not committed.success:
 		_unlock_after_failed_commit()
@@ -143,8 +147,12 @@ func _resolve_tactical_defeat(
 	var lock_result: OperationResult = _commit_resolution_lock(result_id)
 	if not lock_result.success:
 		return lock_result
-	var committed: OperationResult = _commit_service.commit_result(
-		result, _setup, _catalogue
+	var authority_snapshot := MissionAuthoritySnapshot.from_tactical_state(
+		_state_store.state, _setup
+	)
+	var envelope := MissionCommitEnvelope.new(_setup, result, authority_snapshot)
+	var committed: OperationResult = _commit_service.commit_envelope(
+		envelope, _catalogue
 	)
 	if not committed.success:
 		_unlock_after_failed_commit()
@@ -209,7 +217,9 @@ func _finalize_event_statistics(result: MissionResult) -> void:
 func _commit_resolution_lock(result_id: StringName) -> OperationResult:
 	var state: TacticalState = _state_store.state
 	var changes := TacticalChangeSet.new(
-		&"mission_resolution_locked", state.revision
+		&"mission_resolution_locked",
+		state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	changes.stage(
 		func() -> bool:
@@ -225,7 +235,9 @@ func _commit_resolution_lock(result_id: StringName) -> OperationResult:
 func _unlock_after_failed_commit() -> void:
 	var state: TacticalState = _state_store.state
 	var changes := TacticalChangeSet.new(
-		&"mission_resolution_commit_failed", state.revision
+		&"mission_resolution_commit_failed",
+		state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	changes.stage(
 		func() -> bool:

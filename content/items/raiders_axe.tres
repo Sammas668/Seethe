@@ -16,3 +16,5 @@ maximum_stack_size = 1
 equipment_tags = Array[StringName]([&"weapon", &"melee", &"axe", &"reaver"])
 granted_action_ids = Array[StringName]([&"action.raiders_axe_attack"])
 tactical_visual_category = &"weapon"
+
+required_proficiency_id = &"proficiency.martial_weapons"

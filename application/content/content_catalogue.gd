@@ -6,6 +6,7 @@ var action_definitions_by_id: Dictionary = {}
 var defence_profiles_by_id: Dictionary = {}
 var character_templates_by_id: Dictionary = {}
 var character_modifiers_by_id: Dictionary = {}
+var ai_profiles_by_id: Dictionary = {}
 var _frozen: bool = false
 
 
@@ -48,6 +49,13 @@ func register_character_modifier(
 	return true
 
 
+func register_ai_profile(definition: TacticalAIProfileDefinition) -> bool:
+	if not _can_register(definition, definition.id if definition != null else &""):
+		return false
+	ai_profiles_by_id[definition.id] = definition
+	return true
+
+
 func _can_register(definition: Variant, definition_id: StringName) -> bool:
 	if _frozen:
 		push_error("ContentCatalogue is frozen and cannot accept new definitions.")
@@ -64,6 +72,7 @@ func _contains_definition_id(definition_id: StringName) -> bool:
 		or defence_profiles_by_id.has(definition_id)
 		or character_templates_by_id.has(definition_id)
 		or character_modifiers_by_id.has(definition_id)
+		or ai_profiles_by_id.has(definition_id)
 	)
 
 
@@ -95,6 +104,10 @@ func character_modifier(
 	return character_modifiers_by_id.get(modifier_id) as CharacterModifierDefinition
 
 
+func ai_profile(profile_id: StringName) -> TacticalAIProfileDefinition:
+	return ai_profiles_by_id.get(profile_id) as TacticalAIProfileDefinition
+
+
 func actions_granted_by_item(
 		definition: ItemDefinition
 ) -> Array[ActionDefinition]:
@@ -123,6 +136,7 @@ func definition_counts() -> Dictionary:
 		"defences": defence_profiles_by_id.size(),
 		"characters": character_templates_by_id.size(),
 		"modifiers": character_modifiers_by_id.size(),
+		"ai_profiles": ai_profiles_by_id.size(),
 	}
 
 
@@ -133,6 +147,7 @@ func validate_catalogue() -> Array[String]:
 	_validate_defences(errors)
 	_validate_character_templates(errors)
 	_validate_character_modifiers(errors)
+	_validate_ai_profiles(errors)
 	return errors
 
 
@@ -207,19 +222,195 @@ func _validate_character_templates(errors: Array[String]) -> void:
 				"Character template %s references unknown defence profile %s."
 				% [template.id, template.default_defence_profile_id]
 			)
+		if (
+			not template.ai_profile_id.is_empty()
+			and not ai_profiles_by_id.has(template.ai_profile_id)
+		):
+			errors.append(
+				"Character template %s references unknown AI profile %s."
+				% [template.id, template.ai_profile_id]
+			)
 		for action_id: StringName in template.innate_action_ids:
 			if not action_definitions_by_id.has(action_id):
 				errors.append(
 					"Character template %s references unknown innate action %s."
 					% [template.id, action_id]
 				)
-		for entry: Dictionary in template.default_loadout_entries:
-			var item_id: StringName = StringName(entry.get("definition_id", &""))
-			if not item_definitions_by_id.has(item_id):
-				errors.append(
-					"Character template %s references unknown item %s."
-					% [template.id, item_id]
+		_validate_character_default_loadout(template, errors)
+
+
+func _validate_character_default_loadout(
+		template: CharacterTemplateDefinition,
+		errors: Array[String]
+) -> void:
+	var occupied_inventory_cells: Dictionary = {}
+	var equipped_hand_item_ids: Dictionary = {}
+	var equipped_fixed_slot_item_ids: Dictionary = {}
+
+	for entry_index: int in range(template.default_loadout_entries.size()):
+		var entry: Dictionary = template.default_loadout_entries[entry_index]
+		var item_id: StringName = StringName(entry.get("definition_id", &""))
+		if not item_definitions_by_id.has(item_id):
+			errors.append(
+				"Character template %s references unknown item %s."
+				% [template.id, item_id]
+			)
+			continue
+
+		var definition: ItemDefinition = item_definition(item_id)
+		if definition == null:
+			continue
+		var container_kind: StringName = StringName(
+			entry.get("container_kind", &"")
+		)
+		var grid_position: Vector2i = entry.get(
+			"grid_position", Vector2i.ZERO
+		)
+		var quantity: int = maxi(1, int(entry.get("quantity", 1)))
+
+		if quantity > definition.maximum_stack_size:
+			errors.append(
+				"Character template %s loadout item %s exceeds stack limit %d."
+				% [template.id, item_id, definition.maximum_stack_size]
+			)
+		if not definition.stackable and quantity != 1:
+			errors.append(
+				"Character template %s gives non-stackable item %s quantity %d."
+				% [template.id, item_id, quantity]
+			)
+
+		match container_kind:
+			TacticalInventoryState.KIND_PRIMARY_HAND, TacticalInventoryState.KIND_SECONDARY_HAND:
+				if not definition.can_equip_in_hand():
+					errors.append(
+						"Character template %s equips item %s in a hand, but the item is not hand-equippable."
+						% [template.id, item_id]
+					)
+				if quantity != 1:
+					errors.append(
+						"Character template %s equips item %s with quantity %d."
+						% [template.id, item_id, quantity]
+					)
+				if equipped_hand_item_ids.has(container_kind):
+					errors.append(
+						"Character template %s assigns both %s and %s to %s."
+						% [
+							template.id,
+							equipped_hand_item_ids[container_kind],
+							item_id,
+							container_kind,
+						]
+					)
+				else:
+					equipped_hand_item_ids[container_kind] = item_id
+				if (
+					container_kind == TacticalInventoryState.KIND_SECONDARY_HAND
+					and definition.is_two_handed()
+				):
+					errors.append(
+						"Character template %s equips two-handed item %s in Secondary Hand."
+						% [template.id, item_id]
+					)
+
+			TacticalInventoryState.KIND_ARMOUR, TacticalInventoryState.KIND_WORN_UTILITY:
+				if not definition.can_equip_in_slot(container_kind):
+					errors.append(
+						"Character template %s equips item %s in unsupported fixed slot %s."
+						% [template.id, item_id, container_kind]
+					)
+				if quantity != 1:
+					errors.append(
+						"Character template %s equips fixed-slot item %s with quantity %d."
+						% [template.id, item_id, quantity]
+					)
+				if equipped_fixed_slot_item_ids.has(container_kind):
+					errors.append(
+						"Character template %s assigns both %s and %s to %s."
+						% [template.id, equipped_fixed_slot_item_ids[container_kind], item_id, container_kind]
+					)
+				else:
+					equipped_fixed_slot_item_ids[container_kind] = item_id
+
+			TacticalInventoryState.KIND_BELT, TacticalInventoryState.KIND_BACKPACK:
+				if (
+					container_kind == TacticalInventoryState.KIND_BELT
+					and not definition.belt_allowed
+				):
+					errors.append(
+						"Character template %s places item %s on the Belt, but the item is not Belt-legal."
+						% [template.id, item_id]
+					)
+				if (
+					container_kind == TacticalInventoryState.KIND_BACKPACK
+					and not definition.backpack_allowed
+				):
+					errors.append(
+						"Character template %s places item %s in the Backpack, but the item is not Backpack-legal."
+						% [template.id, item_id]
+					)
+
+				var container_width: int = (
+					TacticalInventoryState.BELT_WIDTH
+					if container_kind == TacticalInventoryState.KIND_BELT
+					else TacticalInventoryState.BACKPACK_WIDTH
 				)
+				var container_height: int = (
+					TacticalInventoryState.BELT_HEIGHT
+					if container_kind == TacticalInventoryState.KIND_BELT
+					else TacticalInventoryState.BACKPACK_HEIGHT
+				)
+				var rect: Rect2i = Rect2i(
+					grid_position, definition.inventory_footprint
+				)
+				var rect_end: Vector2i = rect.position + rect.size
+				if (
+					rect.position.x < 0
+					or rect.position.y < 0
+					or rect_end.x > container_width
+					or rect_end.y > container_height
+				):
+					errors.append(
+						"Character template %s places item %s outside the %s grid."
+						% [template.id, item_id, container_kind]
+					)
+
+				for y: int in range(rect.position.y, rect_end.y):
+					for x: int in range(rect.position.x, rect_end.x):
+						var occupancy_key: String = "%s|%d|%d" % [
+							container_kind, x, y,
+						]
+						if occupied_inventory_cells.has(occupancy_key):
+							errors.append(
+								"Character template %s loadout items %s and %s overlap in %s."
+								% [
+									template.id,
+									occupied_inventory_cells[occupancy_key],
+									item_id,
+									container_kind,
+								]
+							)
+						else:
+							occupied_inventory_cells[occupancy_key] = item_id
+
+			_:
+				errors.append(
+					"Character template %s places item %s in unknown container %s."
+					% [template.id, item_id, container_kind]
+				)
+
+	var primary_item_id: StringName = StringName(
+		equipped_hand_item_ids.get(TacticalInventoryState.KIND_PRIMARY_HAND, &"")
+	)
+	var secondary_item_id: StringName = StringName(
+		equipped_hand_item_ids.get(TacticalInventoryState.KIND_SECONDARY_HAND, &"")
+	)
+	if not primary_item_id.is_empty() and not secondary_item_id.is_empty():
+		var primary_definition: ItemDefinition = item_definition(primary_item_id)
+		if primary_definition != null and primary_definition.is_two_handed():
+			errors.append(
+				"Character template %s equips two-handed item %s with Secondary Hand item %s."
+				% [template.id, primary_item_id, secondary_item_id]
+			)
 
 
 func _validate_character_modifiers(errors: Array[String]) -> void:
@@ -244,3 +435,15 @@ func _validate_character_modifiers(errors: Array[String]) -> void:
 					"Character modifier %s grants unknown action %s."
 					% [modifier.id, action_id]
 				)
+
+
+func _validate_ai_profiles(errors: Array[String]) -> void:
+	for raw_id: Variant in ai_profiles_by_id.keys():
+		var profile_id: StringName = StringName(raw_id)
+		var profile: TacticalAIProfileDefinition = ai_profile(profile_id)
+		if profile == null:
+			errors.append("AI profile catalogue contains a null entry: %s" % profile_id)
+			continue
+		if profile.id != profile_id:
+			errors.append("AI profile catalogue key does not match %s." % profile_id)
+		errors.append_array(profile.validate_definition())

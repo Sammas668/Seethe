@@ -71,7 +71,8 @@ func render_inventory_items(
 			item.instance_kind,
 			TacticalStatusBadgeProvider.for_body_item(state, item)
 			if item.is_body()
-			else {}
+			else {},
+			item.definition.fixed_inventory_fixture if item.definition != null else false
 		)
 
 	queue_redraw()
@@ -97,7 +98,8 @@ func render_ground_items(
 			ground_item.instance_kind,
 			TacticalStatusBadgeProvider.for_body_item(state, ground_item)
 			if ground_item.is_body()
-			else {}
+			else {},
+			false
 		)
 
 	queue_redraw()
@@ -224,7 +226,8 @@ func _add_item_control(
 		grid_position: Vector2i,
 		visual_category: StringName = &"misc",
 		instance_kind: StringName = &"item",
-		status_snapshot: Dictionary = {}
+		status_snapshot: Dictionary = {},
+	fixed_fixture: bool = false
 ) -> void:
 	var item_control := SpatialInventoryItemControl.new()
 	add_child(item_control)
@@ -243,7 +246,8 @@ func _add_item_control(
 		footprint,
 		visual_category,
 		instance_kind,
-		status_snapshot
+		status_snapshot,
+		fixed_fixture
 	)
 	item_control.item_activated.connect(
 		func(control: SpatialInventoryItemControl, mouse_button: int) -> void:

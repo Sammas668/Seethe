@@ -17,6 +17,7 @@ signal damage_committed(event: Dictionary)
 signal movement_committed(event: Dictionary)
 signal reaction_decision_requested(request: ReactionDecisionRequest)
 signal reaction_decision_cleared(request_id: StringName)
+signal visibility_delta_changed(team_id: StringName, delta: Dictionary)
 
 var _state_store: TacticalStateStore
 var _map_definition: TacticalMapDefinition
@@ -48,6 +49,24 @@ var _opening_handler: TacticalOpeningHandler
 var _structure_attack_handler: TacticalStructureAttackHandler
 var _geometry_cache: TacticalGeometryCacheService
 var _reaction_service: TacticalReactionService
+var _ability_service: TacticalAbilityService
+var _grapple_handler: GrappleHandler
+
+# Stage 4.5e1 exact attack previews are cached per authoritative tactical,
+# geometry and visibility revision. Provoking-Reaction summaries are cached
+# separately because they depend on the attacker and action, not the hovered
+# target.
+const ATTACK_PREVIEW_CACHE_LIMIT: int = 96
+const PROVOKING_REACTION_CACHE_LIMIT: int = 48
+var _attack_preview_cache: Dictionary = {}
+var _provoking_reaction_preview_cache: Dictionary = {}
+var _attack_preview_cache_hits: int = 0
+var _attack_preview_cache_misses: int = 0
+var _provoking_reaction_cache_hits: int = 0
+var _provoking_reaction_cache_misses: int = 0
+var _last_exact_attack_preview_usec: int = 0
+var _last_provoking_reaction_preview_usec: int = 0
+var _duplicate_preview_requests_avoided: int = 0
 
 
 func _init() -> void:
@@ -82,7 +101,9 @@ func configure(
 		opening_handler: TacticalOpeningHandler = null,
 		structure_attack_handler: TacticalStructureAttackHandler = null,
 		geometry_cache: TacticalGeometryCacheService = null,
-		reaction_service: TacticalReactionService = null
+		reaction_service: TacticalReactionService = null,
+		ability_service: TacticalAbilityService = null,
+		grapple_handler: GrappleHandler = null
 ) -> void:
 	_state_store = state_store
 	_map_definition = map_definition
@@ -112,6 +133,8 @@ func configure(
 	_structure_attack_handler = structure_attack_handler
 	_geometry_cache = geometry_cache
 	_reaction_service = reaction_service
+	_ability_service = ability_service
+	_grapple_handler = grapple_handler
 	_movement_query = MOVEMENT_PREVIEW_QUERY_SCRIPT.new()
 	_movement_query.configure(
 		_state_store,
@@ -130,6 +153,16 @@ func configure(
 		var movement_callback := Callable(self, "_on_movement_committed")
 		if not _enemy_turn_handler.is_connected("movement_committed", movement_callback):
 			_enemy_turn_handler.connect("movement_committed", movement_callback)
+	if _visibility_service != null and _visibility_service.has_signal("visibility_delta_changed"):
+		var visibility_delta_callback := Callable(self, "_on_visibility_delta_changed")
+		if not _visibility_service.is_connected(
+			"visibility_delta_changed",
+			visibility_delta_callback
+		):
+			_visibility_service.connect(
+				"visibility_delta_changed",
+				visibility_delta_callback
+			)
 	if _reaction_service != null:
 		var request_callback := Callable(self, "_on_reaction_decision_requested")
 		if not _reaction_service.reaction_decision_requested.is_connected(request_callback):
@@ -140,6 +173,7 @@ func configure(
 
 
 func _on_state_changed(reason: StringName) -> void:
+	_clear_attack_preview_caches()
 	state_changed.emit(reason)
 
 
@@ -147,6 +181,7 @@ func _on_state_changed_with_flags(
 		reason: StringName,
 		flags: TacticalInvalidationFlags
 ) -> void:
+	_clear_attack_preview_caches()
 	state_changed_with_flags.emit(reason, flags)
 
 
@@ -164,6 +199,13 @@ func _on_reaction_decision_requested(request: ReactionDecisionRequest) -> void:
 
 func _on_reaction_decision_cleared(request_id: StringName) -> void:
 	reaction_decision_cleared.emit(request_id)
+
+
+func _on_visibility_delta_changed(
+		team_id: StringName,
+		delta: Dictionary
+) -> void:
+	visibility_delta_changed.emit(team_id, delta.duplicate(true))
 
 
 func state() -> TacticalState:
@@ -191,11 +233,41 @@ func mission_display_name() -> String:
 
 
 func primary_objective_text() -> String:
+	var tactical_state: TacticalState = state()
+	if tactical_state != null and tactical_state.mission_runtime_state != null:
+		for objective_id: StringName in tactical_state.mission_runtime_state.primary_objective_ids:
+			var objective_state := tactical_state.mission_runtime_state.objective(objective_id)
+			if objective_state != null:
+				return objective_state.display_name
 	return (
 		_mission_setup.primary_objective_text
 		if _mission_setup != null
 		else "Complete the mission objective."
 	)
+
+
+func objective_hud_text() -> String:
+	var tactical_state: TacticalState = state()
+	if tactical_state == null or tactical_state.mission_runtime_state == null:
+		return primary_objective_text()
+	var lines: Array[String] = []
+	for objective_id: StringName in tactical_state.mission_runtime_state.primary_objective_ids:
+		var objective_state := tactical_state.mission_runtime_state.objective(objective_id)
+		if objective_state == null:
+			continue
+		lines.append("%s [%d/%d]%s" % [
+			objective_state.display_name,
+			objective_state.current_quantity,
+			objective_state.required_quantity,
+			" · COMPLETE" if objective_state.is_complete() else "",
+		])
+	for objective_id: StringName in tactical_state.mission_runtime_state.optional_objective_ids:
+		var objective_state := tactical_state.mission_runtime_state.objective(objective_id)
+		if objective_state == null:
+			continue
+		var marker: String = "✓" if objective_state.is_complete() else ("✕" if objective_state.is_failed() else "·")
+		lines.append("%s %s" % [marker, objective_state.display_name])
+	return "\n".join(lines)
 
 
 func required_objective_complete() -> bool:
@@ -345,6 +417,19 @@ func explored_tile_count_for_player() -> int:
 		if _visibility_service != null
 		else 0
 	)
+
+
+func visibility_delta_for_player() -> Dictionary:
+	if (
+		_visibility_service == null
+		or not _visibility_service.has_method("last_delta_for_team")
+	):
+		return {}
+	var delta_value: Variant = _visibility_service.call(
+		"last_delta_for_team",
+		&"player"
+	)
+	return delta_value as Dictionary if delta_value is Dictionary else {}
 
 
 func first_aid_unavailable_reason(
@@ -535,6 +620,28 @@ func reaction_performance_snapshot() -> Dictionary:
 	return _reaction_service.performance_snapshot() if _reaction_service != null else {}
 
 
+func enemy_ai_performance_snapshot() -> Dictionary:
+	return (
+		_enemy_turn_handler.call("performance_snapshot")
+		if (
+			_enemy_turn_handler != null
+			and _enemy_turn_handler.has_method("performance_snapshot")
+		)
+		else {}
+	)
+
+
+func record_last_ai_presentation_timing(presentation_usec: int) -> void:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("record_last_presentation_timing")
+	):
+		_enemy_turn_handler.call(
+			"record_last_presentation_timing",
+			maxi(0, presentation_usec)
+		)
+
+
 func perception_tiles_for_observer(
 		observer_id: StringName,
 		facing_override: Vector2i = Vector2i.ZERO
@@ -647,11 +754,103 @@ func end_initiative_turn(unit_id: StringName) -> OperationResult:
 	return _initiative_handler.end_active_turn(unit_id)
 
 
-func resolve_active_ai_initiative() -> OperationResult:
+func prepare_ai_activation_handoff(unit_id: StringName) -> OperationResult:
+	if (
+		_enemy_turn_handler == null
+		or not _enemy_turn_handler.has_method("prepare_ai_activation_handoff")
+	):
+		return OperationResult.no_change(
+			unit_id,
+			"AI handoff prevalidation is unavailable."
+		)
+	return _enemy_turn_handler.call(
+		"prepare_ai_activation_handoff", unit_id
+	) as OperationResult
+
+
+func peek_next_ai_handoff_unit_id() -> StringName:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("peek_next_ai_handoff_unit_id")
+	):
+		return StringName(_enemy_turn_handler.call(
+			"peek_next_ai_handoff_unit_id"
+		))
+	return &""
+
+
+# Hotfix 5f6: also serves one-actor enemy-to-enemy lookahead.
+func warmup_next_ai_handoff(
+		budget_usec: int = 1500
+) -> OperationResult:
+	if (
+		_enemy_turn_handler == null
+		or not _enemy_turn_handler.has_method("warmup_next_ai_handoff")
+	):
+		return OperationResult.fail(
+			&"enemy_turn_handler_missing",
+			"The enemy handoff warmup is unavailable."
+		)
+	var value: Variant = _enemy_turn_handler.call(
+		"warmup_next_ai_handoff",
+		maxi(250, budget_usec)
+	)
+	var result: OperationResult = value as OperationResult
+	return result if result != null else OperationResult.fail(
+		&"enemy_handoff_warmup_missing",
+		"The enemy AI returned no handoff warmup result."
+	)
+
+
+func cancel_handoff_ai_warmup() -> void:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("cancel_handoff_ai_warmup")
+	):
+		_enemy_turn_handler.call("cancel_handoff_ai_warmup")
+
+
+func warmup_active_ai_initiative(
+		budget_usec: int = 3000
+) -> OperationResult:
+	if (
+		_enemy_turn_handler == null
+		or not _enemy_turn_handler.has_method("warmup_initiative_activation")
+	):
+		return OperationResult.fail(
+			&"enemy_turn_handler_missing",
+			"The enemy AI warmup is unavailable."
+		)
+	var active_id: StringName = active_initiative_unit_id()
+	var value: Variant = _enemy_turn_handler.call(
+		"warmup_initiative_activation",
+		active_id,
+		maxi(250, budget_usec)
+	)
+	var result: OperationResult = value as OperationResult
+	return result if result != null else OperationResult.fail(
+		&"enemy_contact_warmup_missing",
+		"The enemy AI returned no contact warmup result."
+	)
+
+
+func cancel_contact_ai_warmup() -> void:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("cancel_contact_ai_warmup")
+	):
+		_enemy_turn_handler.call("cancel_contact_ai_warmup")
+
+
+func resolve_active_ai_initiative(
+		budget_usec: int = 3000
+) -> OperationResult:
 	if _enemy_turn_handler == null:
 		return OperationResult.fail(&"enemy_turn_handler_missing", "The enemy AI is unavailable.")
 	var active_id: StringName = active_initiative_unit_id()
-	var value: Variant = _enemy_turn_handler.call("resolve_initiative_activation", active_id)
+	var value: Variant = _enemy_turn_handler.call(
+		"resolve_initiative_activation", active_id, maxi(250, budget_usec)
+	)
 	var result: OperationResult = value as OperationResult
 	return result if result != null else OperationResult.fail(
 		&"enemy_turn_result_missing",
@@ -759,6 +958,154 @@ func resolve_enemy_turn() -> OperationResult:
 	)
 
 
+func resolve_next_enemy_activation(
+		budget_usec: int = 3000
+) -> OperationResult:
+	if _enemy_turn_handler == null:
+		return OperationResult.fail(
+			&"enemy_turn_handler_missing",
+			"The Enemy Turn handler is unavailable."
+		)
+	var value: Variant = _enemy_turn_handler.call(
+		"resolve_next_enemy_activation", maxi(250, budget_usec)
+	)
+	var result: OperationResult = value as OperationResult
+	return (
+		result
+		if result != null
+		else OperationResult.fail(
+			&"enemy_activation_result_missing",
+			"The Enemy Turn handler returned no activation result."
+		)
+	)
+
+
+func peek_next_enemy_activation_unit_id() -> StringName:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("peek_next_enemy_activation_unit_id")
+	):
+		return StringName(
+			_enemy_turn_handler.call("peek_next_enemy_activation_unit_id")
+		)
+	return &""
+
+
+func has_pending_enemy_planning() -> bool:
+	return (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("has_pending_enemy_planning")
+		and bool(_enemy_turn_handler.call("has_pending_enemy_planning"))
+	)
+
+
+func enemy_planning_ready_to_commit() -> bool:
+	return (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("is_enemy_plan_ready_to_commit")
+		and bool(_enemy_turn_handler.call("is_enemy_plan_ready_to_commit"))
+	)
+
+
+func pending_enemy_planning_is_visibility() -> bool:
+	return (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("pending_enemy_planning_is_visibility")
+		and bool(_enemy_turn_handler.call("pending_enemy_planning_is_visibility"))
+	)
+
+
+
+
+func has_pending_enemy_destination_visibility() -> bool:
+	return (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method(
+			"has_pending_enemy_destination_visibility"
+		)
+		and bool(_enemy_turn_handler.call(
+			"has_pending_enemy_destination_visibility"
+		))
+	)
+
+
+func pending_enemy_destination_visibility_unit_id() -> StringName:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method(
+			"pending_enemy_destination_visibility_unit_id"
+		)
+	):
+		return StringName(_enemy_turn_handler.call(
+			"pending_enemy_destination_visibility_unit_id"
+		))
+	return &""
+
+
+func step_pending_enemy_destination_visibility(budget_usec: int = 3000) -> bool:
+	if (
+		_enemy_turn_handler == null
+		or not _enemy_turn_handler.has_method(
+			"step_pending_enemy_destination_visibility"
+		)
+	):
+		return true
+	return bool(_enemy_turn_handler.call(
+		"step_pending_enemy_destination_visibility",
+		maxi(250, budget_usec)
+	))
+
+
+func cancel_pending_enemy_destination_visibility() -> void:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method(
+			"cancel_pending_enemy_destination_visibility"
+		)
+	):
+		_enemy_turn_handler.call(
+			"cancel_pending_enemy_destination_visibility"
+		)
+
+
+func record_enemy_planning_frame_yield(
+		slices_this_frame: int,
+		hidden_actor: bool
+) -> void:
+	if (
+		_enemy_turn_handler != null
+		and _enemy_turn_handler.has_method("record_enemy_planning_frame_yield")
+	):
+		_enemy_turn_handler.call(
+			"record_enemy_planning_frame_yield",
+			slices_this_frame,
+			hidden_actor
+		)
+
+
+func commit_ready_enemy_activation() -> OperationResult:
+	if (
+		_enemy_turn_handler == null
+		or not _enemy_turn_handler.has_method("commit_ready_enemy_activation")
+	):
+		return OperationResult.fail(
+			&"enemy_turn_handler_missing",
+			"The Enemy Turn handler cannot commit a completed plan."
+		)
+	var value: Variant = _enemy_turn_handler.call(
+		"commit_ready_enemy_activation"
+	)
+	var result: OperationResult = value as OperationResult
+	return (
+		result
+		if result != null
+		else OperationResult.fail(
+			&"enemy_activation_result_missing",
+			"The Enemy Turn handler returned no committed activation result."
+		)
+	)
+
+
 func set_character_modifier_active(
 		unit_id: StringName,
 		modifier_id: StringName,
@@ -767,6 +1114,61 @@ func set_character_modifier_active(
 	if not _modifier_toggle.is_valid():
 		return false
 	return bool(_modifier_toggle.call(unit_id, modifier_id, active))
+
+
+func grapple_unavailable_reason(actor_id: StringName, target_id: StringName) -> String:
+	if _grapple_handler == null:
+		return "Grapple resolution is unavailable."
+	return _grapple_handler.unavailable_reason(actor_id, target_id)
+
+
+func initiate_grapple(actor_id: StringName, target_id: StringName) -> OperationResult:
+	if _grapple_handler == null:
+		return OperationResult.fail(&"grapple_unavailable", "Grapple resolution is unavailable.")
+	return _grapple_handler.initiate(actor_id, target_id)
+
+
+func release_grapple(actor_id: StringName) -> OperationResult:
+	if _grapple_handler == null:
+		return OperationResult.fail(&"grapple_unavailable", "Grapple resolution is unavailable.")
+	return _grapple_handler.release(actor_id)
+
+
+func break_grapple_hold(target_id: StringName) -> OperationResult:
+	if _grapple_handler == null:
+		return OperationResult.fail(&"grapple_unavailable", "Grapple resolution is unavailable.")
+	return _grapple_handler.break_hold(target_id)
+
+
+func tactical_ability_definition(action_id: StringName) -> TacticalAbilityDefinition:
+	return (
+		_ability_service.ability_definition(action_id)
+		if _ability_service != null
+		else null
+	)
+
+
+func tactical_ability_unavailable_reason(
+		caster_id: StringName,
+		action_id: StringName,
+		target_id: StringName
+) -> String:
+	if _ability_service == null:
+		return "Tactical ability service is unavailable."
+	return _ability_service.unavailable_reason(caster_id, action_id, target_id)
+
+
+func execute_tactical_ability(
+		caster_id: StringName,
+		action_id: StringName,
+		target_id: StringName
+) -> OperationResult:
+	if _ability_service == null:
+		return OperationResult.fail(
+			&"ability_service_missing",
+			"Tactical ability service is unavailable."
+		)
+	return _ability_service.execute(caster_id, action_id, target_id)
 
 
 func action_definition(action_id: StringName) -> ActionDefinition:
@@ -849,6 +1251,23 @@ func preview_attack(
 ):
 	if _attack_preview_query == null:
 		return null
+	var started_usec: int = Time.get_ticks_usec()
+	var cache_key: String = _attack_preview_cache_key(
+		attacker_id,
+		target_id,
+		action_id,
+		power_attack_value,
+		damage_channel,
+		origin_override,
+		target_position_override
+	)
+	if _attack_preview_cache.has(cache_key):
+		_attack_preview_cache_hits += 1
+		_duplicate_preview_requests_avoided += 1
+		_last_exact_attack_preview_usec = Time.get_ticks_usec() - started_usec
+		return _attack_preview_cache[cache_key]
+	_attack_preview_cache_misses += 1
+
 	var preview = _attack_preview_query.call(
 		"execute",
 		attacker_id,
@@ -867,17 +1286,97 @@ func preview_attack(
 	):
 		var attacker: TacticalUnitState = _state_store.state.get_unit(attacker_id)
 		if attacker != null and attacker.is_player_controlled():
-			var summaries: Array[Dictionary] = (
-				_reaction_service.preview_provoking_action_reactions(
-					attacker_id, action_id
-				)
+			var summaries: Array[Dictionary] = _cached_provoking_reaction_summaries(
+				attacker_id,
+				action_id
 			)
-			preview.provoking_reaction_summaries = summaries
+			preview.provoking_reaction_summaries = summaries.duplicate(true)
 			var highest: int = 0
 			for summary: Dictionary in summaries:
 				highest = maxi(highest, int(summary.get("hit_chance_percent", 0)))
 			preview.highest_provoking_reaction_hit_chance = highest
+	_store_attack_preview(cache_key, preview)
+	_last_exact_attack_preview_usec = Time.get_ticks_usec() - started_usec
 	return preview
+
+
+func _cached_provoking_reaction_summaries(
+		attacker_id: StringName,
+		action_id: StringName
+) -> Array[Dictionary]:
+	var started_usec: int = Time.get_ticks_usec()
+	var result: Array[Dictionary] = []
+	var cache_key: String = _provoking_reaction_cache_key(attacker_id, action_id)
+	if _provoking_reaction_preview_cache.has(cache_key):
+		_provoking_reaction_cache_hits += 1
+		_duplicate_preview_requests_avoided += 1
+		var cached_value: Variant = _provoking_reaction_preview_cache[cache_key]
+		if cached_value is Array:
+			for entry: Variant in cached_value:
+				if entry is Dictionary:
+					var entry_dictionary: Dictionary = entry
+					result.append(entry_dictionary.duplicate(true))
+		_last_provoking_reaction_preview_usec = Time.get_ticks_usec() - started_usec
+		return result
+	_provoking_reaction_cache_misses += 1
+	result = _reaction_service.preview_provoking_action_reactions(
+		attacker_id,
+		action_id
+	)
+	if _provoking_reaction_preview_cache.size() >= PROVOKING_REACTION_CACHE_LIMIT:
+		_provoking_reaction_preview_cache.clear()
+	_provoking_reaction_preview_cache[cache_key] = result.duplicate(true)
+	_last_provoking_reaction_preview_usec = Time.get_ticks_usec() - started_usec
+	return result
+
+
+func _attack_preview_cache_key(
+		attacker_id: StringName,
+		target_id: StringName,
+		action_id: StringName,
+		power_attack_value: int,
+		damage_channel: StringName,
+		origin_override: Variant,
+		target_position_override: Variant
+) -> String:
+	return "%s|%s|%s|%d|%s|%s|%s|%d|%d|%d" % [
+		String(attacker_id),
+		String(target_id),
+		String(action_id),
+		power_attack_value,
+		String(damage_channel),
+		str(origin_override),
+		str(target_position_override),
+		tactical_revision(),
+		geometry_revision(),
+		visibility_revision(),
+	]
+
+
+func _provoking_reaction_cache_key(
+		attacker_id: StringName,
+		action_id: StringName
+) -> String:
+	return "%s|%s|%d|%d|%d" % [
+		String(attacker_id),
+		String(action_id),
+		tactical_revision(),
+		geometry_revision(),
+		visibility_revision(),
+	]
+
+
+func _store_attack_preview(cache_key: String, preview: Variant) -> void:
+	if preview == null:
+		return
+	if _attack_preview_cache.size() >= ATTACK_PREVIEW_CACHE_LIMIT:
+		_attack_preview_cache.clear()
+	_attack_preview_cache[cache_key] = preview
+
+
+func _clear_attack_preview_caches() -> void:
+	_attack_preview_cache.clear()
+	_provoking_reaction_preview_cache.clear()
 
 
 func legal_attack_target_ids(
@@ -1295,6 +1794,30 @@ func end_visibility_recalculation_deferral() -> void:
 	end_visibility_recalculation_deferral_for_units([], true)
 
 
+func prepare_visibility_for_destination(
+		unit_id: StringName,
+		destination: Vector2i
+) -> bool:
+	if (
+		_visibility_service != null
+		and _visibility_service.has_method("prepare_visibility_for_destination")
+	):
+		return bool(_visibility_service.call(
+			"prepare_visibility_for_destination",
+			unit_id,
+			destination
+		))
+	return false
+
+
+func prepare_visibility_for_units(unit_ids: Array[StringName]) -> void:
+	if (
+		_visibility_service != null
+		and _visibility_service.has_method("prepare_visibility_for_units")
+	):
+		_visibility_service.call("prepare_visibility_for_units", unit_ids)
+
+
 func end_visibility_recalculation_deferral_for_units(
 		moved_unit_ids: Array[StringName],
 		force_full_visibility: bool = false
@@ -1336,6 +1859,30 @@ func performance_snapshot() -> Dictionary:
 			)
 			else {}
 		),
+		"attack_commit": (
+			_attack_handler.call("performance_snapshot")
+			if (
+				_attack_handler != null
+				and _attack_handler.has_method("performance_snapshot")
+			)
+			else {}
+		),
+		"attack_selection": {
+			"exact_preview_cache_entries": _attack_preview_cache.size(),
+			"exact_preview_cache_hits": _attack_preview_cache_hits,
+			"exact_preview_cache_misses": _attack_preview_cache_misses,
+			"provoking_reaction_cache_entries": _provoking_reaction_preview_cache.size(),
+			"provoking_reaction_cache_hits": _provoking_reaction_cache_hits,
+			"provoking_reaction_cache_misses": _provoking_reaction_cache_misses,
+			"duplicate_preview_requests_avoided": _duplicate_preview_requests_avoided,
+			"last_exact_attack_preview_usec": _last_exact_attack_preview_usec,
+			"last_provoking_reaction_preview_usec": _last_provoking_reaction_preview_usec,
+		},
+		"reactions": (
+			_reaction_service.performance_snapshot()
+			if _reaction_service != null
+			else {}
+		),
 		"visibility": (
 			_visibility_service.call("performance_snapshot")
 			if (
@@ -1355,6 +1902,12 @@ func performance_snapshot() -> Dictionary:
 				_enemy_turn_handler != null
 				and _enemy_turn_handler.has_method("performance_snapshot")
 			)
+			else {}
+		),
+		"transactions": TacticalChangeSet.performance_snapshot(),
+		"state_store": (
+			_state_store.performance_snapshot()
+			if _state_store != null
 			else {}
 		),
 		"directional_cover_field": (

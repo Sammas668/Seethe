@@ -14,6 +14,8 @@ const CONTAINER_PRIMARY_HAND: StringName = &"main_hand"
 const CONTAINER_SECONDARY_HAND: StringName = &"off_hand"
 const CONTAINER_BELT: StringName = &"belt"
 const CONTAINER_BACKPACK: StringName = &"backpack"
+const CONTAINER_ARMOUR: StringName = &"armour"
+const CONTAINER_WORN_UTILITY: StringName = &"worn_utility"
 
 var location_type: StringName = LOCATION_UNASSIGNED
 var owner_id: StringName = &""
@@ -106,7 +108,12 @@ func validate_state() -> Array[String]:
 		LOCATION_CHARACTER_EQUIPMENT:
 			if owner_id.is_empty():
 				errors.append("Character equipment location has no character owner.")
-			if container_id not in [CONTAINER_PRIMARY_HAND, CONTAINER_SECONDARY_HAND]:
+			if container_id not in [
+				CONTAINER_PRIMARY_HAND,
+				CONTAINER_SECONDARY_HAND,
+				CONTAINER_ARMOUR,
+				CONTAINER_WORN_UTILITY,
+			]:
 				errors.append("Character equipment uses illegal container %s." % container_id)
 		LOCATION_CHARACTER_INVENTORY:
 			if owner_id.is_empty():

@@ -82,14 +82,26 @@ func recent_events(
 		filter_id: StringName = FILTER_ALL,
 		include_hidden: bool = false
 ) -> Array[Dictionary]:
-	var matching := events(filter_id, include_hidden)
-	if limit <= 0 or matching.is_empty():
+	if limit <= 0 or _events.is_empty():
 		return []
 
-	var start_index := maxi(0, matching.size() - limit)
+	# Read backwards and stop as soon as the requested visible entries are found.
+	# The previous implementation deep-copied the entire mission journal on every
+	# collapsed-log update before discarding all but the last three records.
+	var reverse_result: Array[Dictionary] = []
+	for index: int in range(_events.size() - 1, -1, -1):
+		var event: Dictionary = _events[index]
+		if not include_hidden and not _is_player_visible(event):
+			continue
+		if not _matches_filter(event, filter_id):
+			continue
+		reverse_result.append(event.duplicate(true))
+		if reverse_result.size() >= limit:
+			break
+
 	var result: Array[Dictionary] = []
-	for index: int in range(start_index, matching.size()):
-		result.append(matching[index].duplicate(true))
+	for index: int in range(reverse_result.size() - 1, -1, -1):
+		result.append(reverse_result[index])
 	return result
 
 

@@ -25,3 +25,5 @@ innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
 skill_bonuses = {"Perception": 4, "Stealth": 4}
 ability_entries = Array[String](["Mark Target — prototype entry", "Live Capture Training"])
 default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.training_shortbow", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.bandage", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.smoke_pellet", "grid_position": Vector2i(1, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.dagger", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.buckler", "grid_position": Vector2i(1, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.spare_arrows", "grid_position": Vector2i(3, 0), "quantity": 1}])
+
+provisional_content = true

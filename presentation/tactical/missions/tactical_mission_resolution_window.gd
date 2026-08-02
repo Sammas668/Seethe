@@ -244,16 +244,29 @@ func _summary_text(
 ) -> String:
 	var lines: Array[String] = []
 	lines.append("[b]Objectives[/b]")
-	lines.append(
-		"Complete — %s" % setup.primary_objective_text
-		if result.completed_objective_ids.has(setup.primary_objective_id)
-		else "Failed — %s" % setup.primary_objective_text
-	)
-	if (
-		not setup.optional_captive_objective_id.is_empty()
-		and result.optional_objective_ids.has(setup.optional_captive_objective_id)
-	):
-		lines.append("Optional complete — %s" % setup.optional_captive_objective_text)
+	if result.objective_outcomes_by_id.is_empty():
+		lines.append(
+			"Complete — %s" % setup.primary_objective_text
+			if result.completed_objective_ids.has(setup.primary_objective_id)
+			else "Failed — %s" % setup.primary_objective_text
+		)
+	else:
+		var objective_ids: Array = result.objective_outcomes_by_id.keys()
+		objective_ids.sort_custom(func(a: Variant, b: Variant) -> bool: return String(a) < String(b))
+		for raw_objective_id: Variant in objective_ids:
+			var entry: Dictionary = result.objective_outcomes_by_id.get(raw_objective_id, {})
+			var status: String = String(entry.get("status", "active")).capitalize()
+			var optional_text: String = "Optional · " if bool(entry.get("optional", false)) else "Primary · "
+			lines.append("• %s%s — %s [%d/%d]" % [
+				optional_text,
+				String(entry.get("display_name", raw_objective_id)),
+				status,
+				int(entry.get("current_quantity", 0)),
+				int(entry.get("required_quantity", 1)),
+			])
+			var failure_reason: String = String(entry.get("failure_reason", ""))
+			if not failure_reason.is_empty():
+				lines.append("  %s" % failure_reason)
 	lines.append("")
 	lines.append("[b]Personnel[/b]")
 	var personnel_count: int = 0
@@ -295,6 +308,11 @@ func _summary_text(
 	lines.append("Enemies incapacitated: %d" % int(result.mission_statistics.get("enemies_incapacitated", 0)))
 	lines.append("Captives taken: %d" % int(result.mission_statistics.get("captives_taken", 0)))
 	lines.append("Allies stabilised: %d" % int(result.mission_statistics.get("allies_stabilised", 0)))
+	if not result.notoriety_preview_lines.is_empty():
+		lines.append("")
+		lines.append("[b]Notoriety preview[/b]")
+		for line: String in result.notoriety_preview_lines:
+			lines.append("• %s" % line)
 	if campaign != null:
 		lines.append("Campaign revision: %d" % campaign.revision)
 	lines.append("")

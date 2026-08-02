@@ -110,12 +110,12 @@ static func create_body(
 		"A fallen character. Its linked character record remains authoritative."
 	)
 	body_definition.weight_lb = 0.0
-	body_definition.inventory_footprint = Vector2i(4, 4)
+	body_definition.inventory_footprint = Vector2i(4, 3)
 	body_definition.handedness = ItemDefinition.HANDEDNESS_NONE
-	# The spatial inventory footprint remains the authority. Medium bodies do not
-	# fit the current Belt, while a future Tiny body may fit and should then use
-	# the same packed-body visibility and downing rules as the Backpack.
-	body_definition.belt_allowed = true
+	# Medium bodies use a 4×3 inventory footprint. Ordinary Backpacks may still
+	# carry them where space permits; the fixed Raider's Sack is the Marauder's
+	# hands-free Belt option. Bodies cannot occupy ordinary Belt cells directly.
+	body_definition.belt_allowed = false
 	body_definition.backpack_allowed = true
 	body_definition.tactical_visual_category = &"body"
 

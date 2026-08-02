@@ -23,6 +23,24 @@ var _event_journal: RefCounted
 var _preview_query: RefCounted
 var _dice_roller: RefCounted
 var _detection_service: TacticalDetectionService
+var _visibility_service: RefCounted
+
+# Stage 4.5e2 commit profiling. Exact target geometry is built during hover;
+# commit performs only revision-aware legality validation when that preview is
+# still current. Combat impact is published before broad state reconciliation.
+var _commit_preview_reuses: int = 0
+var _commit_preview_validation_failures: int = 0
+var _combat_impact_events_emitted: int = 0
+var _lightweight_attack_commits: int = 0
+var _full_validation_attack_commits: int = 0
+var _redundant_hostile_action_resolutions_skipped: int = 0
+var _last_attack_commit_total_usec: int = 0
+var _last_attack_validation_usec: int = 0
+var _last_hostile_action_preparation_usec: int = 0
+var _last_impact_publish_usec_from_commit_start: int = 0
+var _ordinary_attacks_without_visibility_invalidation: int = 0
+var _attack_visibility_invalidations: int = 0
+var _attack_geometry_invalidations: int = 0
 
 
 func configure(
@@ -32,7 +50,8 @@ func configure(
 		event_journal: RefCounted,
 		preview_query: RefCounted,
 		dice_roller: RefCounted,
-		detection_service: TacticalDetectionService = null
+		detection_service: TacticalDetectionService = null,
+		visibility_service: RefCounted = null
 ) -> void:
 	_state_store = state_store
 	_map_definition = map_definition
@@ -41,9 +60,11 @@ func configure(
 	_preview_query = preview_query
 	_dice_roller = dice_roller
 	_detection_service = detection_service
+	_visibility_service = visibility_service
 
 
 func execute_preview(preview) -> OperationResult:
+	var attack_commit_started_usec: int = Time.get_ticks_usec()
 	if preview == null or not bool(preview.get("success")):
 		return OperationResult.fail(
 			&"attack_preview_invalid",
@@ -66,22 +87,37 @@ func execute_preview(preview) -> OperationResult:
 			"The battlefield geometry changed. Preview the attack again."
 		)
 
-	var refreshed = _preview_query.call(
-		"execute",
-		StringName(preview.get("attacker_id")),
-		StringName(preview.get("target_id")),
-		StringName(preview.get("action_id")),
-		int(preview.get("power_attack_value")),
-		StringName(preview.get("damage_channel")),
-		preview.get("attack_origin_override"),
-		preview.get("target_position_override"),
-		preview.get("reaction_context")
+	var validation_started_usec: int = Time.get_ticks_usec()
+	var validation_value: Variant = _preview_query.call(
+		"validate_committed_preview",
+		preview
 	)
+	_last_attack_validation_usec = Time.get_ticks_usec() - validation_started_usec
+	var validation: OperationResult = validation_value as OperationResult
+	if validation == null or not validation.success:
+		_commit_preview_validation_failures += 1
+		_last_attack_commit_total_usec = (
+			Time.get_ticks_usec() - attack_commit_started_usec
+		)
+		return (
+			validation
+			if validation != null
+			else OperationResult.fail(
+				&"attack_no_longer_legal",
+				"The attack is no longer legal."
+			)
+		)
+	var refreshed = validation.data
 	if refreshed == null or not bool(refreshed.get("success")):
+		_commit_preview_validation_failures += 1
+		_last_attack_commit_total_usec = (
+			Time.get_ticks_usec() - attack_commit_started_usec
+		)
 		return OperationResult.fail(
 			&"attack_no_longer_legal",
-			str(refreshed.get("reason")) if refreshed != null else "The attack is no longer legal."
+			"The accepted attack preview could not be reused."
 		)
+	_commit_preview_reuses += 1
 
 	var attacker: TacticalUnitState = state.get_unit(
 		StringName(refreshed.get("attacker_id"))
@@ -99,6 +135,18 @@ func execute_preview(preview) -> OperationResult:
 			"The attacker, target, or attack definition is missing."
 		)
 
+	var ammunition_item: TacticalItemInstanceState = _ammunition_item_for(
+		attacker.unit_id, attack
+	)
+	if attack.ammunition_per_attack > 0 and ammunition_item == null:
+		return OperationResult.fail(
+			&"attack_ammunition_missing",
+			"This attack requires ammunition."
+		)
+	var ammunition_quantity_before: int = (
+		ammunition_item.quantity if ammunition_item != null else 0
+	)
+
 	var budget_snapshot: Dictionary = _budget_snapshot(attacker)
 	var attacker_was_disabled: bool = attacker.is_disabled()
 	var target_hp_before: int = target.current_hp
@@ -107,17 +155,40 @@ func execute_preview(preview) -> OperationResult:
 	var target_life_before: Dictionary = target.life_state_snapshot()
 	var dice_checkpoint: Dictionary = _dice_roller.call("snapshot_state")
 
-	# Randomness is resolved before the TacticalChangeSet begins. The staged
-	# mutations below are deterministic and only apply the already-resolved
-	# outcome. If commit fails, the dice checkpoint is restored.
-	var resolution = _resolve_roll_outcome(
-		refreshed,
-		attack,
-		target,
-		target_hp_before,
-		target_nonlethal_before,
-		target_combat_state_before
+	# Randomness is resolved before the TacticalChangeSet begins. Sanctuary is
+	# checked before the attack roll; a failed Will save spends the declared
+	# attack without rolling the attack or consuming ammunition.
+	var sanctuary_check: Dictionary = _resolve_sanctuary_check(attacker, target)
+	var resolution = (
+		_build_sanctuary_blocked_resolution(
+			refreshed,
+			target_hp_before,
+			target_nonlethal_before,
+			target_combat_state_before,
+			sanctuary_check
+		)
+		if bool(sanctuary_check.get("blocked", false))
+		else _resolve_roll_outcome(
+			refreshed,
+			attack,
+			target,
+			target_hp_before,
+			target_nonlethal_before,
+			target_combat_state_before
+		)
 	)
+	if resolution != null and bool(sanctuary_check.get("checked", false)):
+		_apply_sanctuary_check_to_resolution(resolution, sanctuary_check)
+	var intercessor: TacticalUnitState = null
+	var intercessor_budget_before: Dictionary = {}
+	var intercessor_resources_before: Dictionary = {}
+	if resolution != null:
+		intercessor = _prepare_mercy_intercession(target, resolution)
+		if intercessor != null:
+			intercessor_budget_before = _budget_snapshot(intercessor)
+			intercessor_resources_before = (
+				intercessor.ability_uses_remaining.duplicate(true)
+			)
 	if resolution == null:
 		_dice_roller.call("restore_state", dice_checkpoint)
 		return OperationResult.fail(
@@ -138,21 +209,61 @@ func execute_preview(preview) -> OperationResult:
 		else {}
 	)
 	var cover_salvage_item_id := StringName("instance.salvage.%s" % cover_source_id)
+	var cover_salvage_provenance_id := _generated_item_provenance_id(
+		cover_salvage_item_id
+	)
 	var cover_salvage_existed_before: bool = state.get_item(cover_salvage_item_id) != null
+	var cover_provenance_existed_before: bool = (
+		state.generated_item_provenance(cover_salvage_provenance_id) != null
+	)
 
 	var alert_resolution: TacticalDetectionResolution = null
 	var alert_snapshot: Dictionary = {}
 	if _detection_service != null:
+		var hostile_action_started_usec: int = Time.get_ticks_usec()
 		alert_resolution = _detection_service.prepare_hostile_action_resolution(
 			attacker.unit_id,
 			target.unit_id
 		)
-		alert_snapshot = _detection_service.snapshot_for_resolution(alert_resolution)
+		_last_hostile_action_preparation_usec = (
+			Time.get_ticks_usec() - hostile_action_started_usec
+		)
+		if alert_resolution == null or not alert_resolution.has_state_changes():
+			alert_resolution = null
+			_redundant_hostile_action_resolutions_skipped += 1
+		else:
+			alert_snapshot = _detection_service.snapshot_for_resolution(
+				alert_resolution
+			)
 
+	var attack_contract := TacticalInvalidationContract.attack(
+		attacker.unit_id, target.unit_id
+	)
+	if ammunition_item != null and not bool(resolution.get("sanctuary_blocked")):
+		attack_contract.inventory_changed = true
+		attack_contract.affected_item_ids.append(ammunition_item.item_id)
+	var source_item_id: StringName = StringName(refreshed.get("source_item_id"))
+	var thrown_item: TacticalItemInstanceState = (
+		state.get_item(source_item_id)
+		if attack.id == &"action.reaver_thrown_dagger_attack"
+		else null
+	)
+	var thrown_item_location_before: TacticalItemLocationState = (
+		thrown_item.location.clone() if thrown_item != null else null
+	)
+	if thrown_item != null:
+		attack_contract.inventory_changed = true
+		if not attack_contract.affected_item_ids.has(thrown_item.item_id):
+			attack_contract.affected_item_ids.append(thrown_item.item_id)
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"attack_resolved",
-		state.revision
+		state.revision,
+		attack_contract
 	)
+	changes.set_allow_while_pending(is_reaction)
+	# Staged cover damage or ammunition consumption escalates the authoritative
+	# explicit contract owned by this transaction.
+	var attack_flags: TacticalInvalidationContract = changes.invalidation_contract
 	if is_reaction:
 		changes.stage(
 			Callable(self, "_spend_reaction_and_face").bind(
@@ -176,8 +287,50 @@ func execute_preview(preview) -> OperationResult:
 			"The attack action cost could not be paid.",
 			&"attack_cost_failed"
 		)
+	if ammunition_item != null and not bool(resolution.get("sanctuary_blocked")):
+		changes.stage(
+			Callable(self, "_consume_ammunition").bind(
+				ammunition_item, attack.ammunition_per_attack
+			),
+			Callable(self, "_restore_ammunition").bind(
+				ammunition_item, ammunition_quantity_before
+			),
+			"The attack ammunition could not be consumed.",
+			&"attack_ammunition_failed"
+		)
+	if intercessor != null:
+		if not attack_contract.affected_unit_ids.has(intercessor.unit_id):
+			attack_contract.affected_unit_ids.append(intercessor.unit_id)
+		changes.stage(
+			Callable(self, "_spend_mercy_intercession").bind(intercessor),
+			Callable(self, "_restore_mercy_intercession").bind(
+				intercessor,
+				intercessor_budget_before,
+				intercessor_resources_before
+			),
+			"Mercy Intercession could not spend its Reaction and use.",
+			&"mercy_intercession_cost_failed"
+		)
+
+	var attacker_effects_before: Dictionary = _attack_effect_snapshot(attacker)
+	changes.stage(
+		Callable(self, "_apply_attack_feature_updates").bind(
+			attacker,
+			target,
+			attack,
+			resolution
+		),
+		Callable(self, "_restore_attack_feature_updates").bind(
+			attacker,
+			attacker_effects_before
+		),
+		"Attack feature state could not be updated.",
+		&"attack_feature_update_failed"
+	)
+
 	changes.stage(
 		Callable(self, "_apply_resolved_attack").bind(
+			attacker,
 			target,
 			resolution
 		),
@@ -189,6 +342,17 @@ func execute_preview(preview) -> OperationResult:
 		"The resolved attack damage could not be applied.",
 		&"attack_resolution_failed"
 	)
+	if thrown_item != null:
+		changes.stage(
+			Callable(self, "_land_thrown_item").bind(
+				thrown_item, target.grid_position
+			),
+			Callable(self, "_restore_thrown_item").bind(
+				thrown_item, thrown_item_location_before
+			),
+			"The thrown Dagger could not be placed on the battlefield.",
+			&"thrown_item_landing_failed"
+		)
 	if (
 		bool(resolution.get("missed_due_to_cover"))
 		and StringName(refreshed.get("primary_cover_source_kind")) in [
@@ -199,13 +363,16 @@ func execute_preview(preview) -> OperationResult:
 			Callable(self, "_apply_cover_source_damage_and_salvage").bind(
 				resolution,
 				target.grid_position,
-				cover_salvage_item_id
+				cover_salvage_item_id,
+				attack_flags
 			),
 			Callable(self, "_restore_cover_source_damage_and_salvage").bind(
 				cover_source_id,
 				cover_source_snapshot,
 				cover_salvage_item_id,
-				cover_salvage_existed_before
+				cover_salvage_existed_before,
+				cover_salvage_provenance_id,
+				cover_provenance_existed_before
 			),
 			"The protecting structure could not receive the cover hit.",
 			&"cover_source_damage_failed"
@@ -226,6 +393,58 @@ func execute_preview(preview) -> OperationResult:
 			"The attack alert transition could not be committed.",
 			&"attack_alert_failed"
 		)
+
+	# The common attack path changes only one action budget and one target's HP.
+	# It does not need a whole-mission body/item/squad/environment audit. Escalate
+	# to the full transaction path only for body transitions, structural cover
+	# damage/salvage, or a real alert/initiative mutation.
+	var target_body_state_changed: bool = (
+		StringName(resolution.get("target_combat_state_after"))
+		!= target_combat_state_before
+		or bool(resolution.get("target_became_defeated"))
+	)
+	var body_synchronisation_required: bool = (
+		target_body_state_changed or attacker_was_disabled
+	)
+	var structural_state_changed: bool = (
+		bool(resolution.get("missed_due_to_cover"))
+		and StringName(refreshed.get("primary_cover_source_kind")) in [
+			&"opening", &"structure"
+		]
+	)
+	var full_validation_required: bool = (
+		body_synchronisation_required
+		or structural_state_changed
+		or alert_resolution != null
+	)
+
+	# Precise attack invalidation. A body transition changes standing occupancy
+	# and item representation, but bodies do not block the fog-of-war sight field.
+	# Alert/revelation changes awareness and initiative, not map visibility.
+	if body_synchronisation_required:
+		attack_flags.occupancy_changed = true
+		attack_flags.inventory_changed = true
+	if target_body_state_changed:
+		attack_flags.visibility_changed = true
+		if not attack_flags.moved_observer_ids.has(target.unit_id):
+			attack_flags.moved_observer_ids.append(target.unit_id)
+		if not target.team_id.is_empty() and not attack_flags.affected_team_ids.has(target.team_id):
+			attack_flags.affected_team_ids.append(target.team_id)
+	if alert_resolution != null and (
+		not alert_resolution.newly_aware_squad_ids.is_empty()
+		or not alert_resolution.initiative_totals_by_unit_id.is_empty()
+	):
+		attack_flags.initiative_changed = true
+
+	changes.set_commit_validation_policy(
+		body_synchronisation_required,
+		full_validation_required
+	)
+	if full_validation_required:
+		_full_validation_attack_commits += 1
+	else:
+		_lightweight_attack_commits += 1
+
 	changes.require(
 		Callable(self, "_validate_attack_result").bind(
 			attacker,
@@ -237,6 +456,20 @@ func execute_preview(preview) -> OperationResult:
 		),
 		"The committed attack state is inconsistent.",
 		&"attack_invariant_failed"
+	)
+	# Publish visual impact before any journal formatting or log notification.
+	# Combat-log presentation itself is frame-deferred by TacticalCombatLog, so
+	# the first red pulse/vibration frame is never held behind log rebuilding.
+	changes.after_commit(
+		Callable(self, "_publish_attack_impact").bind(
+			attacker,
+			target,
+			resolution,
+			attack_commit_started_usec
+		)
+	)
+	changes.after_commit(
+		Callable(self, "_record_attack_invalidation_profile").bind(attack_flags)
 	)
 	changes.after_commit(
 		Callable(self, "_record_attack_event").bind(
@@ -260,19 +493,33 @@ func execute_preview(preview) -> OperationResult:
 		_dice_roller.call("restore_state", dice_checkpoint)
 		return committed
 
-	resolution.capacity_after = attacker.action_budget.remaining_turn_capacity_feet
-	resolution.target_hp_after = target.current_hp
-	resolution.target_nonlethal_after = target.nonlethal_damage
-	_emit_damage_committed(attacker, target, resolution)
 	if _detection_service != null and not attacker.squad_id.is_empty():
 		_detection_service.request_current_perception_for_squad(
 			attacker.squad_id
 		)
+	_last_attack_commit_total_usec = (
+		Time.get_ticks_usec() - attack_commit_started_usec
+	)
 	return OperationResult.committed(
 		resolution,
 		_result_message(attacker, target, attack, resolution),
 		_state_store.state.revision
 	)
+
+
+func _publish_attack_impact(
+	attacker: TacticalUnitState,
+	target: TacticalUnitState,
+	resolution,
+	attack_commit_started_usec: int
+) -> void:
+	resolution.capacity_after = attacker.action_budget.remaining_turn_capacity_feet
+	resolution.target_hp_after = target.current_hp
+	resolution.target_nonlethal_after = target.nonlethal_damage
+	_last_impact_publish_usec_from_commit_start = (
+		Time.get_ticks_usec() - attack_commit_started_usec
+	)
+	_emit_damage_committed(attacker, target, resolution)
 
 
 func _apply_disabled_attack_strain(attacker: TacticalUnitState) -> bool:
@@ -288,9 +535,11 @@ func _emit_damage_committed(
 	var applied_damage: int = int(resolution.get("applied_damage"))
 	if applied_damage <= 0:
 		return
-	# This signal is emitted only after the complete TacticalChangeSet has
-	# committed, post-commit log callbacks have run and state_changed has fired.
-	# Presentation may react immediately, but no gameplay system waits for it.
+	# This signal is emitted from the first post-commit callback after authoritative
+	# mutation, before journal publication and broad state_changed handling.
+	# Presentation may start immediate non-blocking feedback; gameplay never
+	# waits for the animation.
+	_combat_impact_events_emitted += 1
 	damage_committed.emit({
 		"attacker_id": attacker.unit_id,
 		"target_id": target.unit_id,
@@ -300,6 +549,209 @@ func _emit_damage_committed(
 		"hp_after": target.current_hp,
 		"nonlethal_after": target.nonlethal_damage,
 	})
+
+
+func performance_snapshot() -> Dictionary:
+	return {
+		"commit_preview_reuses": _commit_preview_reuses,
+		"commit_preview_validation_failures": (
+			_commit_preview_validation_failures
+		),
+		"combat_impact_events_emitted": _combat_impact_events_emitted,
+		"lightweight_attack_commits": _lightweight_attack_commits,
+		"full_validation_attack_commits": _full_validation_attack_commits,
+		"redundant_hostile_action_resolutions_skipped": (
+			_redundant_hostile_action_resolutions_skipped
+		),
+		"last_attack_validation_usec": _last_attack_validation_usec,
+		"last_hostile_action_preparation_usec": (
+			_last_hostile_action_preparation_usec
+		),
+		"last_impact_publish_usec_from_commit_start": (
+			_last_impact_publish_usec_from_commit_start
+		),
+		"last_attack_commit_total_usec": _last_attack_commit_total_usec,
+		"ordinary_attacks_without_visibility_invalidation": (
+			_ordinary_attacks_without_visibility_invalidation
+		),
+		"attack_visibility_invalidations": _attack_visibility_invalidations,
+		"attack_geometry_invalidations": _attack_geometry_invalidations,
+	}
+
+
+func _resolve_sanctuary_check(
+		attacker: TacticalUnitState,
+		target: TacticalUnitState
+) -> Dictionary:
+	var result: Dictionary = {
+		"checked": false,
+		"roll": 0,
+		"bonus": 0,
+		"total": 0,
+		"dc": 0,
+		"blocked": false,
+	}
+	if attacker == null or target == null or not target.has_timed_effect(&"effect.sanctuary"):
+		return result
+	var dc: int = target.timed_effect_value(&"effect.sanctuary")
+	var roll: int = int(_dice_roller.call("roll_die", 20))
+	var bonus: int = (
+		attacker.resolved_character.stat_value(&"will", 0)
+		if attacker.resolved_character != null
+		else 0
+	)
+	if attacker.has_timed_effect(&"effect.resistance"):
+		bonus += attacker.timed_effect_value(&"effect.resistance")
+	result["checked"] = true
+	result["roll"] = roll
+	result["bonus"] = bonus
+	result["total"] = roll + bonus
+	result["dc"] = dc
+	result["blocked"] = roll + bonus < dc
+	return result
+
+
+func _build_sanctuary_blocked_resolution(
+		preview,
+		target_hp_before: int,
+		target_nonlethal_before: int,
+		target_combat_state_before: StringName,
+		sanctuary_check: Dictionary
+):
+	var resolution = ATTACK_RESOLUTION_SCRIPT.new()
+	resolution.preview = preview
+	resolution.capacity_before = int(preview.get("capacity_before"))
+	resolution.target_hp_before = target_hp_before
+	resolution.target_hp_after = target_hp_before
+	resolution.target_nonlethal_before = target_nonlethal_before
+	resolution.target_nonlethal_after = target_nonlethal_before
+	resolution.target_combat_state_before = target_combat_state_before
+	resolution.target_combat_state_after = target_combat_state_before
+	resolution.damage_channel = StringName(preview.get("damage_channel"))
+	resolution.sanctuary_blocked = bool(sanctuary_check.get("blocked", false))
+	return resolution
+
+
+func _apply_sanctuary_check_to_resolution(
+		resolution,
+		sanctuary_check: Dictionary
+) -> void:
+	resolution.sanctuary_checked = bool(sanctuary_check.get("checked", false))
+	resolution.sanctuary_save_roll = int(sanctuary_check.get("roll", 0))
+	resolution.sanctuary_save_bonus = int(sanctuary_check.get("bonus", 0))
+	resolution.sanctuary_save_total = int(sanctuary_check.get("total", 0))
+	resolution.sanctuary_save_dc = int(sanctuary_check.get("dc", 0))
+	resolution.sanctuary_blocked = bool(sanctuary_check.get("blocked", false))
+
+
+func _prepare_mercy_intercession(
+		target: TacticalUnitState,
+		resolution
+) -> TacticalUnitState:
+	if (
+		target == null
+		or resolution == null
+		or not bool(resolution.get("hit"))
+		or StringName(resolution.get("damage_channel")) != TacticalUnitState.DAMAGE_CHANNEL_LETHAL
+		or int(resolution.get("final_damage")) <= 0
+		or not target.has_role_tag(&"biological")
+		or target.is_dead()
+	):
+		return null
+	var best: TacticalUnitState = null
+	for candidate: TacticalUnitState in _state_store.state.get_units():
+		if (
+			candidate == null
+			or candidate.is_dead()
+			or candidate.resolved_character == null
+			or not candidate.is_ai_controlled()
+			or not candidate.resolved_character.has_trait(&"feature.mercy_intercession")
+			or not TacticalTeamRelations.are_allied(candidate.team_id, target.team_id)
+			or not candidate.can_use_reaction()
+			or not candidate.can_spend_ability_resource(&"resource.mercy.intercession", 1)
+		):
+			continue
+		var distance: int = TacticalGridDistance.feet_between(
+			candidate.grid_position,
+			target.grid_position
+		)
+		if distance > 30:
+			continue
+		if best == null or String(candidate.unit_id) < String(best.unit_id):
+			best = candidate
+	if best == null:
+		return null
+	var roll: int = int(_dice_roller.call("roll_die", 8))
+	var reduction: int = mini(int(resolution.get("final_damage")), roll + 3)
+	resolution.mercy_intercession_used = true
+	resolution.mercy_intercessor_id = best.unit_id
+	resolution.mercy_intercession_roll = roll
+	resolution.mercy_intercession_reduction = reduction
+	resolution.final_damage = maxi(0, int(resolution.get("final_damage")) - reduction)
+	return best
+
+
+func _spend_mercy_intercession(intercessor: TacticalUnitState) -> bool:
+	return (
+		intercessor != null
+		and intercessor.action_budget.spend_reaction()
+		and intercessor.spend_ability_resource(&"resource.mercy.intercession", 1)
+	)
+
+
+func _restore_mercy_intercession(
+		intercessor: TacticalUnitState,
+		budget_before: Dictionary,
+		resources_before: Dictionary
+) -> void:
+	if intercessor == null:
+		return
+	_restore_budget(intercessor, budget_before)
+	intercessor.restore_ability_resources(resources_before)
+
+
+func _attack_effect_snapshot(unit: TacticalUnitState) -> Dictionary:
+	return {
+		"rounds": unit.timed_effect_rounds.duplicate(true),
+		"sources": unit.timed_effect_source_ids.duplicate(true),
+		"values": unit.timed_effect_values.duplicate(true),
+		"subdual_target": unit.subdual_takedown_target_id,
+	}
+
+
+func _apply_attack_feature_updates(
+		attacker: TacticalUnitState,
+		target: TacticalUnitState,
+		attack: AttackDefinition,
+		resolution
+) -> bool:
+	if attacker == null or target == null or attack == null or resolution == null:
+		return false
+	if bool(resolution.get("sanctuary_checked")) and attacker.has_timed_effect(&"effect.resistance"):
+		attacker.clear_timed_effect(&"effect.resistance")
+	if not bool(resolution.get("sanctuary_blocked")):
+		if attacker.has_timed_effect(&"effect.guidance"):
+			attacker.clear_timed_effect(&"effect.guidance")
+	if attacker.has_timed_effect(&"effect.sanctuary"):
+		attacker.clear_timed_effect(&"effect.sanctuary")
+	if (
+		bool(resolution.get("hit"))
+		and attack.attack_tags.has(&"sanctuary_blackjack")
+		and attacker.resolved_character != null
+		and attacker.resolved_character.has_trait(&"feat.subdual_takedown")
+	):
+		attacker.mark_subdual_takedown_target(target.unit_id)
+	return true
+
+
+func _restore_attack_feature_updates(
+		attacker: TacticalUnitState,
+		snapshot: Dictionary
+) -> void:
+	attacker.timed_effect_rounds = (snapshot.get("rounds", {}) as Dictionary).duplicate(true)
+	attacker.timed_effect_source_ids = (snapshot.get("sources", {}) as Dictionary).duplicate(true)
+	attacker.timed_effect_values = (snapshot.get("values", {}) as Dictionary).duplicate(true)
+	attacker.subdual_takedown_target_id = StringName(snapshot.get("subdual_target", &""))
 
 
 func _resolve_roll_outcome(
@@ -393,14 +845,29 @@ func _resolve_roll_outcome(
 
 
 func _apply_resolved_attack(
+		attacker: TacticalUnitState,
 		target: TacticalUnitState,
 		resolution
 ) -> bool:
 	resolution.applied_damage = 0
+	var was_nonlethal_unconscious: bool = target.is_nonlethal_unconscious()
 	if bool(resolution.get("hit")):
 		resolution.applied_damage = target.apply_damage(
 			int(resolution.get("final_damage")),
 			StringName(resolution.get("damage_channel"))
+		)
+	if (
+		attacker != null
+		and not was_nonlethal_unconscious
+		and target.is_nonlethal_unconscious()
+		and StringName(resolution.get("damage_channel"))
+			== TacticalUnitState.DAMAGE_CHANNEL_NONLETHAL
+	):
+		target.record_nonlethal_incapacitation(
+			attacker.unit_id,
+			StringName("attack.%s.%s.r%d" % [
+				attacker.unit_id, target.unit_id, _state_store.state.revision
+			])
 		)
 	resolution.target_hp_after = target.current_hp
 	resolution.target_nonlethal_after = target.nonlethal_damage
@@ -411,6 +878,28 @@ func _apply_resolved_attack(
 		and target.is_defeated()
 	)
 	return true
+
+
+func _land_thrown_item(
+		item: TacticalItemInstanceState,
+		landing_cell: Vector2i
+) -> bool:
+	if item == null or item.definition == null:
+		return false
+	item.location = TacticalItemLocationState.ground(
+		landing_cell, "Thrown weapon"
+	)
+	_state_store.state.rebuild_ground_item_index()
+	return true
+
+
+func _restore_thrown_item(
+		item: TacticalItemInstanceState,
+		location_before: TacticalItemLocationState
+) -> void:
+	if item != null and location_before != null:
+		item.location = location_before.clone()
+		_state_store.state.rebuild_ground_item_index()
 
 
 func _restore_attack_resolution(
@@ -560,21 +1049,36 @@ func _record_attack_event(
 		int(preview.get("nonlethal_attack_penalty")),
 		int(preview.get("range_penalty"))
 	)
-	var roll_records: Array = [
-		ROLL_RECORD_SCRIPT.create(
-			&"attack_roll",
-			"d20",
-			[resolution.get("attack_roll")],
-			int(resolution.get("attack_total")),
-			int(preview.get("effective_target_armour_class")),
-			(
-				&"cover_hit"
-				if bool(resolution.get("missed_due_to_cover"))
-				else &"hit" if bool(resolution.get("hit")) else &"miss"
-			),
-			attack_modifiers
-		),
-	]
+	var roll_records: Array = []
+	if bool(resolution.get("sanctuary_checked")):
+		roll_records.append(
+			ROLL_RECORD_SCRIPT.create(
+				&"sanctuary_will_save",
+				"d20",
+				[resolution.get("sanctuary_save_roll")],
+				int(resolution.get("sanctuary_save_total")),
+				int(resolution.get("sanctuary_save_dc")),
+				&"failed" if bool(resolution.get("sanctuary_blocked")) else &"succeeded",
+				[]
+			)
+		)
+	if not bool(resolution.get("sanctuary_blocked")):
+		roll_records.append(
+			ROLL_RECORD_SCRIPT.create(
+				&"attack_roll",
+				"d20",
+				[resolution.get("attack_roll")],
+				int(resolution.get("attack_total")),
+				int(preview.get("effective_target_armour_class")),
+				(
+					&"cover_hit"
+					if bool(resolution.get("missed_due_to_cover"))
+					else &"hit" if bool(resolution.get("hit")) else &"miss"
+				),
+				attack_modifiers
+			)
+		)
+
 	if bool(resolution.get("critical_threat")):
 		roll_records.append(
 			ROLL_RECORD_SCRIPT.create(
@@ -658,6 +1162,25 @@ func _record_attack_event(
 			)
 		else:
 			details.append("Nonlethal attack penalty: −4.")
+	if bool(resolution.get("sanctuary_checked")):
+		details.append(
+			"Sanctuary Will save: d20 %d %+d = %d vs DC %d — %s."
+			% [
+				int(resolution.get("sanctuary_save_roll")),
+				int(resolution.get("sanctuary_save_bonus")),
+				int(resolution.get("sanctuary_save_total")),
+				int(resolution.get("sanctuary_save_dc")),
+				"attack blocked" if bool(resolution.get("sanctuary_blocked")) else "attack permitted",
+			]
+		)
+	if bool(resolution.get("mercy_intercession_used")):
+		details.append(
+			"Mercy Intercession: d8 %d + 3 reduced lethal damage by %d."
+			% [
+				int(resolution.get("mercy_intercession_roll")),
+				int(resolution.get("mercy_intercession_reduction")),
+			]
+		)
 	if bool(resolution.get("natural_one")):
 		details.append("Natural 1: automatic miss.")
 	elif bool(resolution.get("natural_twenty")):
@@ -759,21 +1282,40 @@ func _record_attack_event(
 			"after": target.nonlethal_damage,
 		}
 
+	var attacker_observable: bool = _unit_is_player_observable(attacker)
+	var target_observable: bool = _unit_is_player_observable(target)
+	var hidden_hostile_attacker: bool = (
+		attacker.team_id != &"player" and not attacker_observable
+	)
+	var event_visibility: StringName = (
+		&"player" if attacker_observable or target_observable else &"hidden"
+	)
+	var event_summary: String = (
+		"An unseen attacker attacks %s — %s."
+		% [target.display_name, str(resolution.call("outcome_label"))]
+		if hidden_hostile_attacker and target_observable
+		else "%s attacks %s with %s — %s."
+		% [
+			attacker.display_name,
+			target.display_name,
+			attack.display_name,
+			str(resolution.call("outcome_label")),
+		]
+	)
+	if hidden_hostile_attacker and target_observable:
+		details = _redacted_unseen_attack_details(target, resolution, damage_channel_label)
+		roll_records = []
+
 	var phase: TacticalPhaseState = _state_store.state.phase_state
 	_event_journal.call(
 		"record_event",
 		&"attack_resolved",
 		phase.round_number,
 		phase.current_phase,
-		"%s attacks %s with %s — %s."
-		% [
-			attacker.display_name,
-			target.display_name,
-			attack.display_name,
-			str(resolution.call("outcome_label")),
-		],
+		event_summary,
 		{
 			"category": &"combat",
+			"visibility": event_visibility,
 			"source_actor_id": attacker.unit_id,
 			"target_actor_ids": [target.unit_id],
 			"action_id": attack.id,
@@ -852,10 +1394,54 @@ func _record_attack_event(
 	)
 
 
+func _unit_is_player_observable(unit: TacticalUnitState) -> bool:
+	if unit == null:
+		return false
+	if unit.team_id == &"player":
+		return true
+	if _visibility_service == null:
+		return false
+	if not _visibility_service.has_method("is_unit_visible_to_team"):
+		return false
+	return bool(
+		_visibility_service.call("is_unit_visible_to_team", &"player", unit)
+	)
+
+
+func _redacted_unseen_attack_details(
+		target: TacticalUnitState,
+		resolution,
+		damage_channel_label: String
+) -> Array[String]:
+	var redacted: Array[String] = [
+		"The attacker was outside current player perception.",
+		"Damage channel: %s" % damage_channel_label,
+	]
+	if bool(resolution.get("hit")):
+		redacted.append(
+			"%s suffers %d damage."
+			% [target.display_name, int(resolution.get("final_damage"))]
+		)
+	elif bool(resolution.get("missed_due_to_cover")):
+		redacted.append("The unseen attack struck cover.")
+	else:
+		redacted.append("The unseen attack missed.")
+	if bool(resolution.get("target_became_defeated")):
+		redacted.append(
+			"%s became %s."
+			% [
+				target.display_name,
+				String(target.life_state_id()).replace("_", " ").capitalize(),
+			]
+		)
+	return redacted
+
+
 func _apply_cover_source_damage_and_salvage(
 		resolution,
 		target_tile: Vector2i,
-		salvage_item_id: StringName
+		salvage_item_id: StringName,
+		invalidation_flags: TacticalInvalidationFlags
 ) -> bool:
 	var preview = resolution.get("preview")
 	var source_id: StringName = StringName(preview.get("primary_cover_source_id"))
@@ -870,6 +1456,19 @@ func _apply_cover_source_damage_and_salvage(
 	if not bool(damage_result.get("success", false)):
 		return false
 	resolution.cover_source_damage = damage_result
+	if invalidation_flags != null:
+		if int(damage_result.get("applied_damage", 0)) > 0:
+			invalidation_flags.environment_visuals_changed = true
+		var before_integrity := StringName(damage_result.get("before_integrity", &""))
+		var after_integrity := StringName(damage_result.get("after_integrity", &""))
+		if before_integrity != after_integrity:
+			invalidation_flags.geometry_changed = true
+			if invalidation_flags is TacticalInvalidationContract:
+				(invalidation_flags as TacticalInvalidationContract).justification = (
+					"Attack changed an authored cover source identified by the resolution payload."
+				)
+			if _cover_integrity_blocks_sight(source_id, before_integrity) != _cover_integrity_blocks_sight(source_id, after_integrity):
+				invalidation_flags.visibility_changed = true
 	if not bool(damage_result.get("destroyed", false)):
 		return true
 	var definition_id: StringName = StringName(
@@ -893,6 +1492,11 @@ func _apply_cover_source_damage_and_salvage(
 	)
 	if not _state_store.state.add_item(salvage, _map_definition, false):
 		return false
+	if not _register_generated_salvage_provenance(salvage, source_id):
+		_state_store.state.remove_item(salvage_item_id, false)
+		return false
+	if invalidation_flags != null:
+		invalidation_flags.inventory_changed = true
 	resolution.cover_salvage_item_id = salvage_item_id
 	var opening_runtime: TacticalOpeningState = environment.opening_state(source_id)
 	if opening_runtime != null:
@@ -903,16 +1507,95 @@ func _apply_cover_source_damage_and_salvage(
 	return true
 
 
+func _cover_integrity_blocks_sight(
+		source_id: StringName,
+		integrity_state: StringName
+) -> bool:
+	var opening: TacticalOpeningDefinition = _map_definition.opening_definition(source_id)
+	if opening != null:
+		if integrity_state == TacticalOpeningDefinition.STATE_OPEN:
+			return false
+		if opening.opening_kind == TacticalOpeningDefinition.KIND_WINDOW and opening.clear_glass:
+			return false
+		if opening.opening_kind == TacticalOpeningDefinition.KIND_BARRED_OPENING:
+			return false
+		return integrity_state not in [
+			TacticalOpeningDefinition.STATE_BROKEN,
+			TacticalOpeningDefinition.STATE_DESTROYED,
+		]
+	var structure: TacticalStructureDefinition = _map_definition.structure_definition(source_id)
+	if structure != null:
+		if not structure.blocks_sight_intact:
+			return false
+		return integrity_state not in [
+			TacticalStructureDefinition.STATE_BREACHED,
+			TacticalStructureDefinition.STATE_DESTROYED,
+			TacticalStructureDefinition.STATE_CLEARED,
+		]
+	return false
+
+
+func _record_attack_invalidation_profile(
+		flags: TacticalInvalidationFlags
+) -> void:
+	if flags == null:
+		return
+	if flags.geometry_changed:
+		_attack_geometry_invalidations += 1
+	if flags.visibility_changed:
+		_attack_visibility_invalidations += 1
+	else:
+		_ordinary_attacks_without_visibility_invalidation += 1
+
+
 func _restore_cover_source_damage_and_salvage(
 		source_id: StringName,
 		source_snapshot: Dictionary,
 		salvage_item_id: StringName,
-		salvage_existed_before: bool
+		salvage_existed_before: bool,
+		provenance_id: StringName,
+		provenance_existed_before: bool
 ) -> void:
 	if _state_store.state.environment_state != null and not source_snapshot.is_empty():
 		_state_store.state.environment_state.restore_source(source_id, source_snapshot)
 	if not salvage_existed_before and _state_store.state.get_item(salvage_item_id) != null:
 		_state_store.state.remove_item(salvage_item_id, false)
+	if not provenance_existed_before:
+		_state_store.state.remove_generated_item_provenance(provenance_id)
+
+
+func _generated_item_provenance_id(item_id: StringName) -> StringName:
+	return StringName(
+		"provenance.%s.%s" % [_state_store.state.mission_id, item_id]
+	)
+
+
+func _register_generated_salvage_provenance(
+		salvage: TacticalItemInstanceState,
+		source_id: StringName
+) -> bool:
+	var state: TacticalState = _state_store.state
+	if state == null or salvage == null:
+		return false
+	var provenance := TacticalGeneratedItemProvenance.new()
+	provenance.provenance_id = _generated_item_provenance_id(salvage.item_id)
+	provenance.mission_id = state.mission_id
+	provenance.source_setup_hash = state.source_setup_hash
+	provenance.generated_item_id = salvage.item_id
+	provenance.creation_kind = (
+		TacticalGeneratedItemProvenance.CREATION_STRUCTURAL_SALVAGE
+	)
+	provenance.source_event_id = StringName(
+		"event.%s.cover_destroyed.%s.%d"
+		% [state.mission_id, source_id, state.revision + 1]
+	)
+	provenance.source_entity_id = source_id
+	provenance.definition_id = salvage.definition_id
+	provenance.quantity = salvage.quantity
+	provenance.condition = salvage.condition
+	provenance.persistent_modifiers = salvage.tactical_modifiers.duplicate(true)
+	provenance.creation_revision = state.revision + 1
+	return state.register_generated_item_provenance(provenance)
 
 
 func _cover_source_ground_tile(
@@ -1129,6 +1812,8 @@ func _result_message(
 		attack: AttackDefinition,
 		resolution
 ) -> String:
+	if bool(resolution.get("sanctuary_blocked")):
+		return "%s spent %s against %s, but Sanctuary barred the attack." % [attacker.display_name, attack.display_name, target.display_name]
 	var result: String = "%s used %s against %s: %s"
 	result = result % [
 		attacker.display_name,
@@ -1144,3 +1829,49 @@ func _result_message(
 			).to_lower(),
 		]
 	return result + "."
+
+
+func _ammunition_item_for(
+		unit_id: StringName,
+		attack: AttackDefinition
+) -> TacticalItemInstanceState:
+	if (
+		_state_store == null
+		or _state_store.state == null
+		or attack == null
+		or attack.ammunition_per_attack <= 0
+	):
+		return null
+	for item: TacticalItemInstanceState in _state_store.state.get_items():
+		if item == null or item.location == null or item.definition == null:
+			continue
+		if item.location.owner_id != unit_id:
+			continue
+		if not item.definition.has_tag(attack.ammunition_tag):
+			continue
+		if item.quantity >= attack.ammunition_per_attack:
+			return item
+	return null
+
+
+func _consume_ammunition(
+		item: TacticalItemInstanceState,
+		amount: int
+) -> bool:
+	if item == null or amount <= 0 or item.quantity < amount:
+		return false
+	if item.quantity == amount:
+		return _state_store.state.remove_item(item.item_id, false)
+	item.quantity -= amount
+	return true
+
+
+func _restore_ammunition(
+		item: TacticalItemInstanceState,
+		quantity_before: int
+) -> void:
+	if item == null or quantity_before <= 0:
+		return
+	item.quantity = quantity_before
+	if _state_store.state.get_item(item.item_id) == null:
+		_state_store.state.add_item(item, _map_definition, false)

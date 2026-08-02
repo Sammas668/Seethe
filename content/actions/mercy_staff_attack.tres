@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="AttackDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 6
+damage_type = &"blunt"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+reach_feet = 5
+
+[resource]
+script = ExtResource("1_attack")
+id = &"action.mercy_staff_attack"
+display_name = "Mercy Staff"
+description = "A weak staff strike used when preservation cannot be achieved safely."
+action_cost_type = &"half"
+attack_kind = &"melee"
+attack_ability = &"strength"
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+attack_bonus_modifier = -1
+attack_tags = Array[StringName]([&"weapon", &"staff", &"melee", &"mercy"])
+implementation_profile_id = &"combat.melee_weapon"
+supports_power_attack = false

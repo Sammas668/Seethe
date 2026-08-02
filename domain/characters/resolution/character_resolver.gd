@@ -37,6 +37,17 @@ func resolve(
 	result.portrait_id = character.effective_portrait_id(template)
 	result.tactical_visual_id = template.tactical_visual_id
 	result.footprint = template.footprint
+	result.role_tags = template.role_tags.duplicate()
+	result.proficiency_ids = template.proficiency_ids.duplicate()
+	result.ai_profile_id = template.ai_profile_id
+	result.combatant_classification = template.combatant_classification
+	result.capture_eligible = template.capture_eligible
+	result.surrender_eligible = template.surrender_eligible
+	result.loot_profile_id = template.loot_profile_id
+	result.provisional_content = template.provisional_content
+	result.carrying_strength_bonus = template.carrying_strength_bonus
+	result.ability_resource_maximums = template.ability_resource_maximums.duplicate(true)
+	result.feature_parameters = template.feature_parameters.duplicate(true)
 	result.defence_profile_id = (
 		defence_profile.id if defence_profile != null else &""
 	)
@@ -211,10 +222,22 @@ func _resolve_core_stats(result, character, template, defence_profile, equipment
 			int(template.base_armour_class),
 			&"template"
 		)
+		var dexterity_modifier: int = result.ability_modifier("DEX")
+		var maximum_dexterity_bonus: int = _equipped_maximum_dexterity_bonus(
+			equipment_inputs
+		)
+		var dexterity_contribution: int = mini(
+			dexterity_modifier,
+			maximum_dexterity_bonus
+		)
 		armour.add_line(
 			&"ability.dexterity",
-			"Dexterity",
-			result.ability_modifier("DEX"),
+			(
+				"Dexterity (capped at %+d by armour)" % maximum_dexterity_bonus
+				if dexterity_contribution != dexterity_modifier
+				else "Dexterity"
+			),
+			dexterity_contribution,
 			&"ability"
 		)
 		if defence_profile != null:
@@ -237,6 +260,37 @@ func _resolve_core_stats(result, character, template, defence_profile, equipment
 			active_modifiers
 		)
 		result.stats_by_id[armour.stat_id] = armour
+
+	var armour_check = _new_stat(&"armour_check_penalty", "Armour-check Penalty")
+	if armour_check != null:
+		var armour_penalty: int = _equipped_armour_check_penalty(equipment_inputs)
+		armour_check.add_line(
+			&"equipped_armour",
+			"Equipped armour",
+			armour_penalty,
+			&"equipment"
+		)
+		result.stats_by_id[armour_check.stat_id] = armour_check
+
+	var trap_ac = _new_stat(&"trap_armour_class_bonus", "Trap Sense AC Bonus")
+	if trap_ac != null:
+		trap_ac.add_line(
+			&"feature.trap_sense_1",
+			"Trap Sense +1",
+			int(result.feature_parameter(&"feature.trap_sense_1", &"trap_armour_class_bonus", 0)),
+			&"trait"
+		)
+		result.stats_by_id[trap_ac.stat_id] = trap_ac
+
+	var trap_reflex = _new_stat(&"trap_reflex_bonus", "Trap Sense Reflex Bonus")
+	if trap_reflex != null:
+		trap_reflex.add_line(
+			&"feature.trap_sense_1",
+			"Trap Sense +1",
+			int(result.feature_parameter(&"feature.trap_sense_1", &"trap_reflex_bonus", 0)),
+			&"trait"
+		)
+		result.stats_by_id[trap_reflex.stat_id] = trap_reflex
 
 	_add_save_stat(
 		result,
@@ -362,19 +416,60 @@ func _resolve_core_stats(result, character, template, defence_profile, equipment
 			)
 			result.stats_by_id[sprint.stat_id] = sprint
 
-	var grapple = _new_stat(&"grapple", "Grapple")
-	if grapple != null:
-		grapple.add_line(
+	var manoeuvre = _new_stat(&"manoeuvre", "Manoeuvre")
+	if manoeuvre != null:
+		manoeuvre.add_line(
 			&"base_attack_bonus",
 			"Base Attack Bonus",
 			result.stat_value(&"base_attack_bonus"),
 			&"progression"
 		)
-		grapple.add_line(
+		manoeuvre.add_line(
 			&"ability.strength",
 			"Strength",
 			result.ability_modifier("STR"),
 			&"ability"
+		)
+		_append_external_stat_modifiers(
+			manoeuvre,
+			&"manoeuvre",
+			character,
+			active_modifiers
+		)
+		result.stats_by_id[manoeuvre.stat_id] = manoeuvre
+
+	var manoeuvre_defence = _new_stat(&"manoeuvre_defence", "Manoeuvre Defence")
+	if manoeuvre_defence != null:
+		manoeuvre_defence.add_line(template.id, "Base", 10, &"template")
+		manoeuvre_defence.add_line(
+			&"base_attack_bonus",
+			"Base Attack Bonus",
+			result.stat_value(&"base_attack_bonus"),
+			&"progression"
+		)
+		manoeuvre_defence.add_line(
+			&"ability.strength",
+			"Strength",
+			result.ability_modifier("STR"),
+			&"ability"
+		)
+		_append_external_stat_modifiers(
+			manoeuvre_defence,
+			&"manoeuvre_defence",
+			character,
+			active_modifiers
+		)
+		result.stats_by_id[manoeuvre_defence.stat_id] = manoeuvre_defence
+
+	# Compatibility alias: existing grapple rules use the shared physical
+	# manoeuvre value while older UI/tests still request the grapple stat.
+	var grapple = _new_stat(&"grapple", "Grapple")
+	if grapple != null:
+		grapple.add_line(
+			&"manoeuvre",
+			"Shared Manoeuvre",
+			result.stat_value(&"manoeuvre"),
+			&"derived"
 		)
 		_append_external_stat_modifiers(
 			grapple,
@@ -384,13 +479,41 @@ func _resolve_core_stats(result, character, template, defence_profile, equipment
 		)
 		result.stats_by_id[grapple.stat_id] = grapple
 
-	var carry = _new_stat(&"maximum_weight_lb", "Carrying Capacity")
+	var effective_carrying_strength = _new_stat(
+		&"effective_carrying_strength",
+		"Effective Strength for Carrying"
+	)
+	if effective_carrying_strength != null:
+		effective_carrying_strength.add_line(
+			&"ability.strength",
+			"Strength",
+			result.ability_score("STR"),
+			&"ability"
+		)
+		if template.carrying_strength_bonus != 0:
+			effective_carrying_strength.add_line(
+				template.id,
+				"Raider's Burden",
+				template.carrying_strength_bonus,
+				&"trait"
+			)
+		result.stats_by_id[effective_carrying_strength.stat_id] = effective_carrying_strength
+
+	var carrying_strength_value: int = result.stat_value(
+		&"effective_carrying_strength", result.ability_score("STR")
+	)
+	var maximum_load: int = (
+		_maximum_load_for_strength(carrying_strength_value)
+		if template.carrying_strength_bonus > 0
+		else int(round(float(template.maximum_weight_lb)))
+	)
+	var carry = _new_stat(&"maximum_weight_lb", "Maximum Carried Load")
 	if carry != null:
 		carry.add_line(
 			template.id,
-			"Template capacity",
-			int(round(float(template.maximum_weight_lb))),
-			&"template"
+			"Carrying table at Strength %d" % carrying_strength_value,
+			maximum_load,
+			&"derived"
 		)
 		_append_external_stat_modifiers(
 			carry,
@@ -399,6 +522,26 @@ func _resolve_core_stats(result, character, template, defence_profile, equipment
 			active_modifiers
 		)
 		result.stats_by_id[carry.stat_id] = carry
+
+	var light_load = _new_stat(&"light_load_max_lb", "Light Load Maximum")
+	if light_load != null:
+		light_load.add_line(
+			&"maximum_weight_lb",
+			"One third of maximum load",
+			int(floor(float(maximum_load) / 3.0)),
+			&"derived"
+		)
+		result.stats_by_id[light_load.stat_id] = light_load
+
+	var medium_load = _new_stat(&"medium_load_max_lb", "Medium Load Maximum")
+	if medium_load != null:
+		medium_load.add_line(
+			&"maximum_weight_lb",
+			"Two thirds of maximum load",
+			int(floor(float(maximum_load) * 2.0 / 3.0)),
+			&"derived"
+		)
+		result.stats_by_id[medium_load.stat_id] = medium_load
 
 
 func _add_simple_stat(result, stat_id: StringName, display_name: String, base_value: int, base_label: String, character, active_modifiers: Array) -> void:
@@ -496,6 +639,51 @@ func _append_action(target: Array, seen: Dictionary, action_id: StringName) -> v
 		return
 	seen[action_id] = true
 	target.append(action_id)
+
+
+func _equipped_maximum_dexterity_bonus(equipment_inputs: Array) -> int:
+	var result: int = 99
+	for equipment_value: Variant in equipment_inputs:
+		var equipment: RefCounted = equipment_value as RefCounted
+		if equipment == null or not bool(equipment.get("equipped")):
+			continue
+		if float(equipment.get("condition")) <= 0.0:
+			continue
+		var definition: ItemDefinition = equipment.get("definition") as ItemDefinition
+		if definition == null or definition.defence_profile_id.is_empty():
+			continue
+		result = mini(result, definition.maximum_dexterity_bonus)
+	return result
+
+
+func _equipped_armour_check_penalty(equipment_inputs: Array) -> int:
+	var result: int = 0
+	for equipment_value: Variant in equipment_inputs:
+		var equipment: RefCounted = equipment_value as RefCounted
+		if equipment == null or not bool(equipment.get("equipped")):
+			continue
+		if float(equipment.get("condition")) <= 0.0:
+			continue
+		var definition: ItemDefinition = equipment.get("definition") as ItemDefinition
+		if definition != null:
+			result += mini(0, definition.armour_check_penalty)
+	return result
+
+
+func _maximum_load_for_strength(strength_score: int) -> int:
+	# D&D 3.5 carrying-capacity table. Scores above 29 multiply the value
+	# ten points lower by four, preserving the standard progression.
+	var table: Array[int] = [
+		0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
+		115, 130, 150, 175, 200, 230, 260, 300, 350, 400,
+		460, 520, 600, 700, 800, 920, 1040, 1200, 1400,
+	]
+	var score: int = maxi(1, strength_score)
+	var multiplier: int = 1
+	while score > 29:
+		score -= 10
+		multiplier *= 4
+	return table[score] * multiplier
 
 
 func _new_stat(

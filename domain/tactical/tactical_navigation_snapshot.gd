@@ -5,6 +5,7 @@ var map_definition: TacticalMapDefinition
 var tactical_state: TacticalState
 var mover_id: StringName
 var mover_footprint: Vector2i
+var mover_dragging_body: bool = false
 
 
 func _init(
@@ -17,6 +18,7 @@ func _init(
 	mover_id = mover_id_value
 	var mover := tactical_state.get_unit(mover_id) if tactical_state != null else null
 	mover_footprint = mover.footprint if mover != null else Vector2i.ONE
+	mover_dragging_body = _resolve_mover_dragging_body()
 
 
 func is_inside(origin: Vector2i) -> bool:
@@ -98,6 +100,10 @@ func is_difficult(origin: Vector2i) -> bool:
 
 
 func mover_is_dragging_body() -> bool:
+	return mover_dragging_body
+
+
+func _resolve_mover_dragging_body() -> bool:
 	if tactical_state == null or mover_id.is_empty():
 		return false
 	for hand_kind: StringName in [
@@ -113,6 +119,6 @@ func mover_is_dragging_body() -> bool:
 
 
 func movement_multiplier(origin: Vector2i) -> int:
-	if mover_is_dragging_body():
+	if mover_dragging_body:
 		return 2
 	return 2 if is_difficult(origin) else 1

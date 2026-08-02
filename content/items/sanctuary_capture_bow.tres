@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+[resource]
+script = ExtResource("1_def")
+id = &"item.sanctuary.capture_bow"
+display_name = "Sanctuary Capture Bow"
+description = "A watch bow tuned for padded nonlethal arrows."
+weight_lb = 4.0
+inventory_footprint = Vector2i(3, 2)
+handedness = &"two_handed"
+belt_allowed = false
+backpack_allowed = true
+stackable = false
+maximum_stack_size = 1
+equipment_tags = Array[StringName]([&"weapon", &"ranged", &"bow", &"capture_bow", &"capture_weapon", &"nonlethal"])
+granted_action_ids = Array[StringName]([&"action.sanctuary.capture_bow_attack", &"action.overwatch"])
+defence_profile_id = &""
+stat_modifiers = {}
+tactical_visual_category = &"weapon"
+permits_first_aid = false
+first_aid_bonus = 0
+is_restraint = false

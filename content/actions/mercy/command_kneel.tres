@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.command_kneel"
+display_name = "Command: Kneel"
+description = "Half Action, 30 feet, Will DC 15. On failure the target kneels, current voluntary movement ends, and it cannot voluntarily stand until its next activation."
+action_cost_type = &"half"
+implementation_profile_id = &"ability.save_condition"
+targeting_rule_id = &"target.single_hostile_living"
+range_feet = 30
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &"resource.mercy.command_kneel"
+resource_cost = 1
+spell_rank = 1
+caster_level = 3
+school_tags = Array[StringName]([&"compulsion"])
+dice_count = 0
+die_size = 0
+flat_bonus = 0
+damage_channel = &""
+save_type = &"will"
+save_dc = 15
+half_on_save = false
+condition_id = &"condition.command_kneel"
+duration_rounds = 1
+concentration = false
+bonus_value = 0
+effect_tags = Array[StringName]([&"compulsion"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])

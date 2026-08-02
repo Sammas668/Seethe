@@ -13,11 +13,15 @@ const KIND_SECONDARY_HAND: StringName = &"off_hand"
 const KIND_BELT: StringName = &"belt"
 const KIND_BACKPACK: StringName = &"backpack"
 const KIND_GROUND: StringName = &"ground"
+const KIND_RAIDER_SACK: StringName = TacticalInventoryState.KIND_RAIDER_SACK
 
 const BODY_MENU_LOOT: int = 0
 const BODY_MENU_FIRST_AID: int = 1
 const BODY_MENU_FINISH_OFF: int = 2
 const BODY_MENU_UNTIE: int = 3
+
+const RAIDER_SACK_POPUP_SIZE: Vector2i = Vector2i(340, 310)
+const RAIDER_SACK_CELL_SIZE: Vector2 = Vector2(70.0, 56.0)
 
 @onready var _previous_button: Button = $Modal/Margin/VBox/Header/PreviousUnitButton
 @onready var _unit_title: Label = $Modal/Margin/VBox/Header/UnitTitle
@@ -68,12 +72,16 @@ var _loot_list: ItemList
 var _loot_body_item_id: StringName = &""
 var _loot_take_button: Button
 var _loot_search_button: Button
+var _raider_sack_popup: PanelContainer
+var _raider_sack_grid: SpatialInventoryGrid
+var _raider_sack_close_button: Button
 
 
 func _ready() -> void:
 	set_process_unhandled_key_input(false)
 	_initialize_portrait_views()
 	_initialize_body_interaction_ui()
+	_initialize_raider_sack_ui()
 
 	_previous_button.pressed.connect(func() -> void: _change_unit(-1))
 	_next_button.pressed.connect(func() -> void: _change_unit(1))
@@ -113,11 +121,101 @@ func _ready() -> void:
 		_belt_grid,
 		_backpack_grid,
 		_reach_grid,
+		_raider_sack_grid,
 	]:
 		grid.item_activated.connect(_on_grid_item_activated)
 		grid.transfer_requested.connect(_on_transfer_requested)
 		grid.empty_cell_activated.connect(_on_empty_cell_activated)
 		grid.item_dropped_onto.connect(_on_item_dropped_onto)
+
+
+
+func _initialize_raider_sack_ui() -> void:
+	_raider_sack_popup = PanelContainer.new()
+	_raider_sack_popup.name = "RaiderSackPopup"
+	_raider_sack_popup.visible = false
+	_raider_sack_popup.custom_minimum_size = Vector2(RAIDER_SACK_POPUP_SIZE)
+	_raider_sack_popup.size = Vector2(RAIDER_SACK_POPUP_SIZE)
+	_raider_sack_popup.z_index = 200
+	var popup_style := StyleBoxFlat.new()
+	popup_style.bg_color = Color(0.018, 0.025, 0.031, 0.998)
+	popup_style.border_color = Color(0.69, 0.50, 0.18, 1.0)
+	popup_style.border_width_left = 2
+	popup_style.border_width_top = 2
+	popup_style.border_width_right = 2
+	popup_style.border_width_bottom = 2
+	popup_style.corner_radius_top_left = 4
+	popup_style.corner_radius_top_right = 4
+	popup_style.corner_radius_bottom_left = 4
+	popup_style.corner_radius_bottom_right = 4
+	_raider_sack_popup.add_theme_stylebox_override("panel", popup_style)
+	add_child(_raider_sack_popup)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	_raider_sack_popup.add_child(margin)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	margin.add_child(box)
+
+	var header := HBoxContainer.new()
+	header.custom_minimum_size = Vector2(0.0, 34.0)
+	box.add_child(header)
+
+	var title := Label.new()
+	title.text = "RAIDER'S SACK"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_color_override("font_color", Color(0.92, 0.81, 0.55, 1.0))
+	title.add_theme_font_size_override("font_size", 17)
+	header.add_child(title)
+
+	_raider_sack_close_button = Button.new()
+	_raider_sack_close_button.name = "CloseButton"
+	_raider_sack_close_button.text = "X"
+	_raider_sack_close_button.tooltip_text = "Close Raider's Sack"
+	_raider_sack_close_button.custom_minimum_size = Vector2(34.0, 30.0)
+	_raider_sack_close_button.add_theme_color_override("font_color", Color.WHITE)
+	_raider_sack_close_button.add_theme_font_size_override("font_size", 15)
+	var close_style := StyleBoxFlat.new()
+	close_style.bg_color = Color(0.63, 0.08, 0.08, 1.0)
+	close_style.border_color = Color(0.96, 0.36, 0.31, 1.0)
+	close_style.border_width_left = 1
+	close_style.border_width_top = 1
+	close_style.border_width_right = 1
+	close_style.border_width_bottom = 1
+	close_style.corner_radius_top_left = 3
+	close_style.corner_radius_top_right = 3
+	close_style.corner_radius_bottom_left = 3
+	close_style.corner_radius_bottom_right = 3
+	var close_hover := close_style.duplicate() as StyleBoxFlat
+	close_hover.bg_color = Color(0.82, 0.11, 0.09, 1.0)
+	_raider_sack_close_button.add_theme_stylebox_override("normal", close_style)
+	_raider_sack_close_button.add_theme_stylebox_override("hover", close_hover)
+	_raider_sack_close_button.add_theme_stylebox_override("pressed", close_hover)
+	_raider_sack_close_button.pressed.connect(_close_raider_sack_popup)
+	header.add_child(_raider_sack_close_button)
+
+	var instruction := Label.new()
+	instruction.text = "One restrained Medium-or-smaller captive or compatible burden. Medium bodies occupy the full 4×3 grid."
+	instruction.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	instruction.add_theme_color_override("font_color", Color(0.68, 0.74, 0.77, 1.0))
+	instruction.add_theme_font_size_override("font_size", 11)
+	box.add_child(instruction)
+
+	_raider_sack_grid = SpatialInventoryGrid.new()
+	_raider_sack_grid.name = "RaiderSackGrid"
+	_raider_sack_grid.configure(
+		KIND_RAIDER_SACK,
+		TacticalInventoryState.RAIDER_SACK_WIDTH,
+		TacticalInventoryState.RAIDER_SACK_HEIGHT,
+		RAIDER_SACK_CELL_SIZE
+	)
+	box.add_child(_raider_sack_grid)
 
 
 func _initialize_body_interaction_ui() -> void:
@@ -240,6 +338,7 @@ func open_for_unit(
 
 
 func close_window() -> void:
+	_close_raider_sack_popup()
 	visible = false
 	set_process_unhandled_key_input(false)
 	_clear_selection()
@@ -247,12 +346,14 @@ func close_window() -> void:
 
 
 func hide_silently() -> void:
+	_close_raider_sack_popup()
 	visible = false
 	set_process_unhandled_key_input(false)
 	_clear_selection()
 
 
 func set_current_unit(unit_id: StringName) -> void:
+	_close_raider_sack_popup()
 	_current_unit_id = unit_id
 	_clear_selection()
 	refresh()
@@ -277,6 +378,8 @@ func refresh() -> void:
 
 func show_tab(tab_id: StringName) -> void:
 	_current_tab = TAB_CHARACTER if tab_id == TAB_CHARACTER else TAB_INVENTORY
+	if _current_tab != TAB_INVENTORY:
+		_close_raider_sack_popup()
 	_inventory_tab.visible = _current_tab == TAB_INVENTORY
 	_character_tab.visible = _current_tab == TAB_CHARACTER
 	_inventory_tab_button.button_pressed = _current_tab == TAB_INVENTORY
@@ -354,6 +457,14 @@ func _render_inventory_tab(unit: TacticalUnitState) -> void:
 		state.get_unit_container_items(unit.unit_id, KIND_BACKPACK),
 		state
 	)
+	var raider_sack: TacticalItemInstanceState = state.raider_sack_item_for_unit(unit.unit_id)
+	if raider_sack == null and _raider_sack_popup.visible:
+		_close_raider_sack_popup()
+	if _raider_sack_popup.visible:
+		_raider_sack_grid.render_inventory_items(
+			state.get_unit_container_items(unit.unit_id, KIND_RAIDER_SACK),
+			state
+		)
 	_reach_grid.render_ground_items(
 		state.get_accessible_ground_items(unit),
 		state
@@ -460,13 +571,20 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		+ "Controller: %s\n"
 		+ "Turn: %s\n"
 		+ "Persistence: %s\n"
-		+ "Faction: %s\n\n"
+		+ "Faction: %s\n"
+		+ "Troop Tier: %d\n"
+		+ "Classification: %s\n"
+		+ "AI Profile: %s\n"
+		+ "Reaction: %s\n\n"
 		+ "HP: %d / %d\n"
 		+ "Armour: %s\n"
 		+ "%s\n"
 		+ "%s\n"
 		+ "Half Action: %d ft\n"
 		+ "Sprint: %d ft\n"
+		+ "Reach: 5 ft\n"
+		+ "Footprint: %d × %d tile%s\n"
+		+ "Quick Action: %s\n"
 		+ "Weight: %.1f / %.1f lb\n\n"
 		+ "[font_size=10]Persistent ID: %s[/font_size]"
 	) % [
@@ -482,13 +600,21 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		String(unit.turn_behavior).replace("_", " ").capitalize(),
 		String(snapshot.persistence_scope).capitalize(),
 		String(snapshot.faction_id),
+		snapshot.troop_tier,
+		String(snapshot.combatant_classification).capitalize(),
+		String(snapshot.ai_profile_id),
+		String(unit.action_budget.reaction_state).replace("_", " ").capitalize(),
 		unit.current_hp,
 		unit.maximum_hp,
 		armour_name,
 		_formatted_stat(snapshot, &"armour_class", "Armour Class", false),
 		_formatted_stat(snapshot, &"turn_capacity", "Movement", false, " ft"),
 		snapshot.stat_value(&"half_action_cost", 0),
-		snapshot.stat_value(&"sprint_distance", 0),
+		unit.sprint_distance_feet,
+		unit.footprint.x,
+		unit.footprint.y,
+		"" if unit.footprint == Vector2i.ONE else "s",
+		"Available" if unit.action_budget.quick_action_available else "Spent",
 		_facade.state().calculated_carried_weight(unit.unit_id),
 		unit.inventory.maximum_weight_lb,
 		String(unit.persistent_character_id),
@@ -516,6 +642,9 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		+ "%s\n"
 		+ "%s\n"
 		+ "%s\n"
+		+ "%s\n"
+		+ "%s\n"
+		+ "%s\n"
 		+ "%s\n\n"
 		+ "[b]SKILLS[/b]\n%s"
 	) % [
@@ -525,6 +654,9 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		_formatted_stat(snapshot, &"fortitude", "Fortitude", true),
 		_formatted_stat(snapshot, &"reflex", "Reflex", true),
 		_formatted_stat(snapshot, &"will", "Will", true),
+		_formatted_stat(snapshot, &"grapple", "Grapple", true),
+		_formatted_stat(snapshot, &"manoeuvre", "Manoeuvre", true),
+		_formatted_stat(snapshot, &"manoeuvre_defence", "Manoeuvre Defence", false),
 		_skill_summary(snapshot),
 	]
 
@@ -532,20 +664,32 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		"[b]CURRENT EQUIPMENT[/b]\n"
 		+ "Primary Hand: %s\n"
 		+ "Secondary Hand: %s\n"
-		+ "Belt: %s\n\n"
+		+ "Armour: %s\n"
+		+ "Belt: %s\n"
+		+ "Backpack: %s\n"
+		+ "Worn Utility: %s\n\n"
 		+ "[b]ATTACKS[/b]\n%s\n\n"
 		+ "[b]DEFENCES & RESISTANCES[/b]\n%s\n\n"
 		+ "[b]ABILITIES[/b]\n%s\n\n"
+		+ "[b]PROFICIENCIES[/b]\n%s\n\n"
+		+ "[b]ROLE TAGS[/b]\n%s\n\n"
+		+ "[b]CARRYING[/b]\n%s\n\n"
 		+ "[b]CONDITIONS[/b]\n%s\n\n"
 		+ "[b]INJURIES[/b]\n%s\n\n"
 		+ "[b]HISTORY[/b]\n%s"
 	) % [
 		_facade.state().hand_display_name(unit.unit_id, KIND_PRIMARY_HAND),
 		_facade.state().hand_display_name(unit.unit_id, KIND_SECONDARY_HAND),
+		_facade.state().container_summary(unit.unit_id, TacticalInventoryState.KIND_ARMOUR),
 		_facade.state().container_summary(unit.unit_id, KIND_BELT),
+		_facade.state().container_summary(unit.unit_id, KIND_BACKPACK),
+		_facade.state().container_summary(unit.unit_id, TacticalInventoryState.KIND_WORN_UTILITY),
 		_attack_summary_for_unit(unit),
 		_defence_summary_for_unit(snapshot, defence_profile),
-		snapshot.list_or_none(snapshot.ability_entries),
+		_ability_summary_for_unit(unit),
+		snapshot.list_or_none(snapshot.proficiency_ids),
+		snapshot.list_or_none(snapshot.role_tags),
+		_carrying_summary_for_unit(unit),
 		snapshot.list_or_none(snapshot.condition_entries, "No active conditions."),
 		snapshot.list_or_none(snapshot.injury_entries, "No injuries."),
 		snapshot.list_or_none(snapshot.history_entries, "No recorded history."),
@@ -560,6 +704,89 @@ func _render_character_tab(unit: TacticalUnitState) -> void:
 		if unit.is_player_controlled()
 		else "Inspection only — this unit is not player-controlled."
 	)
+
+
+func _ability_summary_for_unit(unit: TacticalUnitState) -> String:
+	var lines: Array[String] = []
+	for entry: Variant in unit.resolved_character.ability_entries:
+		lines.append(String(entry))
+	if not unit.ability_resource_maximums.is_empty():
+		lines.append("")
+		lines.append("[b]REMAINING USES[/b]")
+		var resource_ids: Array[String] = []
+		for raw_id: Variant in unit.ability_resource_maximums.keys():
+			resource_ids.append(String(raw_id))
+		resource_ids.sort()
+		for resource_text: String in resource_ids:
+			var resource_id := StringName(resource_text)
+			var maximum: int = int(unit.ability_resource_maximums.get(resource_id, 0))
+			var remaining: int = unit.ability_uses(resource_id)
+			var label: String = resource_text.trim_prefix("resource.").replace(".", " ").capitalize()
+			lines.append(
+				"%s: At will" % label
+				if maximum < 0
+				else "%s: %d / %d" % [label, remaining, maximum]
+			)
+	if unit.fatigued_after_rage:
+		lines.append("Fatigued after Rage for this encounter")
+	lines.append_array(_rage_live_summary(unit))
+	return "None" if lines.is_empty() else "\n".join(PackedStringArray(lines))
+
+
+func _carrying_summary_for_unit(unit: TacticalUnitState) -> String:
+	var snapshot: ResolvedCharacterSnapshot = unit.resolved_character
+	var actual_strength: int = snapshot.ability_score("STR")
+	var carrying_strength: int = snapshot.stat_value(
+		&"effective_carrying_strength", actual_strength
+	)
+	return (
+		"Effective Strength for carrying: %d (actual %d + %d Raider's Burden)\n"
+		+ "Light: 0-%d lb · Medium: %d-%d lb · Heavy: %d-%d lb\n"
+		+ "Current: %.1f / %d lb\n"
+		+ "Load: %s · Movement: %d ft · Half Action: %d ft · Sprint: %s"
+	) % [
+		carrying_strength,
+		actual_strength,
+		snapshot.carrying_strength_bonus,
+		snapshot.stat_value(&"light_load_max_lb", 0),
+		snapshot.stat_value(&"light_load_max_lb", 0) + 1,
+		snapshot.stat_value(&"medium_load_max_lb", 0),
+		snapshot.stat_value(&"medium_load_max_lb", 0) + 1,
+		snapshot.stat_value(&"maximum_weight_lb", 0),
+		_facade.state().calculated_carried_weight(unit.unit_id),
+		snapshot.stat_value(&"maximum_weight_lb", 0),
+		String(unit.load_category).replace("_", " ").capitalize(),
+		unit.action_budget.maximum_turn_capacity_feet,
+		int(floor(float(unit.action_budget.maximum_turn_capacity_feet) * 0.5)),
+		("Unavailable" if unit.sprint_distance_feet <= 0 else "%d ft" % unit.sprint_distance_feet),
+	]
+
+
+func _rage_live_summary(unit: TacticalUnitState) -> Array[String]:
+	var lines: Array[String] = []
+	var snapshot: ResolvedCharacterSnapshot = unit.resolved_character
+	if snapshot == null or not snapshot.has_trait(&"feature.rage"):
+		return lines
+	lines.append("")
+	lines.append("[b]RAGE — LIVE RESOLVED SHEET[/b]")
+	lines.append(
+		"Status: Active · %d rounds remaining" % unit.rage_rounds_remaining
+		if unit.active_character_modifier_ids.has(&"effect.rage")
+		else "Status: Inactive"
+	)
+	lines.append("Uses: %d / %d" % [
+		unit.ability_uses(&"resource.rage"),
+		int(unit.ability_resource_maximums.get(&"resource.rage", 1)),
+	])
+	lines.append("Strength %d · Constitution %d · HP %d/%d · AC %d" % [
+		snapshot.ability_score("STR"), snapshot.ability_score("CON"),
+		unit.current_hp, unit.maximum_hp, unit.armour_class,
+	])
+	lines.append("Fort %+d · Reflex %+d · Will %+d · Grapple %+d" % [
+		snapshot.stat_value(&"fortitude"), snapshot.stat_value(&"reflex"),
+		snapshot.stat_value(&"will"), snapshot.stat_value(&"grapple"),
+	])
+	return lines
 
 
 func _attack_summary_for_unit(unit: TacticalUnitState) -> String:
@@ -578,13 +805,15 @@ func _attack_summary_for_unit(unit: TacticalUnitState) -> String:
 		var marker := "▼" if _expanded_breakdowns.has(key) else "▶"
 		var readiness := "READY" if ready_ids.has(action_id) else "STOWED"
 		lines.append(
-			"[url=%s]%s %s %+d · %s · %s · %s · %s[/url]"
+			"[url=%s]%s %s %+d · %s %s · Critical %s · %s · %s · %s[/url]"
 			% [
 				key,
 				marker,
 				attack.display_name,
 				snapshot.attack_bonus_for(attack),
 				snapshot.damage_notation_for(attack),
+				_damage_type_and_mode_summary(attack),
+				_critical_summary(attack),
 				attack.range_profile.summary(),
 				attack.cost_label(),
 				readiness,
@@ -602,6 +831,32 @@ func _attack_summary_for_unit(unit: TacticalUnitState) -> String:
 	if lines.is_empty():
 		return "No typed attacks available."
 	return "\n".join(PackedStringArray(lines))
+
+
+func _critical_summary(attack: AttackDefinition) -> String:
+	if attack == null:
+		return "—"
+	if attack.critical_threat_minimum >= 20:
+		return "×%d" % attack.critical_multiplier
+	return "%d–20/×%d" % [
+		attack.critical_threat_minimum,
+		attack.critical_multiplier,
+	]
+
+
+func _damage_type_and_mode_summary(attack: AttackDefinition) -> String:
+	if attack == null or attack.damage_profile == null:
+		return "damage"
+	var type_text: String = String(attack.damage_profile.damage_type).replace("_", "/")
+	match attack.damage_mode_policy:
+		AttackDefinition.DAMAGE_POLICY_NONLETHAL_ONLY:
+			return "nonlethal %s" % type_text
+		AttackDefinition.DAMAGE_POLICY_LETHAL_ONLY:
+			return "lethal %s" % type_text
+		_:
+			if attack.supports_nonlethal:
+				return "lethal/nonlethal %s" % type_text
+			return type_text
 
 
 func _defence_summary_for_unit(
@@ -697,6 +952,13 @@ func _on_grid_item_activated(
 		item_control: SpatialInventoryItemControl,
 		mouse_button: int
 ) -> void:
+	var activated_item: TacticalItemInstanceState = _facade.state().get_item(item_control.item_id)
+	if activated_item != null and activated_item.definition != null and activated_item.definition.has_tag(&"raiders_sack"):
+		if mouse_button == MOUSE_BUTTON_LEFT:
+			_open_raider_sack_popup()
+		else:
+			message_requested.emit("Raider's Sack is a permanent Belt item. Left-click it to open.")
+		return
 	if mouse_button == MOUSE_BUTTON_RIGHT:
 		var item: TacticalItemInstanceState = _facade.state().get_item(
 			item_control.item_id
@@ -708,6 +970,39 @@ func _on_grid_item_activated(
 		return
 
 	_select_source(item_control.source_kind, item_control.item_id)
+
+
+func _open_raider_sack_popup() -> void:
+	if _facade == null or _current_unit_id.is_empty():
+		return
+	var state: TacticalState = _facade.state()
+	var sack: TacticalItemInstanceState = state.raider_sack_item_for_unit(
+		_current_unit_id
+	)
+	if sack == null:
+		message_requested.emit(
+			"This Marauder has no Raider's Sack item. Reopen the mission so the loadout migration can repair it."
+		)
+		return
+	_raider_sack_grid.render_inventory_items(
+		state.get_unit_container_items(_current_unit_id, KIND_RAIDER_SACK),
+		state
+	)
+	var popup_size := RAIDER_SACK_POPUP_SIZE
+	var viewport_size := Vector2i(get_viewport_rect().size)
+	var desired := Vector2i(get_viewport().get_mouse_position()) + Vector2i(18, 18)
+	desired.x = clampi(desired.x, 8, maxi(8, viewport_size.x - popup_size.x - 8))
+	desired.y = clampi(desired.y, 8, maxi(8, viewport_size.y - popup_size.y - 8))
+	_raider_sack_popup.position = Vector2(desired)
+	_raider_sack_popup.size = Vector2(popup_size)
+	_raider_sack_popup.visible = true
+	_raider_sack_popup.move_to_front()
+	message_requested.emit("Raider's Sack opened.")
+
+
+func _close_raider_sack_popup() -> void:
+	if _raider_sack_popup != null and _raider_sack_popup.visible:
+		_raider_sack_popup.hide()
 
 
 func _on_item_dropped_onto(
@@ -1124,6 +1419,7 @@ func _clear_selection() -> void:
 
 
 func _change_unit(direction: int) -> void:
+	_close_raider_sack_popup()
 	var order := _resolved_unit_order()
 	if order.is_empty():
 		return

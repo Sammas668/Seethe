@@ -21,3 +21,5 @@ maximum_weight_lb = 60.0
 default_defence_profile_id = &"defence.light_armour"
 innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
 default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.training_spear", "grid_position": Vector2i(0, 0), "quantity": 1}])
+
+provisional_content = true

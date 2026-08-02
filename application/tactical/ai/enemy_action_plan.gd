@@ -14,6 +14,7 @@ var _move_destination: Vector2i = Vector2i.ZERO
 var _move_required: bool = false
 var _attack_after_move: bool = false
 var _path_cost_feet: int = 0
+var _move_path: Array[Vector2i] = []
 var _memory_unit_id: StringName = &""
 var _goal_position: Vector2i = Vector2i(-1, -1)
 var _goal_reached: bool = false
@@ -46,6 +47,9 @@ var attack_after_move: bool:
 var path_cost_feet: int:
 	get:
 		return _path_cost_feet
+var move_path: Array[Vector2i]:
+	get:
+		return _move_path.duplicate()
 var memory_unit_id: StringName:
 	get:
 		return _memory_unit_id
@@ -63,7 +67,8 @@ func configure_success(
 		move_destination_value: Vector2i,
 		move_required_value: bool,
 		attack_after_move_value: bool,
-		path_cost_feet_value: int
+		path_cost_feet_value: int,
+		move_path_value: Array[Vector2i] = []
 ) -> void:
 	if _finalized:
 		return
@@ -75,6 +80,7 @@ func configure_success(
 	_move_required = move_required_value
 	_attack_after_move = attack_after_move_value
 	_path_cost_feet = maxi(0, path_cost_feet_value)
+	_move_path = move_path_value.duplicate()
 	_finalized = true
 
 
@@ -84,7 +90,8 @@ func configure_search(
 		move_destination_value: Vector2i,
 		move_required_value: bool,
 		goal_reached_value: bool,
-		path_cost_feet_value: int
+		path_cost_feet_value: int,
+		move_path_value: Array[Vector2i] = []
 ) -> void:
 	if _finalized:
 		return
@@ -96,6 +103,7 @@ func configure_search(
 	_move_required = move_required_value
 	_goal_reached = goal_reached_value
 	_path_cost_feet = maxi(0, path_cost_feet_value)
+	_move_path = move_path_value.duplicate()
 	_finalized = true
 
 
@@ -104,7 +112,8 @@ func configure_return_to_task(
 		move_destination_value: Vector2i,
 		move_required_value: bool,
 		goal_reached_value: bool,
-		path_cost_feet_value: int
+		path_cost_feet_value: int,
+		move_path_value: Array[Vector2i] = []
 ) -> void:
 	if _finalized:
 		return
@@ -115,6 +124,7 @@ func configure_return_to_task(
 	_move_required = move_required_value
 	_goal_reached = goal_reached_value
 	_path_cost_feet = maxi(0, path_cost_feet_value)
+	_move_path = move_path_value.duplicate()
 	_finalized = true
 
 

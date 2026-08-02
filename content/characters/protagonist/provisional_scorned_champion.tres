@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.protagonist.provisional_scorned_champion"
+display_name = "Scorned Champion (Provisional)"
+species_name = "Human"
+class_name_text = "Provisional martial protagonist"
+archetype_name = "Campaign choice deferred"
+troop_type = "Protagonist"
+troop_tier = 0
+base_level = 3
+base_xp = 3000
+base_ability_scores = {"CHA": 12, "CON": 14, "DEX": 12, "INT": 10, "STR": 16, "WIS": 10}
+base_attack_bonus = 3
+base_save_bonuses = {"fortitude": 3, "reflex": 1, "will": 1}
+base_hp_before_constitution = 28
+hp_constitution_levels = 3
+base_armour_class = 10
+base_turn_capacity_feet = 80
+sprint_multiplier = 1.5
+passive_perception_base = 10
+perception_skill_bonus = 2
+maximum_weight_lb = 90.0
+footprint = Vector2i(1, 1)
+default_defence_profile_id = &"defence.patchwork_raider_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+trait_ids = Array[StringName]([])
+skill_bonuses = {"Athletics": 6, "Intimidation": 4, "Perception": 2}
+ability_entries = Array[String](["Provisional protagonist — progression and archetype selection are deferred to Stage 5.0f."])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.raiders_axe", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.rope", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.bandage", "grid_position": Vector2i(0, 0), "quantity": 1}])
+portrait_id = &"portrait.hakon_rusk"
+tactical_visual_id = &"tactical.protagonist.provisional"
+role_tags = Array[StringName]([&"player", &"protagonist", &"provisional"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.martial_weapons", &"proficiency.light_armour"])
+combatant_classification = &"combatant"
+capture_eligible = false
+surrender_eligible = false
+loot_profile_id = &"loot_profile.protagonist.provisional"
+provisional_content = true

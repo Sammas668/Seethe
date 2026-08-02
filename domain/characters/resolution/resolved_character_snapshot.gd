@@ -19,6 +19,17 @@ var troop_tier: int = 0
 var portrait_id: StringName = &""
 var tactical_visual_id: StringName = &""
 var footprint: Vector2i = Vector2i.ONE
+var role_tags: Array[StringName] = []
+var proficiency_ids: Array[StringName] = []
+var ai_profile_id: StringName = &""
+var combatant_classification: StringName = &"combatant"
+var capture_eligible: bool = true
+var surrender_eligible: bool = true
+var loot_profile_id: StringName = &""
+var provisional_content: bool = false
+var carrying_strength_bonus: int = 0
+var ability_resource_maximums: Dictionary = {}
+var feature_parameters: Dictionary = {}
 
 var ability_scores: Dictionary = {}
 var stats_by_id: Dictionary = {}
@@ -37,6 +48,18 @@ var history_entries: Array = []
 
 func has_trait(trait_id: StringName) -> bool:
 	return trait_ids.has(trait_id)
+
+
+func has_proficiency(proficiency_id: StringName) -> bool:
+	return proficiency_id.is_empty() or proficiency_ids.has(proficiency_id)
+
+
+func trap_armour_class_bonus() -> int:
+	return stat_value(&"trap_armour_class_bonus", 0)
+
+
+func trap_reflex_bonus() -> int:
+	return stat_value(&"trap_reflex_bonus", 0)
 
 
 func ability_score(abbreviation: String) -> int:
@@ -91,6 +114,7 @@ func attack_bonus_for(attack) -> int:
 		+ ability_modifier(ability_abbreviation)
 		+ int(attack.attack_bonus_modifier)
 		+ stat_value(StringName("attack.%s" % attack.id), 0)
+		+ _weapon_focus_bonus(attack)
 	)
 
 
@@ -105,6 +129,7 @@ func damage_bonus_for(attack) -> int:
 		ability_modifier(ability_abbreviation)
 		+ int(attack.damage_bonus_modifier)
 		+ stat_value(StringName("damage.%s" % attack.id), 0)
+		+ stat_value(&"damage.all", 0)
 	)
 
 
@@ -147,6 +172,9 @@ func attack_breakdown_for(attack) -> Array[String]:
 				int(attack.attack_bonus_modifier),
 			]
 		)
+	var focus_bonus: int = _weapon_focus_bonus(attack)
+	if focus_bonus != 0:
+		lines.append("%-28s %+d" % ["Weapon Focus", focus_bonus])
 	var situational := stat_value(StringName("attack.%s" % attack.id), 0)
 	if situational != 0:
 		lines.append("%-28s %+d" % ["Situational", situational])
@@ -174,6 +202,9 @@ func damage_breakdown_for(attack) -> Array[String]:
 				int(attack.damage_bonus_modifier),
 			]
 		)
+	var all_damage := stat_value(&"damage.all", 0)
+	if all_damage != 0:
+		lines.append("%-28s %+d" % ["All damage modifier", all_damage])
 	if attack.damage_profile != null and int(attack.damage_profile.flat_bonus) != 0:
 		lines.append(
 			"%-28s %+d" % [
@@ -182,6 +213,38 @@ func damage_breakdown_for(attack) -> Array[String]:
 			]
 		)
 	return lines
+
+
+func _weapon_focus_bonus(attack) -> int:
+	if attack == null:
+		return 0
+	if (
+		has_trait(&"feat.weapon_focus.sanctuary_blackjack")
+		and attack.attack_tags.has(&"sanctuary_blackjack")
+	):
+		return 1
+	if (
+		has_trait(&"feat.weapon_focus.sanctuary_capture_bow")
+		and attack.attack_tags.has(&"capture_bow")
+	):
+		return 1
+	return 0
+
+
+func feature_parameter(feature_id: StringName, key: StringName, default_value: Variant = null) -> Variant:
+	var parameters: Dictionary = feature_parameters.get(feature_id, {}) as Dictionary
+	return parameters.get(key, default_value)
+
+
+func concentration_bonus(casting_defensively: bool = false) -> int:
+	var base_bonus: int = int(skill_bonuses.get("Concentration", 0))
+	if casting_defensively and has_trait(&"feat.combat_casting"):
+		base_bonus += int(feature_parameter(
+			&"feat.combat_casting",
+			&"concentration_bonus",
+			4
+		))
+	return base_bonus
 
 
 func _ability_abbreviation(ability_id: StringName) -> String:

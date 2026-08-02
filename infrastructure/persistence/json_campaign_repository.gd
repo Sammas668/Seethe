@@ -4,6 +4,7 @@ extends CampaignRepository
 var save_path: String = DEFAULT_SAVE_PATH
 var persistence_enabled: bool = true
 var _loaded_current_was_corrupt: bool = false
+var _loaded_save_was_migrated: bool = false
 var _catalogue: ContentCatalogue
 
 
@@ -31,6 +32,7 @@ func load_campaign() -> CampaignState:
 	load_failed = false
 	preserved_corrupt_path = ""
 	_loaded_current_was_corrupt = false
+	_loaded_save_was_migrated = false
 
 	if not persistence_enabled:
 		return CampaignState.new()
@@ -39,7 +41,14 @@ func load_campaign() -> CampaignState:
 
 	var current_result: Dictionary = _read_campaign_file(save_path)
 	if bool(current_result.get("success", false)):
-		return current_result.get("campaign") as CampaignState
+		var current_campaign: CampaignState = current_result.get("campaign") as CampaignState
+		_loaded_save_was_migrated = bool(current_result.get("migrated", false))
+		if _loaded_save_was_migrated and current_campaign != null:
+			if not save_campaign(current_campaign):
+				push_warning(
+					"The legacy Marauder loadout was repaired in memory but could not be persisted."
+				)
+		return current_campaign
 
 	_loaded_current_was_corrupt = true
 	last_load_error = String(current_result.get("message", "Campaign save is invalid."))
@@ -49,12 +58,14 @@ func load_campaign() -> CampaignState:
 		var backup_result: Dictionary = _read_campaign_file(backup_path())
 		if bool(backup_result.get("success", false)):
 			recovered_from_backup = true
+			var backup_campaign: CampaignState = backup_result.get("campaign") as CampaignState
+			_loaded_save_was_migrated = bool(backup_result.get("migrated", false))
 			push_warning(
 				"Campaign save was invalid; recovered the last valid backup. "
 				+ "The damaged file was preserved at %s."
 				% preserved_corrupt_path
 			)
-			return backup_result.get("campaign") as CampaignState
+			return backup_campaign
 		last_load_error += " Backup recovery also failed: %s" % String(
 			backup_result.get("message", "invalid backup")
 		)
@@ -182,6 +193,9 @@ func _read_campaign_file(path: String) -> Dictionary:
 	var campaign: CampaignState = CampaignState.from_dictionary(
 		parsed as Dictionary
 	)
+	var migrated: bool = MarauderLoadoutMigration.repair_existing_marauders(
+		campaign
+	)
 	var validation_errors: Array[String] = campaign.validate_campaign()
 	if _catalogue != null:
 		validation_errors.append_array(
@@ -196,6 +210,7 @@ func _read_campaign_file(path: String) -> Dictionary:
 	return {
 		"success": true,
 		"campaign": campaign,
+		"migrated": migrated,
 		"message": "",
 	}
 

@@ -21,20 +21,49 @@ func configure(
 	_catalogue = catalogue
 
 
+func commit_envelope(
+		envelope: MissionCommitEnvelope,
+		catalogue_override: ContentCatalogue = null
+) -> OperationResult:
+	if envelope == null:
+		return OperationResult.fail(
+			&"mission_commit_envelope_missing",
+			"A mission commit envelope is required."
+		)
+	var envelope_errors: Array[String] = envelope.validate_envelope()
+	if not envelope_errors.is_empty():
+		return OperationResult.fail(
+			&"mission_commit_envelope_invalid",
+			envelope_errors[0]
+		)
+	return commit_result(
+		envelope.result,
+		envelope.setup,
+		catalogue_override,
+		envelope.authority_snapshot
+	)
+
+
 func commit_result(
 		result: MissionResult,
 		setup: MissionSetupSnapshot,
-		catalogue_override: ContentCatalogue = null
+		catalogue_override: ContentCatalogue = null,
+		authority_snapshot: MissionAuthoritySnapshot = null
 ) -> OperationResult:
 	if result == null or setup == null or _state_store == null:
 		return OperationResult.fail(
 			&"mission_result_missing",
 			"A mission result, finalized mission setup and campaign store are required."
 		)
-	if not setup.is_finalized():
+	if not setup.verify_integrity():
 		return OperationResult.fail(
-			&"mission_setup_not_finalized",
-			"Mission results cannot commit against a mutable setup draft."
+			&"mission_setup_integrity_failed",
+			"Mission results cannot commit against a mutable or altered setup."
+		)
+	if result.source_setup_hash != setup.finalized_setup_hash():
+		return OperationResult.fail(
+			&"mission_result_setup_hash_mismatch",
+			"Mission result does not match its finalized mission setup."
 		)
 	if not _state_store.has_method("current_campaign"):
 		return OperationResult.fail(
@@ -75,6 +104,12 @@ func commit_result(
 			"Campaign revision changed from %d to %d while mission %s was active."
 			% [result.source_campaign_revision, campaign.revision, result.mission_id]
 		)
+	for provenance_id: StringName in result.generated_item_provenance_ids:
+		if campaign.has_applied_generated_item_provenance(provenance_id):
+			return OperationResult.fail(
+				&"generated_item_provenance_already_applied",
+				"Generated-item provenance %s was already consumed." % provenance_id
+			)
 
 	var catalogue: ContentCatalogue = (
 		catalogue_override if catalogue_override != null else _catalogue
@@ -83,7 +118,8 @@ func commit_result(
 		result,
 		setup,
 		campaign,
-		catalogue
+		catalogue,
+		authority_snapshot
 	)
 	if not validation_errors.is_empty():
 		return OperationResult.fail(
@@ -114,6 +150,14 @@ func _apply_result_to_candidate(
 		candidate: CampaignState,
 		result: MissionResult
 ) -> OperationResult:
+	for provenance_id: StringName in result.generated_item_provenance_ids:
+		if not candidate.mark_generated_item_provenance_applied(provenance_id):
+			return OperationResult.fail(
+				&"generated_item_provenance_apply_failed",
+				"Generated-item provenance %s could not be consumed exactly once."
+				% provenance_id
+			)
+
 	for character_result: MissionCharacterResult in result.get_character_results():
 		var character: PersistentCharacterState = candidate.get_character(
 			character_result.character_id

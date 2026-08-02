@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TacticalAIProfileDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/ai/tactical_ai_profile_definition.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"ai.civilian.farm_worker"
+display_name = "Farm Worker"
+role = &"civilian"
+can_raise_alarm = true
+can_surrender = true
+notes = "Works at authored anchors and seeks safety rather than combat."

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TacticalAIProfileDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/ai/tactical_ai_profile_definition.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"ai.reaver.marauder.aggressive"
+display_name = "Reaver Marauder — Aggressive Capture Specialist"
+role = &"melee_defender"
+preferred_attack_kind = &"melee"
+prefers_cover = false
+prefers_overwatch = false
+preserves_ammunition = false
+can_raise_alarm = false
+can_surrender = true
+avoids_melee = false
+support_priority = 0
+notes = "Closes aggressively, favours nonlethal capture opportunities and carries restrained targets."

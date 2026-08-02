@@ -99,7 +99,7 @@ static func _test_body_carry_and_drag_use_inventory_locations(
 		"A carried body must be an ordinary Backpack item location.",
 		failures
 	)
-	_expect(body.footprint == Vector2i(4, 4), "A Medium body must consume a real 4×4 Backpack footprint.", failures)
+	_expect(body.footprint == Vector2i(4, 3), "A Medium body must consume a real 4×3 Backpack footprint.", failures)
 	_expect(
 		state.calculated_carried_weight(actor.unit_id) >= body_weight - 0.001,
 		"A carried body must contribute full body-plus-equipment weight.",
@@ -425,7 +425,8 @@ static func _test_carrier_downing_drops_bodies(
 	var carrier_before: Dictionary = carrier.life_state_snapshot()
 	var changes := TacticalChangeSet.new(
 		&"test_carrier_downed_with_bodies",
-		state.revision
+		state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	changes.stage(
 		func() -> bool:

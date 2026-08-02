@@ -81,6 +81,41 @@ var inventory: TacticalInventoryState
 var resolved_character: ResolvedCharacterSnapshot
 var character_sheet: TacticalCharacterSheetState
 var active_character_modifier_ids: Array[StringName] = []
+var role_tags: Array[StringName] = []
+var proficiency_ids: Array[StringName] = []
+var ai_profile_id: StringName = &""
+var combatant_classification: StringName = &"combatant"
+var capture_eligible: bool = true
+var surrender_eligible: bool = true
+var loot_profile_id: StringName = &""
+var provisional_content: bool = false
+
+# Stage 4.7 Hotfix 1 — per-mission ability resources and compact authored
+# conditions. These remain authoritative tactical state, not UI flags.
+var ability_uses_remaining: Dictionary = {}
+var ability_resource_maximums: Dictionary = {}
+var timed_effect_rounds: Dictionary = {}
+var timed_effect_source_ids: Dictionary = {}
+var timed_effect_values: Dictionary = {}
+var concentration_action_id: StringName = &""
+var kneeling: bool = false
+var subdual_takedown_target_id: StringName = &""
+var rage_rounds_remaining: int = 0
+var fatigued_after_rage: bool = false
+var character_resolution_refresh_pending: bool = false
+# Stage 4.7 Hotfix 5 runtime mechanics.
+const LOAD_LIGHT: StringName = &"light"
+const LOAD_MEDIUM: StringName = &"medium"
+const LOAD_HEAVY: StringName = &"heavy"
+const LOAD_OVER_CAPACITY: StringName = &"over_capacity"
+var carried_weight_lb: float = 0.0
+var load_category: StringName = LOAD_LIGHT
+var sprint_distance_feet: int = 0
+var fast_movement_active: bool = false
+var grappled_by_unit_id: StringName = &""
+var grappling_target_unit_id: StringName = &""
+var nonlethal_incapacitation_source_unit_id: StringName = &""
+var nonlethal_incapacitation_event_id: StringName = &""
 
 # Stage 4.2.5 — stealth, awareness and alert foundation.
 # Awareness belongs to the enemy squad; revelation belongs to the player unit
@@ -162,6 +197,7 @@ func configure_resolved_character(
 	if snapshot == null:
 		return
 
+	var previous_maximum_hp: int = maximum_hp
 	var previous_damage := maxi(0, maximum_hp - current_hp)
 	var previous_nonlethal_damage: int = maxi(0, nonlethal_damage)
 	var previous_dying_successes: int = dying_successes
@@ -177,6 +213,16 @@ func configure_resolved_character(
 		action_budget.ordinary_attack_available
 	)
 	var previous_ended := action_budget.ended_activation
+	var previous_ability_uses: Dictionary = ability_uses_remaining.duplicate(true)
+	var previous_timed_effects: Dictionary = timed_effect_rounds.duplicate(true)
+	var previous_timed_sources: Dictionary = timed_effect_source_ids.duplicate(true)
+	var previous_timed_values: Dictionary = timed_effect_values.duplicate(true)
+	var previous_concentration: StringName = concentration_action_id
+	var previous_kneeling: bool = kneeling
+	var previous_subdual_target: StringName = subdual_takedown_target_id
+	var previous_rage_rounds: int = rage_rounds_remaining
+	var previous_fatigued: bool = fatigued_after_rage
+	var previous_resolution_refresh_pending: bool = character_resolution_refresh_pending
 
 	resolved_character = snapshot
 	character_sheet.configure_from_snapshot(snapshot)
@@ -186,6 +232,15 @@ func configure_resolved_character(
 	roster_role = snapshot.roster_role
 	persistence_scope = snapshot.persistence_scope
 	footprint = snapshot.footprint
+	role_tags = snapshot.role_tags.duplicate()
+	proficiency_ids = snapshot.proficiency_ids.duplicate()
+	ai_profile_id = snapshot.ai_profile_id
+	combatant_classification = snapshot.combatant_classification
+	capture_eligible = snapshot.capture_eligible
+	surrender_eligible = snapshot.surrender_eligible
+	loot_profile_id = snapshot.loot_profile_id
+	provisional_content = snapshot.provisional_content
+	ability_resource_maximums = snapshot.ability_resource_maximums.duplicate(true)
 	maximum_hp = maxi(1, snapshot.stat_value(&"maximum_hp", 1))
 	# ResolvedCharacterSnapshot is the sole combat authority for Armour Class.
 	armour_class = snapshot.stat_value(&"armour_class", 10)
@@ -202,15 +257,32 @@ func configure_resolved_character(
 		last_dying_check_round = 0
 		combat_state = COMBAT_STATE_ACTIVE
 		action_budget = ActionBudgetState.new(capacity)
+		ability_uses_remaining.clear()
+		for raw_resource_id: Variant in ability_resource_maximums.keys():
+			ability_uses_remaining[StringName(raw_resource_id)] = int(
+				ability_resource_maximums.get(raw_resource_id, 0)
+			)
+		timed_effect_rounds.clear()
+		timed_effect_source_ids.clear()
+		timed_effect_values.clear()
+		concentration_action_id = &""
+		kneeling = false
+		subdual_takedown_target_id = &""
+		rage_rounds_remaining = 0
+		fatigued_after_rage = false
+		character_resolution_refresh_pending = false
 	else:
 		# Preserve actual negative HP rather than converting it to ordinary
 		# damage against the newly resolved maximum. Positive HP still tracks
 		# previous damage when maximum HP changes.
-		current_hp = (
-			previous_hp
-			if previous_hp <= 0
-			else clampi(maximum_hp - previous_damage, 1, maximum_hp)
-		)
+		if previous_hp <= 0:
+			current_hp = previous_hp
+		elif maximum_hp < previous_maximum_hp:
+			# Constitution/maximum-HP loss removes the matching current HP. This is
+			# required when Rage ends; it may leave the Marauder Dying or Dead.
+			current_hp = maximum_hp - previous_damage
+		else:
+			current_hp = clampi(maximum_hp - previous_damage, 1, maximum_hp)
 		nonlethal_damage = previous_nonlethal_damage
 		dying_successes = previous_dying_successes
 		dying_failures = previous_dying_failures
@@ -233,11 +305,37 @@ func configure_resolved_character(
 			previous_ordinary_attack_available
 		)
 		action_budget.ended_activation = previous_ended
+		ability_uses_remaining = previous_ability_uses
+		for raw_resource_id: Variant in ability_resource_maximums.keys():
+			var resource_id := StringName(raw_resource_id)
+			if not ability_uses_remaining.has(resource_id):
+				ability_uses_remaining[resource_id] = int(
+					ability_resource_maximums.get(raw_resource_id, 0)
+				)
+		timed_effect_rounds = previous_timed_effects
+		timed_effect_source_ids = previous_timed_sources
+		timed_effect_values = previous_timed_values
+		concentration_action_id = previous_concentration
+		kneeling = previous_kneeling
+		subdual_takedown_target_id = previous_subdual_target
+		rage_rounds_remaining = previous_rage_rounds
+		fatigued_after_rage = previous_fatigued
+		character_resolution_refresh_pending = previous_resolution_refresh_pending
+		if previous_hp > 0 and current_hp < 0:
+			stable = false
+		dead = dead or current_hp <= death_threshold_hp()
+		if dead:
+			stable = false
 		_sync_combat_state_from_life()
 
+	character_resolution_refresh_pending = false
 	inventory.maximum_weight_lb = float(
 		snapshot.stat_value(&"maximum_weight_lb", 60)
 	)
+
+
+func has_role_tag(tag: StringName) -> bool:
+	return role_tags.has(tag)
 
 
 func configure_character_sheet(
@@ -264,9 +362,19 @@ func set_character_modifier_active(
 
 
 func refresh_for_new_round() -> void:
+	_tick_timed_effects()
+	if rage_rounds_remaining > 0:
+		rage_rounds_remaining -= 1
+		if rage_rounds_remaining <= 0:
+			active_character_modifier_ids.erase(&"effect.rage")
+			if not active_character_modifier_ids.has(&"effect.fatigued"):
+				active_character_modifier_ids.append(&"effect.fatigued")
+			fatigued_after_rage = true
+			character_resolution_refresh_pending = true
 	action_budget.refresh_for_new_round()
 	diagonal_steps_used = 0
 	disengage_active = false
+	subdual_takedown_target_id = &""
 	if is_disabled():
 		# Disabled characters receive half normal capacity and no Reaction.
 		var disabled_capacity: int = maxi(5, int(
@@ -279,6 +387,239 @@ func refresh_for_new_round() -> void:
 		action_budget.spend_reaction()
 	if not can_take_actions():
 		mark_activation_ended()
+
+
+func ability_uses(resource_id: StringName) -> int:
+	return int(ability_uses_remaining.get(resource_id, 0))
+
+
+func can_spend_ability_resource(resource_id: StringName, amount: int = 1) -> bool:
+	if amount <= 0 or resource_id.is_empty():
+		return true
+	var current: int = ability_uses(resource_id)
+	return current < 0 or current >= amount
+
+
+func spend_ability_resource(resource_id: StringName, amount: int = 1) -> bool:
+	if amount <= 0 or resource_id.is_empty():
+		return true
+	var current: int = ability_uses(resource_id)
+	if current < 0:
+		return true
+	if current < amount:
+		return false
+	ability_uses_remaining[resource_id] = current - amount
+	return true
+
+
+func restore_ability_resources(snapshot: Dictionary) -> void:
+	ability_uses_remaining = snapshot.duplicate(true)
+
+
+func apply_timed_effect(
+		effect_id: StringName,
+		rounds: int,
+		source_id: StringName = &"",
+		value: int = 0
+) -> void:
+	if effect_id.is_empty():
+		return
+	timed_effect_rounds[effect_id] = maxi(1, rounds)
+	timed_effect_source_ids[effect_id] = source_id
+	timed_effect_values[effect_id] = value
+	if effect_id == &"condition.hold_person":
+		action_incapacitated = true
+		action_budget.spend_reaction()
+	if effect_id == &"condition.command_kneel":
+		kneeling = true
+		action_budget.remaining_turn_capacity_feet = 0
+		action_budget.normal_capacity_spent_feet = action_budget.maximum_turn_capacity_feet
+
+
+func clear_timed_effect(effect_id: StringName) -> void:
+	timed_effect_rounds.erase(effect_id)
+	timed_effect_source_ids.erase(effect_id)
+	timed_effect_values.erase(effect_id)
+	if effect_id == &"condition.hold_person":
+		action_incapacitated = false
+	if effect_id == &"condition.command_kneel":
+		kneeling = false
+
+
+func has_timed_effect(effect_id: StringName) -> bool:
+	return int(timed_effect_rounds.get(effect_id, 0)) > 0
+
+
+func timed_effect_value(effect_id: StringName) -> int:
+	return int(timed_effect_values.get(effect_id, 0))
+
+
+func _tick_timed_effects() -> void:
+	var expired: Array[StringName] = []
+	for raw_effect_id: Variant in timed_effect_rounds.keys():
+		var effect_id := StringName(raw_effect_id)
+		var remaining := int(timed_effect_rounds.get(raw_effect_id, 0)) - 1
+		if remaining <= 0:
+			expired.append(effect_id)
+		else:
+			timed_effect_rounds[effect_id] = remaining
+	for effect_id: StringName in expired:
+		clear_timed_effect(effect_id)
+
+
+func rage_available() -> bool:
+	return (
+		resolved_character != null
+		and resolved_character.has_trait(&"feature.rage")
+		and not fatigued_after_rage
+		and ability_uses(&"resource.rage") > 0
+	)
+
+
+func begin_rage() -> bool:
+	if active_character_modifier_ids.has(&"effect.rage") or not rage_available():
+		return false
+	if not spend_ability_resource(&"resource.rage", 1):
+		return false
+	active_character_modifier_ids.append(&"effect.rage")
+	rage_rounds_remaining = int(resolved_character.feature_parameter(
+		&"feature.rage", &"duration_rounds", 7
+	))
+	return true
+
+
+func end_rage() -> bool:
+	if not active_character_modifier_ids.has(&"effect.rage"):
+		return false
+	active_character_modifier_ids.erase(&"effect.rage")
+	if not active_character_modifier_ids.has(&"effect.fatigued"):
+		active_character_modifier_ids.append(&"effect.fatigued")
+	rage_rounds_remaining = 0
+	fatigued_after_rage = true
+	character_resolution_refresh_pending = true
+	return true
+
+
+func mark_subdual_takedown_target(target_id: StringName) -> void:
+	subdual_takedown_target_id = target_id
+
+
+func subdual_takedown_bonus(target_id: StringName, manoeuvre_id: StringName) -> int:
+	if target_id != subdual_takedown_target_id:
+		return 0
+	return 2 if manoeuvre_id in [&"grapple", &"trip", &"shove"] else 0
+
+
+func saving_throw_bonus(save_id: StringName) -> int:
+	if resolved_character == null:
+		return 0
+	var result: int = resolved_character.stat_value(save_id, 0)
+	if has_timed_effect(&"effect.resistance"):
+		result += timed_effect_value(&"effect.resistance")
+	return result
+
+
+func is_raging() -> bool:
+	return active_character_modifier_ids.has(&"effect.rage")
+
+
+func is_fatigued() -> bool:
+	return fatigued_after_rage or active_character_modifier_ids.has(&"effect.fatigued")
+
+
+func is_grappled() -> bool:
+	return not grappled_by_unit_id.is_empty()
+
+
+func is_grappling() -> bool:
+	return not grappling_target_unit_id.is_empty()
+
+
+func apply_grapple(controller_id: StringName, target_id: StringName) -> bool:
+	if controller_id.is_empty() or target_id.is_empty():
+		return false
+	if unit_id == controller_id:
+		grappling_target_unit_id = target_id
+	else:
+		grappled_by_unit_id = controller_id
+	return true
+
+
+func clear_grapple() -> void:
+	grappled_by_unit_id = &""
+	grappling_target_unit_id = &""
+
+
+func armour_class_for_context(
+		deny_dexterity: bool = false,
+		source_kind: StringName = &""
+) -> int:
+	var result: int = armour_class
+	if deny_dexterity and resolved_character != null:
+		var helpless_denial: bool = is_unconscious() or action_incapacitated
+		var retains_dexterity: bool = (
+			resolved_character.has_trait(&"feature.uncanny_dodge")
+			and not helpless_denial
+		)
+		if not retains_dexterity:
+			result -= maxi(0, resolved_character.ability_modifier("DEX"))
+	if source_kind == &"trap" and resolved_character != null:
+		result += resolved_character.trap_armour_class_bonus()
+	return result
+
+
+func reflex_bonus_for_context(source_kind: StringName = &"") -> int:
+	var result: int = saving_throw_bonus(&"reflex")
+	if source_kind == &"trap" and resolved_character != null:
+		result += resolved_character.trap_reflex_bonus()
+	return result
+
+
+func record_nonlethal_incapacitation(source_unit_id: StringName, event_id: StringName) -> void:
+	nonlethal_incapacitation_source_unit_id = source_unit_id
+	nonlethal_incapacitation_event_id = event_id
+
+
+func qualifies_for_take_them_alive(actor_id: StringName) -> bool:
+	return is_nonlethal_unconscious() and nonlethal_incapacitation_source_unit_id == actor_id
+
+
+func apply_encumbrance(weight_lb: float, category: StringName, capacity_feet: int, sprint_feet: int, fast_active: bool) -> void:
+	carried_weight_lb = maxf(0.0, weight_lb)
+	load_category = category
+	sprint_distance_feet = maxi(0, sprint_feet)
+	fast_movement_active = fast_active
+	var spent: int = action_budget.normal_capacity_spent_feet
+	action_budget.maximum_turn_capacity_feet = maxi(0, capacity_feet)
+	action_budget.remaining_turn_capacity_feet = maxi(0, capacity_feet - spent)
+
+
+func movement_unavailable_reason() -> String:
+	if load_category == LOAD_OVER_CAPACITY:
+		return "Movement unavailable: Over Capacity."
+	if is_grappled() or is_grappling():
+		return "Ordinary movement is unavailable while Grappled."
+	return ""
+
+
+func active_condition_labels() -> Array[String]:
+	var result: Array[String] = []
+	for raw_effect_id: Variant in timed_effect_rounds.keys():
+		var effect_id := StringName(raw_effect_id)
+		if not has_timed_effect(effect_id):
+			continue
+		result.append(
+			"%s (%d round%s)" % [
+				String(effect_id).replace("effect.", "").replace("condition.", "").replace("_", " ").capitalize(),
+				int(timed_effect_rounds.get(effect_id, 0)),
+				"" if int(timed_effect_rounds.get(effect_id, 0)) == 1 else "s",
+			]
+		)
+	if active_character_modifier_ids.has(&"effect.rage"):
+		result.append("Rage (%d rounds)" % rage_rounds_remaining)
+	if fatigued_after_rage:
+		result.append("Fatigued (STR -2, DEX -2, cannot Sprint)")
+	return result
 
 
 func lethal_damage_taken() -> int:
@@ -306,7 +647,18 @@ func apply_damage(
 		dead = true
 		stable = false
 	_sync_combat_state_from_life()
+	_end_rage_if_incapacitated()
 	return hp_before - current_hp
+
+
+func _end_rage_if_incapacitated() -> void:
+	if (is_unconscious() or is_dead()) and active_character_modifier_ids.has(&"effect.rage"):
+		active_character_modifier_ids.erase(&"effect.rage")
+		if not active_character_modifier_ids.has(&"effect.fatigued"):
+			active_character_modifier_ids.append(&"effect.fatigued")
+		rage_rounds_remaining = 0
+		fatigued_after_rage = true
+		character_resolution_refresh_pending = true
 
 
 func apply_healing(amount: int) -> int:
@@ -354,6 +706,24 @@ func life_state_snapshot() -> Dictionary:
 		"captive": captive,
 		"restraint_item_id": restraint_item_id,
 		"awaiting_body_placement": awaiting_body_placement,
+		"ability_uses_remaining": ability_uses_remaining.duplicate(true),
+		"timed_effect_rounds": timed_effect_rounds.duplicate(true),
+		"timed_effect_source_ids": timed_effect_source_ids.duplicate(true),
+		"timed_effect_values": timed_effect_values.duplicate(true),
+		"concentration_action_id": concentration_action_id,
+		"kneeling": kneeling,
+		"subdual_takedown_target_id": subdual_takedown_target_id,
+		"rage_rounds_remaining": rage_rounds_remaining,
+		"fatigued_after_rage": fatigued_after_rage,
+		"character_resolution_refresh_pending": character_resolution_refresh_pending,
+		"carried_weight_lb": carried_weight_lb,
+		"load_category": load_category,
+		"sprint_distance_feet": sprint_distance_feet,
+		"fast_movement_active": fast_movement_active,
+		"grappled_by_unit_id": grappled_by_unit_id,
+		"grappling_target_unit_id": grappling_target_unit_id,
+		"nonlethal_incapacitation_source_unit_id": nonlethal_incapacitation_source_unit_id,
+		"nonlethal_incapacitation_event_id": nonlethal_incapacitation_event_id,
 	}
 
 
@@ -381,6 +751,42 @@ func restore_life_state(snapshot: Dictionary) -> void:
 	awaiting_body_placement = bool(snapshot.get(
 		"awaiting_body_placement", awaiting_body_placement
 	))
+	ability_uses_remaining = (snapshot.get(
+		"ability_uses_remaining", ability_uses_remaining
+	) as Dictionary).duplicate(true)
+	timed_effect_rounds = (snapshot.get(
+		"timed_effect_rounds", timed_effect_rounds
+	) as Dictionary).duplicate(true)
+	timed_effect_source_ids = (snapshot.get(
+		"timed_effect_source_ids", timed_effect_source_ids
+	) as Dictionary).duplicate(true)
+	timed_effect_values = (snapshot.get(
+		"timed_effect_values", timed_effect_values
+	) as Dictionary).duplicate(true)
+	concentration_action_id = StringName(snapshot.get(
+		"concentration_action_id", concentration_action_id
+	))
+	kneeling = bool(snapshot.get("kneeling", kneeling))
+	subdual_takedown_target_id = StringName(snapshot.get(
+		"subdual_takedown_target_id", subdual_takedown_target_id
+	))
+	rage_rounds_remaining = int(snapshot.get(
+		"rage_rounds_remaining", rage_rounds_remaining
+	))
+	fatigued_after_rage = bool(snapshot.get(
+		"fatigued_after_rage", fatigued_after_rage
+	))
+	character_resolution_refresh_pending = bool(snapshot.get(
+		"character_resolution_refresh_pending", character_resolution_refresh_pending
+	))
+	carried_weight_lb = float(snapshot.get("carried_weight_lb", carried_weight_lb))
+	load_category = StringName(snapshot.get("load_category", load_category))
+	sprint_distance_feet = int(snapshot.get("sprint_distance_feet", sprint_distance_feet))
+	fast_movement_active = bool(snapshot.get("fast_movement_active", fast_movement_active))
+	grappled_by_unit_id = StringName(snapshot.get("grappled_by_unit_id", grappled_by_unit_id))
+	grappling_target_unit_id = StringName(snapshot.get("grappling_target_unit_id", grappling_target_unit_id))
+	nonlethal_incapacitation_source_unit_id = StringName(snapshot.get("nonlethal_incapacitation_source_unit_id", nonlethal_incapacitation_source_unit_id))
+	nonlethal_incapacitation_event_id = StringName(snapshot.get("nonlethal_incapacitation_event_id", nonlethal_incapacitation_event_id))
 	_sync_combat_state_from_life()
 
 
@@ -484,7 +890,7 @@ func body_inventory_footprint() -> Vector2i:
 	if footprint.x >= 2 or footprint.y >= 2:
 		# Large bodies cannot fit in the current 10x4 ordinary Backpack.
 		return Vector2i(11, 4)
-	return Vector2i(4, 4)
+	return Vector2i(4, 3)
 
 
 func apply_restraint(item_id: StringName) -> bool:
@@ -752,13 +1158,19 @@ func shows_hidden_badge() -> bool:
 func stealth_bonus() -> int:
 	if resolved_character == null:
 		return 0
+	var base_value: int = resolved_character.ability_modifier("DEX")
 	if resolved_character.skill_bonuses.has("Stealth"):
-		return int(resolved_character.skill_bonuses.get("Stealth", 0))
-	if resolved_character.skill_bonuses.has(&"Stealth"):
-		return int(resolved_character.skill_bonuses.get(&"Stealth", 0))
-	# The complete 3.5e skill-rank implementation is later. Dexterity is the
-	# explicit fallback so the preview and roll still share one authority.
-	return resolved_character.ability_modifier("DEX")
+		base_value = int(resolved_character.skill_bonuses.get("Stealth", 0))
+	elif resolved_character.skill_bonuses.has(&"Stealth"):
+		base_value = int(resolved_character.skill_bonuses.get(&"Stealth", 0))
+	# Only the already-used Stealth calculation is made dynamic in Hotfix 5.
+	# The authored value is the lightly loaded, armoured total. Reconstruct the
+	# current value when Dexterity or equipped armour changes.
+	var template_dex: int = 1 if resolved_character.template_id == &"character_template.reaver.marauder_tier_1" else resolved_character.ability_modifier("DEX")
+	var template_armour_penalty: int = -1 if resolved_character.template_id == &"character_template.reaver.marauder_tier_1" else 0
+	base_value += resolved_character.ability_modifier("DEX") - template_dex
+	base_value += resolved_character.stat_value(&"armour_check_penalty", 0) - template_armour_penalty
+	return base_value
 
 
 func passive_perception() -> int:

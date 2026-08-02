@@ -63,7 +63,7 @@ def main() -> int:
             "attacker_was_disabled",
             "_apply_disabled_attack_strain",
             "_emit_damage_committed(attacker, target, resolution)",
-            "post-commit log callbacks have run and state_changed has fired",
+            "before journal publication",
             '"target_id": target.unit_id',
         ],
         failures,
@@ -116,7 +116,8 @@ def main() -> int:
             "Ordinary movement at exactly 0 HP must not cause Disabled strain.",
             "A normal Quick Action must not automatically worsen Disabled.",
             "A strenuous Half Action must resolve and then reduce a Disabled character to -1 HP.",
-            "The combat log must already contain the attack when the damage presentation event fires.",
+            "The damage presentation event must fire before the attack journal record is published.",
+            "The combat log must contain the attack after the commit finishes.",
             "A miss or zero applied damage must not trigger a token hit reaction.",
         ],
         failures,
@@ -140,7 +141,7 @@ def main() -> int:
         [
             "Exactly 0 HP now keeps reduced movement without automatic deterioration.",
             "Strenuous Half Actions still resolve and then apply 1 HP of Disabled strain.",
-            "Committed positive damage emits a presentation-only event after state and log commit.",
+            "Committed positive damage emits after authoritative mutation, before journal publication and broad reconciliation.",
             "The 0.8-second token reaction never awaits or moves status badges.",
         ],
     )

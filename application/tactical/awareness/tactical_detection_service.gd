@@ -34,6 +34,24 @@ var _contact_resolver: ContactInitiativeResolver
 var _batch_transaction_support: DetectionBatchTransactionSupport
 var _perception_recalculation_deferral_depth: int = 0
 var _deferred_perception_squad_ids: Dictionary = {}
+var _hostile_action_resolutions_prepared: int = 0
+var _redundant_hostile_action_resolutions_skipped: int = 0
+var _perception_signature_by_squad: Dictionary = {}
+# Hotfix 5f7 exposes a cheap monotonic perception dependency revision. Plans
+# warmed during the player phase validate this integer at activation instead of
+# rebuilding the full observer/hostile signature after the enemy highlights.
+var _perception_revision_by_squad: Dictionary = {}
+var _perception_revision_serial: int = 0
+var _contact_primed_squad_ids: Dictionary = {}
+var _perception_refresh_count: int = 0
+var _perception_refresh_skipped_count: int = 0
+var _ai_immediate_perception_refresh_count: int = 0
+var _last_perception_refresh_usec: int = 0
+var _last_perception_observer_target_pairs: int = 0
+var _contact_perception_signatures_primed: int = 0
+var _perception_no_change_transactions_avoided: int = 0
+var _unrelated_squad_snapshots_avoided: int = 0
+var _unrelated_budget_snapshots_avoided: int = 0
 
 func configure(
 		state_store: TacticalStateStore,
@@ -189,6 +207,7 @@ func prepare_hostile_action_resolution(
 		attacker_id: StringName,
 		target_id: StringName
 ) -> TacticalDetectionResolution:
+	_hostile_action_resolutions_prepared += 1
 	var resolution := TacticalDetectionResolution.new()
 	resolution.unit_id = attacker_id
 	resolution.hostile_action = true
@@ -199,6 +218,23 @@ func prepare_hostile_action_resolution(
 	if not TEAM_RELATIONS_SCRIPT.are_hostile(attacker.team_id, target.team_id):
 		return resolution
 	if target.squad_id.is_empty():
+		return resolution
+	var target_squad: TacticalSquadState = _state_store.state.get_squad(
+		target.squad_id
+	)
+	# Once combat is already active and this squad already knows the attacker at
+	# the same tile, another ordinary attack cannot reveal, alert, update memory,
+	# or change initiative. Return an empty resolution instead of snapshotting the
+	# entire phase, every squad, and participant budgets again.
+	if (
+		target_squad != null
+		and target_squad.is_aware()
+		and _state_store.state.phase_state.is_initiative_combat()
+		and attacker.is_revealed_to_squad(target.squad_id)
+		and target_squad.last_seen_position(attacker.unit_id)
+		== attacker.grid_position
+	):
+		_redundant_hostile_action_resolutions_skipped += 1
 		return resolution
 	resolution.alert_on_detection = (
 		attacker.team_id == &"player" and target.team_id == &"enemy"
@@ -256,8 +292,80 @@ func perception_tiles_for_observer(
 		facing_override
 	)
 
+func prepare_hidden_trap_perception_check(
+		observer_id: StringName,
+		trap_position: Vector2i,
+		detection_dc: int
+) -> Dictionary:
+	# Future-facing hook only. Trap content will supply the position and DC; the
+	# existing observer field and Perception statistic remain authoritative.
+	var observer: TacticalUnitState = _unit(observer_id)
+	if observer == null or _observer_query == null:
+		return {"can_attempt": false}
+	var fields: Dictionary = perception_tiles_for_observer(observer_id)
+	var can_attempt: bool = false
+	for field_name: String in ["close", "focused", "aware"]:
+		for raw_tile: Variant in fields.get(field_name, []):
+			if raw_tile is Vector2i and raw_tile == trap_position:
+				can_attempt = true
+				break
+		if can_attempt:
+			break
+	return {
+		"can_attempt": can_attempt,
+		"observer_id": observer_id,
+		"trap_position": trap_position,
+		"detection_dc": maxi(0, detection_dc),
+		"perception_modifier": observer.passive_perception() - 10,
+		"passive_perception": observer.passive_perception(),
+		"roll_required": can_attempt,
+	}
+
+
 func perception_performance_snapshot() -> Dictionary:
 	return _observer_query.performance_snapshot()
+
+
+func performance_snapshot() -> Dictionary:
+	return {
+		"observer_query": (
+			_observer_query.performance_snapshot()
+			if _observer_query != null
+			else {}
+		),
+		"hostile_action_resolutions_prepared": (
+			_hostile_action_resolutions_prepared
+		),
+		"redundant_hostile_action_resolutions_skipped": (
+			_redundant_hostile_action_resolutions_skipped
+		),
+		"deferred_perception_squad_count": (
+			_deferred_perception_squad_ids.size()
+		),
+		"perception_refresh_count": _perception_refresh_count,
+		"perception_revision_serial": _perception_revision_serial,
+		"perception_refresh_skipped_count": _perception_refresh_skipped_count,
+		"ai_immediate_perception_refresh_count": (
+			_ai_immediate_perception_refresh_count
+		),
+		"last_perception_refresh_usec": _last_perception_refresh_usec,
+		"last_perception_observer_target_pairs": (
+			_last_perception_observer_target_pairs
+		),
+		"contact_perception_signatures_primed": (
+			_contact_perception_signatures_primed
+		),
+		"perception_no_change_transactions_avoided": (
+			_perception_no_change_transactions_avoided
+		),
+		"unrelated_squad_snapshots_avoided": (
+			_unrelated_squad_snapshots_avoided
+		),
+		"unrelated_budget_snapshots_avoided": (
+			_unrelated_budget_snapshots_avoided
+		),
+	}
+
 
 func snapshot_for_resolution(resolution: TacticalDetectionResolution) -> Dictionary:
 	var snapshot: Dictionary = {
@@ -279,7 +387,17 @@ func snapshot_for_resolution(resolution: TacticalDetectionResolution) -> Diction
 		snapshot["stealth_total"] = unit.current_stealth_total
 		snapshot["revealed"] = unit.revealed_to_squad_ids.duplicate()
 	var squad_snapshots: Dictionary = {}
-	for squad: TacticalSquadState in _state_store.state.get_squads():
+	var affected_squad_ids: Array[StringName] = (
+		_affected_squad_ids_for_resolution(resolution)
+	)
+	_unrelated_squad_snapshots_avoided += maxi(
+		0,
+		_state_store.state.get_squads().size() - affected_squad_ids.size()
+	)
+	for squad_id: StringName in affected_squad_ids:
+		var squad: TacticalSquadState = _state_store.state.get_squad(squad_id)
+		if squad == null:
+			continue
 		squad_snapshots[squad.squad_id] = {
 			"awareness": squad.awareness,
 			"last_seen": squad.last_seen_positions_by_unit_id.duplicate(true),
@@ -291,12 +409,16 @@ func snapshot_for_resolution(resolution: TacticalDetectionResolution) -> Diction
 		var participant: TacticalUnitState = _unit(StringName(participant_id))
 		if participant != null:
 			budget_snapshots.append(_budget_snapshot(participant))
+	_unrelated_budget_snapshots_avoided += maxi(
+		0,
+		_state_store.state.get_units().size() - budget_snapshots.size()
+	)
 	snapshot["budgets"] = budget_snapshots
 	return snapshot
 
 
 func apply_resolution(resolution: TacticalDetectionResolution) -> bool:
-	if resolution == null or not resolution.has_state_changes():
+	if resolution == null or not _resolution_changes_authoritative_state(resolution):
 		return true
 	var unit: TacticalUnitState = _unit(resolution.unit_id)
 	if unit == null:
@@ -407,6 +529,7 @@ func record_resolution(resolution: TacticalDetectionResolution) -> void:
 	var unit: TacticalUnitState = _unit(resolution.unit_id)
 	if unit == null:
 		return
+	_prime_perception_signatures_from_resolution(resolution)
 
 	for check: TacticalDetectionTileCheck in resolution.tile_checks:
 		# Do not leak an unseen enemy merely because it passed a passive
@@ -446,6 +569,26 @@ func record_resolution(resolution: TacticalDetectionResolution) -> void:
 
 func begin_perception_recalculation_deferral() -> void:
 	_perception_recalculation_deferral_depth += 1
+
+
+func perception_revision_for_squad(squad_id: StringName) -> int:
+	return int(_perception_revision_by_squad.get(squad_id, 0))
+
+
+func has_queued_perception_refresh_for_squad(squad_id: StringName) -> bool:
+	return bool(_deferred_perception_squad_ids.get(squad_id, false))
+
+
+func prepare_current_perception_for_ai_warmup(
+		squad_id: StringName
+) -> OperationResult:
+	# Warmup runs during player decision/presentation time. Resolve any queued
+	# authoritative perception before constructing a plan, then capture the
+	# resulting monotonic revision with the planning dependency stamp.
+	if squad_id.is_empty():
+		return OperationResult.ok(false, "No squad perception refresh was required.")
+	_deferred_perception_squad_ids.erase(squad_id)
+	return _refresh_current_perception_for_squad(squad_id, true)
 
 
 func request_current_perception_for_squad(
@@ -511,7 +654,36 @@ func end_perception_recalculation_deferral() -> void:
 func resolve_current_perception_for_squad(
 		squad_id: StringName
 ) -> OperationResult:
-	if _perception_recalculation_deferral_depth > 0:
+	return _refresh_current_perception_for_squad(
+		squad_id,
+		false
+	)
+
+
+func refresh_current_perception_for_ai_planning(
+		squad_id: StringName
+) -> OperationResult:
+	if squad_id.is_empty():
+		return OperationResult.ok(
+			false,
+			"No squad perception refresh was required."
+		)
+	_ai_immediate_perception_refresh_count += 1
+	_deferred_perception_squad_ids.erase(squad_id)
+	return _refresh_current_perception_for_squad(
+		squad_id,
+		true
+	)
+
+
+func _refresh_current_perception_for_squad(
+		squad_id: StringName,
+		bypass_presentation_deferral: bool
+) -> OperationResult:
+	if (
+		not bypass_presentation_deferral
+		and _perception_recalculation_deferral_depth > 0
+	):
 		_deferred_perception_squad_ids[squad_id] = true
 		return OperationResult.ok(
 			false,
@@ -523,27 +695,89 @@ func resolve_current_perception_for_squad(
 			&"unknown_squad",
 			"The observing squad does not exist."
 		)
+	var signature: String = _perception_signature_for_squad(squad)
+	if (
+		not signature.is_empty()
+		and String(_perception_signature_by_squad.get(squad_id, ""))
+		== signature
+	):
+		_perception_refresh_skipped_count += 1
+		_last_perception_refresh_usec = 0
+		var primed_from_contact: bool = bool(
+			_contact_primed_squad_ids.get(squad_id, false)
+		)
+		_contact_primed_squad_ids.erase(squad_id)
+		return OperationResult.new(
+			true,
+			(
+				&"perception_current_from_contact"
+				if primed_from_contact
+				else &"perception_already_current"
+			),
+			(
+				"Squad perception is current from the contact resolution."
+				if primed_from_contact
+				else "Squad perception is already current."
+			),
+			false,
+			OperationResult.STATUS_NO_CHANGE,
+			[],
+			_state_store.state.revision
+		)
+	# A contact-prime marker only applies to the exact signature created by the
+	# detection transaction. Any later authoritative change invalidates it.
+	_contact_primed_squad_ids.erase(squad_id)
+
+	var started_usec: int = Time.get_ticks_usec()
+	_perception_refresh_count += 1
+	var hostile_units: Array[TacticalUnitState] = _hostile_units_for_squad(squad)
+	var observer_count: int = 0
+	for observer: TacticalUnitState in _state_store.state.get_units():
+		if (
+			observer != null
+			and not observer.is_defeated()
+			and observer.squad_id == squad_id
+		):
+			observer_count += 1
+	_last_perception_observer_target_pairs = (
+		observer_count * hostile_units.size()
+	)
+
 	var dice_snapshot: Dictionary = _dice_roller.snapshot_state()
 	var resolutions: Array[TacticalDetectionResolution] = []
-	for unit: TacticalUnitState in _hostile_units_for_squad(squad):
+	var no_change_records: Array[TacticalDetectionResolution] = []
+	for unit: TacticalUnitState in hostile_units:
 		if unit.is_defeated():
 			continue
 		var resolution: TacticalDetectionResolution = (
 			_prepare_current_position_resolution(unit, squad_id, false)
 		)
-		if not resolution.has_state_changes() and not resolution.has_check():
+		if not _resolution_changes_authoritative_state(resolution):
+			if resolution.has_check():
+				no_change_records.append(resolution)
 			continue
 		resolutions.append(resolution)
 	if resolutions.is_empty():
+		_perception_no_change_transactions_avoided += 1
+		for no_change_resolution: TacticalDetectionResolution in no_change_records:
+			record_resolution(no_change_resolution)
+		_perception_signature_by_squad[squad_id] = signature
+		_advance_perception_revision(squad_id)
+		_last_perception_refresh_usec = maxi(
+			0,
+			Time.get_ticks_usec() - started_usec
+		)
 		return OperationResult.ok(false, "No perception state changed.")
 
 	_contact_resolver.finalize_batch(resolutions)
+	_record_avoided_snapshot_scope(resolutions)
 	var snapshot: Dictionary = (
 		_batch_transaction_support.snapshot_for_resolutions(resolutions)
 	)
 	var changes := TacticalChangeSet.new(
 		&"current_perception_resolved",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.token_status()
 	)
 	changes.stage(
 		Callable(self, "apply_resolution_batch").bind(resolutions),
@@ -557,15 +791,215 @@ func resolve_current_perception_for_squad(
 	)
 	if not committed.success:
 		_dice_roller.restore_state(dice_snapshot)
+		_last_perception_refresh_usec = maxi(
+			0,
+			Time.get_ticks_usec() - started_usec
+		)
 		return committed
-	var changed: bool = false
+	for no_change_resolution: TacticalDetectionResolution in no_change_records:
+		record_resolution(no_change_resolution)
+	var changed: bool = not resolutions.is_empty()
 	for resolution: TacticalDetectionResolution in resolutions:
 		record_resolution(resolution)
-		changed = changed or resolution.has_state_changes()
+	_perception_signature_by_squad[squad_id] = (
+		_perception_signature_for_squad(squad)
+	)
+	_advance_perception_revision(squad_id)
+	_last_perception_refresh_usec = maxi(
+		0,
+		Time.get_ticks_usec() - started_usec
+	)
 	return OperationResult.ok(
 		changed,
 		"Perception refreshed." if changed else "No perception state changed."
 	)
+
+
+func _perception_signature_for_squad(
+		squad: TacticalSquadState
+) -> String:
+	if (
+		squad == null
+		or _state_store == null
+		or _state_store.state == null
+	):
+		return ""
+	var parts: Array[String] = [
+		"g:%d" % _state_store.state.geometry_revision(),
+		"s:%s" % String(squad.squad_id),
+		"a:%s" % String(squad.awareness),
+	]
+	var observers: Array[TacticalUnitState] = []
+	var hostiles: Array[TacticalUnitState] = []
+	for unit: TacticalUnitState in _state_store.state.get_units():
+		if unit == null:
+			continue
+		if unit.squad_id == squad.squad_id:
+			observers.append(unit)
+		elif TEAM_RELATIONS_SCRIPT.are_hostile(squad.team_id, unit.team_id):
+			hostiles.append(unit)
+	observers.sort_custom(
+		func(a: TacticalUnitState, b: TacticalUnitState) -> bool:
+			return String(a.unit_id) < String(b.unit_id)
+	)
+	hostiles.sort_custom(
+		func(a: TacticalUnitState, b: TacticalUnitState) -> bool:
+			return String(a.unit_id) < String(b.unit_id)
+	)
+	for observer: TacticalUnitState in observers:
+		parts.append(
+			"o:%s:%d:%d:%d:%d:%d:%d" % [
+				String(observer.unit_id),
+				observer.grid_position.x,
+				observer.grid_position.y,
+				observer.facing_direction.x,
+				observer.facing_direction.y,
+				observer.passive_perception(),
+				1 if observer.is_defeated() else 0,
+			]
+		)
+	for hostile: TacticalUnitState in hostiles:
+		parts.append(
+			"h:%s:%d:%d:%d:%d:%d:%d" % [
+				String(hostile.unit_id),
+				hostile.grid_position.x,
+				hostile.grid_position.y,
+				1 if hostile.stealth_enabled else 0,
+				hostile.current_stealth_total,
+				1 if hostile.is_revealed_to_squad(squad.squad_id) else 0,
+				1 if hostile.is_defeated() else 0,
+			]
+		)
+	return "|".join(PackedStringArray(parts)).sha256_text()
+
+
+func _prime_perception_signatures_from_resolution(
+		resolution: TacticalDetectionResolution
+) -> void:
+	if resolution == null or _state_store == null or _state_store.state == null:
+		return
+	var affected_squad_ids: Array[StringName] = (
+		_affected_squad_ids_for_resolution(resolution)
+	)
+	for squad_id: StringName in affected_squad_ids:
+		var squad: TacticalSquadState = _state_store.state.get_squad(squad_id)
+		if squad == null:
+			continue
+		var signature: String = _perception_signature_for_squad(squad)
+		if signature.is_empty():
+			continue
+		_perception_signature_by_squad[squad_id] = signature
+		_advance_perception_revision(squad_id)
+		_deferred_perception_squad_ids.erase(squad_id)
+		if resolution.newly_aware_squad_ids.has(squad_id):
+			_contact_primed_squad_ids[squad_id] = true
+			_contact_perception_signatures_primed += 1
+
+
+func _advance_perception_revision(squad_id: StringName) -> void:
+	if squad_id.is_empty():
+		return
+	_perception_revision_serial += 1
+	_perception_revision_by_squad[squad_id] = _perception_revision_serial
+
+
+func _record_avoided_snapshot_scope(
+		resolutions: Array[TacticalDetectionResolution]
+) -> void:
+	if _state_store == null or _state_store.state == null:
+		return
+	var affected_squad_ids: Array[StringName] = []
+	var participant_ids: Array[StringName] = []
+	for resolution: TacticalDetectionResolution in resolutions:
+		if resolution == null:
+			continue
+		for squad_id: StringName in _affected_squad_ids_for_resolution(resolution):
+			_append_unique(affected_squad_ids, squad_id)
+		for participant_value: Variant in resolution.initiative_totals_by_unit_id.keys():
+			_append_unique(participant_ids, StringName(participant_value))
+	_unrelated_squad_snapshots_avoided += maxi(
+		0,
+		_state_store.state.get_squads().size() - affected_squad_ids.size()
+	)
+	_unrelated_budget_snapshots_avoided += maxi(
+		0,
+		_state_store.state.get_units().size() - participant_ids.size()
+	)
+
+
+func _affected_squad_ids_for_resolution(
+		resolution: TacticalDetectionResolution
+) -> Array[StringName]:
+	var result: Array[StringName] = []
+	if resolution == null:
+		return result
+	for squad_id: StringName in resolution.detected_squad_ids:
+		_append_unique(result, squad_id)
+	for squad_id: StringName in resolution.newly_aware_squad_ids:
+		_append_unique(result, squad_id)
+	for squad_id: StringName in resolution.revealed_at_destination_squad_ids:
+		_append_unique(result, squad_id)
+	for squad_id: StringName in resolution.lost_sight_squad_ids:
+		_append_unique(result, squad_id)
+	for squad_value: Variant in resolution.last_seen_tile_by_squad_id.keys():
+		_append_unique(result, StringName(squad_value))
+	return result
+
+
+func _resolution_changes_authoritative_state(
+		resolution: TacticalDetectionResolution
+) -> bool:
+	if resolution == null:
+		return false
+	var unit: TacticalUnitState = _unit(resolution.unit_id)
+	if unit == null:
+		return false
+	if resolution.stealth_broken and unit.stealth_enabled:
+		return true
+	if (
+		resolution.persistent_stealth_roll_valid
+		and (
+			not unit.current_stealth_roll_valid
+			or unit.current_stealth_roll_value
+			!= resolution.persistent_stealth_roll_value
+			or unit.current_stealth_total
+			!= resolution.persistent_stealth_total
+		)
+	):
+		return true
+	for squad_id: StringName in resolution.detected_squad_ids:
+		var detected_squad: TacticalSquadState = (
+			_state_store.state.get_squad(squad_id)
+		)
+		if (
+			resolution.alert_on_detection
+			and detected_squad != null
+			and detected_squad.team_id == &"enemy"
+			and not detected_squad.is_aware()
+		):
+			return true
+	for squad_value: Variant in resolution.last_seen_tile_by_squad_id.keys():
+		var squad_id := StringName(squad_value)
+		var squad: TacticalSquadState = _state_store.state.get_squad(squad_id)
+		var tile_value: Variant = resolution.last_seen_tile_by_squad_id[squad_value]
+		if (
+			squad != null
+			and tile_value is Vector2i
+			and squad.last_seen_position(unit.unit_id) != Vector2i(tile_value)
+		):
+			return true
+	for squad_id: StringName in resolution.lost_sight_squad_ids:
+		if unit.is_revealed_to_squad(squad_id):
+			return true
+	for squad_id: StringName in resolution.revealed_at_destination_squad_ids:
+		var squad: TacticalSquadState = _state_store.state.get_squad(squad_id)
+		if not unit.is_revealed_to_squad(squad_id):
+			return true
+		if squad != null and squad.search_rounds_remaining > 0:
+			return true
+	if not resolution.initiative_totals_by_unit_id.is_empty():
+		return true
+	return false
 
 
 func apply_resolution_batch(
@@ -620,8 +1054,19 @@ func _prepare_current_position_resolution(
 		return resolution
 
 	if unit.is_revealed_to_squad(squad_id):
-		resolution.last_seen_tile_by_squad_id[squad_id] = unit.grid_position
-		resolution.revealed_at_destination_squad_ids.append(squad_id)
+		var observing_squad: TacticalSquadState = (
+			_state_store.state.get_squad(squad_id)
+		)
+		if (
+			observing_squad != null
+			and observing_squad.last_seen_position(unit.unit_id)
+			!= unit.grid_position
+		):
+			resolution.last_seen_tile_by_squad_id[squad_id] = (
+				unit.grid_position
+			)
+		if observing_squad != null and observing_squad.search_rounds_remaining > 0:
+			resolution.revealed_at_destination_squad_ids.append(squad_id)
 		return resolution
 
 	var exposures: Array[Dictionary] = []

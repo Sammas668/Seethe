@@ -95,7 +95,8 @@ static func _test_visibility_invalidation_filters_non_spatial_changes(
 	)
 	var changes := TacticalChangeSet.new(
 		&"action_spent",
-		session.state_store.state.revision
+		session.state_store.state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	changes.stage(
 		func() -> bool:

@@ -27,3 +27,5 @@ default_defence_profile_id = &"defence.practice_dummy"
 innate_action_ids = Array[StringName]([])
 ability_entries = Array[String](["Stationary — this target takes no actions or movement.", "Enemy-turn training target — automatically passes. At 0 HP it becomes Defeated and remains on the map; corpse handling is deferred."])
 tactical_visual_id = &"tactical.practice_dummy"
+
+provisional_content = true

@@ -51,7 +51,7 @@ A linked body item:
 - cannot enter the Belt;
 - can enter the Backpack or a Hand through the ordinary transfer handler.
 
-A Medium one-tile creature uses a 4x4 Backpack footprint in the prototype.
+A Medium one-tile creature uses a 4x3 Backpack footprint.
 Large bodies deliberately exceed the current ordinary Backpack width.
 
 ## Inventory location semantics

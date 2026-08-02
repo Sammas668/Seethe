@@ -5,17 +5,27 @@ const BADGE_KIND_NONE: StringName = &"none"
 const BADGE_KIND_UNCONSCIOUS: StringName = &"unconscious"
 const BADGE_KIND_DYING: StringName = &"dying"
 const BADGE_KIND_DEAD: StringName = &"dead"
+const CONDITION_KIND_NONE: StringName = &"none"
+const CONDITION_KIND_RAGE: StringName = &"rage"
+const CONDITION_KIND_FATIGUED: StringName = &"fatigued"
 
 
 static func for_unit(unit: TacticalUnitState) -> Dictionary:
 	if unit == null:
 		return empty_snapshot()
-	return snapshot_from_values(
+	var result: Dictionary = snapshot_from_values(
 		unit.life_state_id(),
 		unit.dying_successes,
 		unit.dying_failures,
 		unit.restrained
 	)
+	result["condition_kind"] = (
+		CONDITION_KIND_RAGE if unit.is_raging()
+		else CONDITION_KIND_FATIGUED if unit.is_fatigued()
+		else CONDITION_KIND_NONE
+	)
+	result["rage_rounds_remaining"] = unit.rage_rounds_remaining
+	return result
 
 
 static func for_body_item(
@@ -45,6 +55,8 @@ static func snapshot_from_values(
 			TacticalUnitState.LIFE_STATE_NONLETHAL_UNCONSCIOUS,
 		],
 		"restrained": restrained,
+		"condition_kind": CONDITION_KIND_NONE,
+		"rage_rounds_remaining": 0,
 	}
 
 

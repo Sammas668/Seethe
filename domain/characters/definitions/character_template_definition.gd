@@ -39,11 +39,34 @@ extends Resource
 @export var default_defence_profile_id: StringName = &""
 @export var innate_action_ids: Array[StringName] = []
 @export var trait_ids: Array[StringName] = []
+# Per-mission authored resources. Keys are stable resource IDs; values are
+# maximum uses. Negative values represent at-will abilities.
+@export var ability_resource_maximums: Dictionary = {}
+# Mechanical feature metadata not reducible to ordinary attacks. Values are
+# authored sheet facts and are queried by shared services and conformance tests.
+@export var feature_parameters: Dictionary = {}
 @export var skill_bonuses: Dictionary = {}
 @export var ability_entries: Array[String] = []
 @export var default_loadout_entries: Array[Dictionary] = []
 @export var portrait_id: StringName = &""
 @export var tactical_visual_id: StringName = &""
+
+# Stage 4.7 production-content metadata. These values describe authored
+# identity and AI/campaign eligibility; mission placements still own positions,
+# squads and mission-specific role overrides.
+@export var role_tags: Array[StringName] = []
+@export var proficiency_ids: Array[StringName] = []
+@export var ai_profile_id: StringName = &""
+@export var combatant_classification: StringName = &"combatant"
+@export var capture_eligible: bool = true
+@export var surrender_eligible: bool = true
+@export var loot_profile_id: StringName = &""
+@export var provisional_content: bool = false
+
+# Raider's Burden and future carrying-only features use an explicit effective
+# Strength bonus. It never changes attacks, damage or manoeuvre checks.
+@export var carrying_strength_bonus: int = 0
+@export var carrying_capacity_bonus_per_strength_point_lb: float = 0.0
 
 
 func ability_score(abbreviation: String) -> int:
@@ -74,6 +97,19 @@ func validate_definition() -> Array[String]:
 		errors.append("Character template %s has a sprint multiplier below 1.0." % id)
 	if maximum_weight_lb <= 0.0:
 		errors.append("Character template %s has non-positive carrying capacity." % id)
+	if carrying_strength_bonus < 0:
+		errors.append("Character template %s has a negative carrying Strength bonus." % id)
+	if carrying_capacity_bonus_per_strength_point_lb < 0.0:
+		errors.append("Character template %s has a negative carrying-capacity scale." % id)
+	if combatant_classification not in [&"combatant", &"civilian", &"support"]:
+		errors.append(
+			"Character template %s has invalid combatant classification %s."
+			% [id, combatant_classification]
+		)
+	if not provisional_content and ai_profile_id.is_empty() and combatant_classification != &"civilian":
+		errors.append("Production combatant template %s has no AI profile." % id)
+	if not provisional_content and loot_profile_id.is_empty():
+		errors.append("Production character template %s has no loot profile." % id)
 	if footprint.x <= 0 or footprint.y <= 0:
 		errors.append("Character template %s has a non-positive footprint." % id)
 	for abbreviation: String in ["STR", "DEX", "CON", "INT", "WIS", "CHA"]:
@@ -93,6 +129,48 @@ func validate_definition() -> Array[String]:
 			)
 		else:
 			seen_actions[action_id] = true
+
+	var seen_roles: Dictionary = {}
+	for role_id: StringName in role_tags:
+		if role_id.is_empty():
+			errors.append("Character template %s has an empty role tag." % id)
+		elif seen_roles.has(role_id):
+			errors.append("Character template %s repeats role tag %s." % [id, role_id])
+		else:
+			seen_roles[role_id] = true
+
+	var seen_proficiencies: Dictionary = {}
+	for proficiency_id: StringName in proficiency_ids:
+		if proficiency_id.is_empty():
+			errors.append("Character template %s has an empty proficiency ID." % id)
+		elif seen_proficiencies.has(proficiency_id):
+			errors.append(
+				"Character template %s repeats proficiency %s."
+				% [id, proficiency_id]
+			)
+		else:
+			seen_proficiencies[proficiency_id] = true
+
+	for raw_feature_id: Variant in feature_parameters.keys():
+		var feature_id := StringName(raw_feature_id)
+		if feature_id.is_empty():
+			errors.append("Character template %s has an empty feature-parameter ID." % id)
+		elif not trait_ids.has(feature_id):
+			errors.append(
+				"Character template %s has parameters for unowned feature %s."
+				% [id, feature_id]
+			)
+
+	for raw_resource_id: Variant in ability_resource_maximums.keys():
+		var resource_id := StringName(raw_resource_id)
+		var maximum := int(ability_resource_maximums.get(raw_resource_id, 0))
+		if resource_id.is_empty():
+			errors.append("Character template %s has an empty ability resource ID." % id)
+		elif maximum == 0 or maximum < -1:
+			errors.append(
+				"Character template %s has invalid maximum %d for %s."
+				% [id, maximum, resource_id]
+			)
 
 	var seen_traits: Dictionary = {}
 	for trait_id: StringName in trait_ids:

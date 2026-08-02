@@ -500,7 +500,8 @@ static func _test_stale_transfer_plan_is_rejected(
 	var capacity_before := unit.action_budget.remaining_turn_capacity_feet
 	var revision_change: TacticalChangeSet = TacticalChangeSet.new(
 		&"test_revision_change",
-		state.revision
+		state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	session.state_store.commit(revision_change, session.map_definition)
 	var result := session.inventory_transfer_handler.execute_plan(

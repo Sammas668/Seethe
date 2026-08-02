@@ -1,0 +1,265 @@
+[gd_resource type="Resource" script_class="MissionDefinition" load_steps=26 format=3]
+
+[ext_resource type="Script" path="res://domain/missions/mission_definition.gd" id="1_mission"]
+[ext_resource type="Resource" path="res://content/missions/farm_storehouse/life_farm_storehouse_map_01.tres" id="2_map"]
+[ext_resource type="Script" path="res://domain/missions/mission_objective_definition.gd" id="3_objective"]
+[ext_resource type="Script" path="res://domain/missions/mission_character_placement_definition.gd" id="4_character"]
+[ext_resource type="Script" path="res://domain/missions/mission_ground_item_placement_definition.gd" id="5_item"]
+
+[sub_resource type="Resource" id="PrimarySupplies"]
+script = ExtResource("3_objective")
+objective_id = &"objective.farm.extract_supplies"
+display_name = "Steal supplies from the storehouse"
+description = "Extract two intact items tagged as mission supplies."
+objective_kind = &"extract_items"
+qualifying_tags = Array[StringName]([&"mission_supply"])
+required_quantity = 2
+success_result_code = &"supplies_extracted"
+failure_result_code = &"supplies_unobtainable"
+
+[sub_resource type="Resource" id="OptionalCaptive"]
+script = ExtResource("3_objective")
+objective_id = &"objective.farm.capture_guard"
+display_name = "Take a guard captive"
+description = "Extract one living restrained settlement guard."
+objective_kind = &"extract_captive"
+optional = true
+qualifying_tags = Array[StringName]([&"settlement_guard", &"capture_eligible"])
+required_quantity = 1
+
+[sub_resource type="Resource" id="OptionalFurniture"]
+script = ExtResource("3_objective")
+objective_id = &"objective.farm.extract_furniture"
+display_name = "Steal intact furniture"
+description = "Extract one intact furniture item."
+objective_kind = &"extract_items"
+optional = true
+qualifying_tags = Array[StringName]([&"furniture"])
+required_quantity = 1
+minimum_condition = 0.99
+
+[sub_resource type="Resource" id="OptionalCivilian"]
+script = ExtResource("3_objective")
+objective_id = &"objective.farm.avoid_civilian_deaths"
+display_name = "Avoid killing civilians"
+description = "Complete the raid without killing a farmhand."
+objective_kind = &"avoid_civilian_deaths"
+optional = true
+required_quantity = 1
+
+[sub_resource type="Resource" id="OptionalDeadline"]
+script = ExtResource("3_objective")
+objective_id = &"objective.farm.leave_before_reinforcements"
+display_name = "Leave before reinforcements arrive"
+description = "Reach extraction with the supplies by the end of round 8."
+objective_kind = &"extract_before_round"
+optional = true
+required_quantity = 1
+deadline_round = 8
+
+[sub_resource type="Resource" id="PlayerProtagonist"]
+script = ExtResource("4_character")
+placement_id = &"placement.player.protagonist"
+character_id = &"character.protagonist.placeholder.0001"
+template_id = &"character_template.protagonist.provisional_scorned_champion"
+display_name = "The Scorned Champion"
+team_id = &"player"
+faction_id = &"faction.reavers"
+grid_position = Vector2i(3, 17)
+facing = Vector2i(1, 0)
+ai_controlled = false
+counts_for_victory = true
+role_tags = Array[StringName]([&"player", &"protagonist", &"provisional"])
+
+[sub_resource type="Resource" id="PlayerMarauderA"]
+script = ExtResource("4_character")
+placement_id = &"placement.player.marauder_a"
+character_id = &"character.reaver.marauder.0001"
+template_id = &"character_template.reaver.marauder_tier_1"
+display_name = "Hakon Rusk"
+team_id = &"player"
+faction_id = &"faction.reavers"
+grid_position = Vector2i(3, 19)
+facing = Vector2i(1, 0)
+ai_controlled = false
+counts_for_victory = true
+role_tags = Array[StringName]([&"player", &"reaver", &"marauder", &"capture_specialist"])
+
+[sub_resource type="Resource" id="PlayerMarauderB"]
+script = ExtResource("4_character")
+placement_id = &"placement.player.marauder_b"
+character_id = &"character.reaver.marauder.0002"
+template_id = &"character_template.reaver.marauder_tier_1"
+display_name = "Svala Thorn"
+team_id = &"player"
+faction_id = &"faction.reavers"
+grid_position = Vector2i(5, 18)
+facing = Vector2i(1, 0)
+ai_controlled = false
+counts_for_victory = true
+role_tags = Array[StringName]([&"player", &"reaver", &"marauder", &"capture_specialist"])
+
+[sub_resource type="Resource" id="EnemyGuardA"]
+script = ExtResource("4_character")
+placement_id = &"placement.enemy.guard_a"
+character_id = &"character.life.sanctuary_spear_guard.0001"
+template_id = &"character_template.life.sanctuary_spear_guard"
+display_name = "Sanctuary Spear Guard"
+team_id = &"enemy"
+faction_id = &"faction.settlement_watch"
+grid_position = Vector2i(18, 15)
+facing = Vector2i(-1, 0)
+squad_id = &"squad.settlement_watch.storehouse"
+ai_controlled = true
+counts_for_victory = true
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"combatant", &"melee_defender"])
+patrol_path_id = &"patrol.storehouse_guard"
+ai_profile_override_id = &"ai.life.sanctuary_spear_guard"
+
+[sub_resource type="Resource" id="EnemyGuardB"]
+script = ExtResource("4_character")
+placement_id = &"placement.enemy.guard_b"
+character_id = &"character.life.sanctuary_spear_guard.0002"
+template_id = &"character_template.life.sanctuary_spear_guard"
+display_name = "Sanctuary Spear Guard"
+team_id = &"enemy"
+faction_id = &"faction.settlement_watch"
+grid_position = Vector2i(18, 19)
+facing = Vector2i(-1, 0)
+squad_id = &"squad.settlement_watch.field"
+ai_controlled = true
+counts_for_victory = true
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"combatant", &"melee_defender"])
+patrol_path_id = &"patrol.storehouse_guard"
+ai_profile_override_id = &"ai.life.sanctuary_spear_guard"
+
+[sub_resource type="Resource" id="EnemyArcher"]
+script = ExtResource("4_character")
+placement_id = &"placement.enemy.archer"
+character_id = &"character.life.sanctuary_archer.0001"
+template_id = &"character_template.life.sanctuary_archer"
+display_name = "Sanctuary Archer"
+team_id = &"enemy"
+faction_id = &"faction.settlement_watch"
+grid_position = Vector2i(27, 11)
+facing = Vector2i(-1, 0)
+squad_id = &"squad.settlement_watch.storehouse"
+ai_controlled = true
+counts_for_victory = true
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"combatant", &"ranged"])
+ai_profile_override_id = &"ai.life.sanctuary_archer"
+
+[sub_resource type="Resource" id="EnemyMercy"]
+script = ExtResource("4_character")
+placement_id = &"placement.enemy.mercy_bearer"
+character_id = &"character.life.mercy_bearer.0001"
+template_id = &"character_template.life.mercy_bearer"
+display_name = "Mercy-Bearer"
+team_id = &"enemy"
+faction_id = &"faction.ilyran_church"
+grid_position = Vector2i(26, 17)
+facing = Vector2i(-1, 0)
+squad_id = &"squad.settlement_watch.storehouse"
+ai_controlled = true
+counts_for_victory = true
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"support", &"mercy_bearer"])
+ai_profile_override_id = &"ai.life.mercy_bearer"
+
+[sub_resource type="Resource" id="CivilianA"]
+script = ExtResource("4_character")
+placement_id = &"placement.civilian.farmhand_a"
+character_id = &"character.life.farmhand.0001"
+template_id = &"character_template.life.farmhand"
+display_name = "Toma Vale"
+team_id = &"neutral"
+faction_id = &"faction.local_civilians"
+grid_position = Vector2i(13, 18)
+facing = Vector2i(0, 1)
+ai_controlled = false
+auto_pass_turn = true
+counts_for_victory = false
+role_tags = Array[StringName]([&"civilian", &"farmhand", &"capture_eligible"])
+patrol_path_id = &"patrol.farmhand_work"
+ai_profile_override_id = &"ai.civilian.farm_worker"
+
+[sub_resource type="Resource" id="CivilianB"]
+script = ExtResource("4_character")
+placement_id = &"placement.civilian.farmhand_b"
+character_id = &"character.life.farmhand.0002"
+template_id = &"character_template.life.farmhand"
+display_name = "Edda Fen"
+team_id = &"neutral"
+faction_id = &"faction.local_civilians"
+grid_position = Vector2i(13, 15)
+facing = Vector2i(0, 1)
+ai_controlled = false
+auto_pass_turn = true
+counts_for_victory = false
+role_tags = Array[StringName]([&"civilian", &"farmhand", &"capture_eligible"])
+patrol_path_id = &"patrol.farmhand_work"
+ai_profile_override_id = &"ai.civilian.farm_worker"
+
+[sub_resource type="Resource" id="SupplyCrateA"]
+script = ExtResource("5_item")
+placement_id = &"placement.item.supply_crate_a"
+instance_id = &"instance.mission.farm.supply_crate_a"
+definition_id = &"item.grain_crate"
+grid_position = Vector2i(23, 13)
+quantity = 1
+condition = 1.0
+source_label = "Storehouse supplies"
+
+[sub_resource type="Resource" id="SupplyCrateB"]
+script = ExtResource("5_item")
+placement_id = &"placement.item.supply_crate_b"
+instance_id = &"instance.mission.farm.supply_crate_b"
+definition_id = &"item.grain_crate"
+grid_position = Vector2i(25, 15)
+quantity = 1
+condition = 1.0
+source_label = "Storehouse supplies"
+
+[sub_resource type="Resource" id="SupplySackC"]
+script = ExtResource("5_item")
+placement_id = &"placement.item.supply_sack_c"
+instance_id = &"instance.mission.farm.supply_sack_c"
+definition_id = &"item.grain_sack"
+grid_position = Vector2i(27, 18)
+quantity = 1
+condition = 1.0
+source_label = "Storehouse supplies"
+
+[sub_resource type="Resource" id="FurnitureTable"]
+script = ExtResource("5_item")
+placement_id = &"placement.item.furniture_table"
+instance_id = &"instance.mission.farm.storehouse_table"
+definition_id = &"item.storehouse_table"
+grid_position = Vector2i(24, 17)
+quantity = 1
+condition = 1.0
+source_label = "Storehouse furniture"
+
+[resource]
+script = ExtResource("1_mission")
+mission_definition_id = &"mission_definition.life.farm_storehouse_raid_01"
+mission_instance_id = &"mission.life.farm_storehouse_raid_01.debug"
+display_name = "Raid the Ilyran Storehouse"
+briefing_text = "An isolated Ilyran farm has stored enough grain to provision the warcamp. Enter from the western hedgerow, take what can be carried, and withdraw before the settlement watch gathers reinforcements."
+mission_type = &"raid"
+map_definition = ExtResource("2_map")
+protagonist_character_id = &"character.protagonist.placeholder.0001"
+maximum_player_deployment = 3
+player_character_ids = Array[StringName]([&"character.protagonist.placeholder.0001", &"character.reaver.marauder.0001", &"character.reaver.marauder.0002"])
+character_placements = Array[ExtResource("4_character")]([SubResource("PlayerProtagonist"), SubResource("PlayerMarauderA"), SubResource("PlayerMarauderB"), SubResource("EnemyGuardA"), SubResource("EnemyGuardB"), SubResource("EnemyArcher"), SubResource("EnemyMercy"), SubResource("CivilianA"), SubResource("CivilianB")])
+ground_item_placements = Array[ExtResource("5_item")]([SubResource("SupplyCrateA"), SubResource("SupplyCrateB"), SubResource("SupplySackC"), SubResource("FurnitureTable")])
+primary_objectives = Array[ExtResource("3_objective")]([SubResource("PrimarySupplies")])
+optional_objectives = Array[ExtResource("3_objective")]([SubResource("OptionalCaptive"), SubResource("OptionalFurniture"), SubResource("OptionalCivilian"), SubResource("OptionalDeadline")])
+failure_condition_ids = Array[StringName]([&"protagonist_dead", &"player_force_incapacitated", &"primary_objective_impossible"])
+loot_profile_id = &"loot_profile.life.farm_storehouse"
+notoriety_event_profile_id = &"notoriety_profile.life.farm_raid"
+visual_profile_id = &"visual_profile.life.farm_day"
+audio_profile_id = &"audio_profile.life.farm_tension"
+result_rule_profile_id = &"result_profile.raid.standard"
+reinforcement_profile_id = &"reinforcement_profile.life.local_watch_preview"
+mission_round_limit = -1
+notoriety_preview_lines = Array[String](["Supplies stolen: +3 per qualifying item", "Settlement guard captured: +4", "Civilian killed: +8", "Strategic application is preview-only in Stage 4.7."])

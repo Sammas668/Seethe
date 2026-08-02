@@ -4,6 +4,9 @@ extends RefCounted
 const STATUS_REJECTED_BEFORE_COMMIT: StringName = &"rejected_before_commit"
 const STATUS_COMMITTED: StringName = &"committed"
 const STATUS_COMMITTED_WITH_WARNING: StringName = &"committed_with_warning"
+const STATUS_NO_CHANGE: StringName = &"no_change"
+const STATUS_PENDING: StringName = &"pending"
+const STATUS_DEFERRED: StringName = &"deferred"
 
 var success: bool
 var code: StringName
@@ -32,6 +35,8 @@ func _init(
 	committed_revision = committed_revision_value
 
 
+# Kept for compatibility with older handlers. New code should prefer committed(),
+# no_change(), pending(), or deferred() so callers can distinguish outcomes.
 static func ok(data_value: Variant = null, message_value: String = "") -> OperationResult:
 	return OperationResult.new(
 		true,
@@ -53,6 +58,52 @@ static func committed(
 		message_value,
 		data_value,
 		STATUS_COMMITTED,
+		[],
+		committed_revision_value
+	)
+
+
+static func no_change(
+		data_value: Variant = null,
+		message_value: String = ""
+) -> OperationResult:
+	return OperationResult.new(
+		true,
+		&"no_change",
+		message_value,
+		data_value,
+		STATUS_NO_CHANGE
+	)
+
+
+static func pending(
+		code_value: StringName,
+		data_value: Variant,
+		message_value: String,
+		committed_revision_value: int = -1
+) -> OperationResult:
+	return OperationResult.new(
+		true,
+		code_value,
+		message_value,
+		data_value,
+		STATUS_PENDING,
+		[],
+		committed_revision_value
+	)
+
+
+static func deferred(
+		data_value: Variant = null,
+		message_value: String = "",
+		committed_revision_value: int = -1
+) -> OperationResult:
+	return OperationResult.new(
+		true,
+		&"deferred",
+		message_value,
+		data_value,
+		STATUS_DEFERRED,
 		[],
 		committed_revision_value
 	)

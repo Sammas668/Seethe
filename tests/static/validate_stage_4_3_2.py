@@ -27,7 +27,7 @@ def main() -> int:
             "func blocks_standing_space()",
             "Exactly 0 HP remains Disabled",
             "func body_inventory_footprint()",
-            "return Vector2i(4, 4)",
+            "return Vector2i(4, 3)",
             "func apply_restraint(",
             "func remove_restraint()",
             "func finish_off()",
@@ -261,7 +261,7 @@ def main() -> int:
         "tests/tactical/stage_4_3_2_body_item_tests.gd",
         [
             "A Disabled character must not create a body item.",
-            "A Medium body must consume a real 4×4 Backpack footprint.",
+            "A Medium body must consume a real 4×3 Backpack footprint.",
             "Dragging a medical item onto a Dying body must perform First Aid.",
             "Search must preserve each item instance and move it to the body tile.",
             "An adjacent enemy ally must be able to use the same Untie action.",

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"item.raiders_sack"
+display_name = "Raider's Sack"
+description = "A permanent reinforced 2x2 Belt fixture. It opens into a 4x3 captive compartment sized for one restrained Medium-or-smaller body."
+weight_lb = 2.5
+inventory_footprint = Vector2i(2, 2)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = false
+stackable = false
+maximum_stack_size = 1
+equipment_tags = Array[StringName]([&"container", &"raiders_sack", &"fixed_fixture", &"reaver"])
+tactical_visual_category = &"container"
+fixed_inventory_fixture = true
+internal_container_kind = &"raider_sack"
+internal_container_size = Vector2i(4, 3)
+internal_allowed_instance_kinds = Array[StringName]([&"body", &"item"])
+internal_single_entity_only = true

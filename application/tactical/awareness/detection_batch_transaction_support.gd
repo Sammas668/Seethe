@@ -35,7 +35,13 @@ func snapshot_for_resolutions(
 		}
 	snapshot["units"] = unit_snapshots
 	var squad_snapshots: Dictionary = {}
-	for squad: TacticalSquadState in _state_store.state.get_squads():
+	var affected_squad_ids: Array[StringName] = (
+		_affected_squad_ids_for_resolutions(resolutions)
+	)
+	for squad_id: StringName in affected_squad_ids:
+		var squad: TacticalSquadState = _state_store.state.get_squad(squad_id)
+		if squad == null:
+			continue
 		squad_snapshots[squad.squad_id] = {
 			"awareness": squad.awareness,
 			"last_seen": squad.last_seen_positions_by_unit_id.duplicate(true),
@@ -43,10 +49,47 @@ func snapshot_for_resolutions(
 		}
 	snapshot["squads"] = squad_snapshots
 	var budget_snapshots: Array[Dictionary] = []
-	for unit: TacticalUnitState in _state_store.state.get_units():
-		budget_snapshots.append(_budget_snapshot(unit))
+	var participant_ids: Array[StringName] = []
+	for resolution: TacticalDetectionResolution in resolutions:
+		if resolution == null:
+			continue
+		for participant_value: Variant in resolution.initiative_totals_by_unit_id.keys():
+			var participant_id := StringName(participant_value)
+			if not participant_ids.has(participant_id):
+				participant_ids.append(participant_id)
+	for participant_id: StringName in participant_ids:
+		var participant: TacticalUnitState = _state_store.state.get_unit(
+			participant_id
+		)
+		if participant != null:
+			budget_snapshots.append(_budget_snapshot(participant))
 	snapshot["budgets"] = budget_snapshots
 	return snapshot
+
+
+func _affected_squad_ids_for_resolutions(
+		resolutions: Array[TacticalDetectionResolution]
+) -> Array[StringName]:
+	var result: Array[StringName] = []
+	for resolution: TacticalDetectionResolution in resolutions:
+		if resolution == null:
+			continue
+		for squad_id: StringName in resolution.detected_squad_ids:
+			_append_unique(result, squad_id)
+		for squad_id: StringName in resolution.newly_aware_squad_ids:
+			_append_unique(result, squad_id)
+		for squad_id: StringName in resolution.revealed_at_destination_squad_ids:
+			_append_unique(result, squad_id)
+		for squad_id: StringName in resolution.lost_sight_squad_ids:
+			_append_unique(result, squad_id)
+		for squad_value: Variant in resolution.last_seen_tile_by_squad_id.keys():
+			_append_unique(result, StringName(squad_value))
+	return result
+
+
+func _append_unique(values: Array[StringName], value: StringName) -> void:
+	if not value.is_empty() and not values.has(value):
+		values.append(value)
 
 
 func restore_snapshot(snapshot: Dictionary) -> void:

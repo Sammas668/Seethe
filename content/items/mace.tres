@@ -8,11 +8,13 @@ id = &"item.mace"
 display_name = "Mace"
 description = "A compact blunt weapon suitable for lethal or controlled nonlethal strikes."
 weight_lb = 8.0
-inventory_footprint = Vector2i(2, 3)
+inventory_footprint = Vector2i(2, 2)
 handedness = &"one_handed"
-belt_allowed = false
+belt_allowed = true
 backpack_allowed = true
 maximum_stack_size = 1
 equipment_tags = Array[StringName]([&"weapon", &"melee", &"mace", &"reaver"])
 granted_action_ids = Array[StringName]([&"action.mace_attack"])
 tactical_visual_category = &"weapon"
+
+required_proficiency_id = &"proficiency.simple_weapons"

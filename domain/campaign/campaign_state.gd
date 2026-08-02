@@ -8,11 +8,12 @@ const CAMPAIGN_ITEM_LOCATION_STATE_SCRIPT = preload(
 	"res://domain/campaign/campaign_item_location_state.gd"
 )
 
-const CURRENT_SAVE_VERSION: int = 4
+const CURRENT_SAVE_VERSION: int = 5
 
 var items_by_id: Dictionary = {}
 var captives_by_id: Dictionary = {}
 var mission_history_by_id: Dictionary = {}
+var applied_generated_item_provenance_ids: Dictionary = {}
 
 
 func _init() -> void:
@@ -63,6 +64,21 @@ func record_mission_result(result: MissionResult) -> bool:
 func mission_history(mission_id: StringName) -> Dictionary:
 	var raw: Variant = mission_history_by_id.get(mission_id, {})
 	return (raw as Dictionary).duplicate(true) if raw is Dictionary else {}
+
+
+func has_applied_generated_item_provenance(provenance_id: StringName) -> bool:
+	return (
+		not provenance_id.is_empty()
+		and applied_generated_item_provenance_ids.has(provenance_id)
+	)
+
+
+func mark_generated_item_provenance_applied(provenance_id: StringName) -> bool:
+	if provenance_id.is_empty() or has_applied_generated_item_provenance(provenance_id):
+		return false
+	applied_generated_item_provenance_ids[provenance_id] = true
+	revision += 1
+	return true
 
 
 func add_item(item) -> bool:
@@ -241,6 +257,9 @@ func restore_from_dictionary(data: Dictionary) -> void:
 	items_by_id = restored.items_by_id
 	captives_by_id = restored.captives_by_id
 	mission_history_by_id = restored.mission_history_by_id
+	applied_generated_item_provenance_ids = (
+		restored.applied_generated_item_provenance_ids
+	)
 	save_version = restored.save_version
 	revision = restored.revision
 	applied_result_ids = restored.applied_result_ids
@@ -266,6 +285,11 @@ func to_dictionary() -> Dictionary:
 	base["items"] = serialized_items
 	base["captives"] = serialized_captives
 	base["mission_history"] = mission_history_by_id.duplicate(true)
+	var provenance_ids: Array[String] = []
+	for raw_id: Variant in applied_generated_item_provenance_ids.keys():
+		provenance_ids.append(String(raw_id))
+	provenance_ids.sort()
+	base["applied_generated_item_provenance_ids"] = provenance_ids
 	return base
 
 
@@ -278,6 +302,15 @@ static func from_dictionary(data: Dictionary) -> CampaignState:
 		var result_id: StringName = StringName(raw_result_id)
 		if not result_id.is_empty():
 			campaign.applied_result_ids[result_id] = true
+
+	var raw_provenance_ids: Variant = data.get(
+		"applied_generated_item_provenance_ids", []
+	)
+	if raw_provenance_ids is Array:
+		for raw_provenance_id: Variant in raw_provenance_ids as Array:
+			var provenance_id := StringName(raw_provenance_id)
+			if not provenance_id.is_empty():
+				campaign.applied_generated_item_provenance_ids[provenance_id] = true
 
 	var raw_characters: Array = data.get("characters", [])
 	for raw_character: Variant in raw_characters:

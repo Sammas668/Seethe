@@ -35,7 +35,8 @@ func execute(command: SpendActionCommand) -> OperationResult:
 	var spent_result: Dictionary = {"value": -1}
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"action_spent",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.action_budget([unit.unit_id])
 	)
 	changes.stage(
 		Callable(self, "_apply_action_cost").bind(

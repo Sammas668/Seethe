@@ -34,6 +34,11 @@ var _journal: RefCounted
 var _expanded: bool = false
 var _filter_id: StringName = FILTER_ALL
 var _unread_count: int = 0
+var _pending_journal_events: Array[Dictionary] = []
+var _journal_event_flush_scheduled: bool = false
+var _expanded_event_ids: Dictionary = {}
+var _frame_deferred_event_batches: int = 0
+var _incremental_expanded_entries_added: int = 0
 
 
 func _ready() -> void:
@@ -101,12 +106,39 @@ func _set_filter(filter_id: StringName) -> void:
 	call_deferred("_scroll_to_bottom")
 
 
-func _on_event_added(_event: Dictionary) -> void:
+func _on_event_added(event: Dictionary) -> void:
+	# Hidden AI activity remains available to diagnostics and save/replay data,
+	# but it must not create player-facing unread counts, label work or a
+	# frame-deferred combat-log refresh.
+	if StringName(event.get("visibility", &"player")) != &"player":
+		return
 	if not _expanded:
 		_unread_count += 1
-	_refresh_all()
-	if _expanded:
-		call_deferred("_scroll_to_bottom")
+	_pending_journal_events.append(event.duplicate(true))
+	if _journal_event_flush_scheduled:
+		return
+	_journal_event_flush_scheduled = true
+	_flush_pending_journal_events_after_frame()
+
+
+func _flush_pending_journal_events_after_frame() -> void:
+	# A committed attack begins its hit pulse before journal publication. Wait for
+	# one rendered frame before touching log controls so the first vibration frame
+	# cannot be held behind label/panel construction.
+	await get_tree().process_frame
+	_journal_event_flush_scheduled = false
+	if _pending_journal_events.is_empty():
+		return
+	_frame_deferred_event_batches += 1
+	var pending: Array = _pending_journal_events.duplicate(true)
+	_pending_journal_events.clear()
+	_refresh_collapsed()
+	if not _expanded:
+		return
+	for event_value: Variant in pending:
+		if event_value is Dictionary:
+			_append_expanded_event(event_value)
+	call_deferred("_scroll_to_bottom")
 
 
 func _apply_layout() -> void:
@@ -168,6 +200,7 @@ func _refresh_collapsed() -> void:
 
 func _refresh_expanded() -> void:
 	_clear_children(_entries)
+	_expanded_event_ids.clear()
 
 	var events: Array = _journal_call(
 		"events",
@@ -176,17 +209,65 @@ func _refresh_expanded() -> void:
 	)
 
 	if events.is_empty():
-		var empty_label := Label.new()
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty_label.text = "No entries match this filter."
-		_entries.add_child(empty_label)
+		_add_expanded_empty_label()
 		return
 
 	for event_value: Variant in events:
 		if not event_value is Dictionary:
 			continue
 		var event: Dictionary = event_value
+		_register_expanded_event(event)
 		_entries.add_child(_build_event_entry(event))
+
+
+func _append_expanded_event(event: Dictionary) -> void:
+	if not _event_matches_current_filter(event):
+		return
+	var event_id: StringName = StringName(event.get("event_id", &""))
+	if not event_id.is_empty() and _expanded_event_ids.has(event_id):
+		return
+	_remove_expanded_empty_label()
+	_register_expanded_event(event)
+	_entries.add_child(_build_event_entry(event))
+	_incremental_expanded_entries_added += 1
+
+
+func _register_expanded_event(event: Dictionary) -> void:
+	var event_id: StringName = StringName(event.get("event_id", &""))
+	if not event_id.is_empty():
+		_expanded_event_ids[event_id] = true
+
+
+func _event_matches_current_filter(event: Dictionary) -> bool:
+	if StringName(event.get("visibility", &"player")) != &"player":
+		return false
+	if _filter_id == FILTER_ALL:
+		return true
+	var category: StringName = StringName(event.get("category", &"events"))
+	if _filter_id == FILTER_ROLLS:
+		var rolls: Array = event.get("roll_records", [])
+		return category == FILTER_ROLLS or not rolls.is_empty()
+	if _filter_id == FILTER_COMBAT:
+		return category == FILTER_COMBAT
+	if _filter_id == FILTER_EVENTS:
+		return category == FILTER_EVENTS
+	return category == _filter_id
+
+
+func _add_expanded_empty_label() -> void:
+	var empty_label := Label.new()
+	empty_label.name = "EmptyEventLabel"
+	empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	empty_label.text = "No entries match this filter."
+	_entries.add_child(empty_label)
+
+
+func _remove_expanded_empty_label() -> void:
+	var empty_label: Node = _entries.get_node_or_null("EmptyEventLabel")
+	if empty_label == null:
+		return
+	_entries.remove_child(empty_label)
+	empty_label.queue_free()
 
 
 func _build_event_entry(event: Dictionary) -> Control:
@@ -278,6 +359,16 @@ func _new_compact_label(label_text: String) -> Label:
 	label.text = label_text
 	label.tooltip_text = label_text
 	return label
+
+
+func performance_snapshot() -> Dictionary:
+	return {
+		"pending_journal_events": _pending_journal_events.size(),
+		"frame_deferred_event_batches": _frame_deferred_event_batches,
+		"incremental_expanded_entries_added": (
+			_incremental_expanded_entries_added
+		),
+	}
 
 
 func _journal_call(

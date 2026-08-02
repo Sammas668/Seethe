@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.life.novice_mercy_bearer"
+display_name = "Novice Mercy-Bearer"
+species_name = "Human"
+class_name_text = "Adept 2"
+archetype_name = "Mercy-Bearer"
+troop_type = "Life Support"
+base_level = 2
+base_ability_scores = {"CHA": 12, "CON": 12, "DEX": 10, "INT": 11, "STR": 10, "WIS": 15}
+base_attack_bonus = 1
+base_save_bonuses = {"fortitude": 1, "reflex": 0, "will": 3}
+base_hp_before_constitution = 14
+hp_constitution_levels = 2
+base_turn_capacity_feet = 30
+passive_perception_base = 10
+perception_skill_bonus = 4
+maximum_weight_lb = 50.0
+default_defence_profile_id = &"defence.hide_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+trait_ids = Array[StringName]([&"trait.mercy_training"])
+ability_entries = Array[String](["Mercy Satchel — one administered healing or First Aid use through the shared body-action system.", "Preservation Priority — stabilise or heal an endangered ally before attacking when a legal support action is available.", "Mercy Staff — weak blunt attack with a visible nonlethal option."])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.mercy_staff", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.mercy_satchel", "grid_position": Vector2i(0, 0), "quantity": 1}])
+tactical_visual_id = &"tactical.life.novice_mercy_bearer"
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"support", &"mercy_bearer"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.light_armour", &"proficiency.medicine"])
+ai_profile_id = &"ai.life.mercy_bearer.support"
+combatant_classification = &"support"
+capture_eligible = true
+surrender_eligible = true
+loot_profile_id = &"loot_profile.life.novice_mercy_bearer"

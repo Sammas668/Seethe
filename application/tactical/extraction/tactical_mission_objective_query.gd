@@ -8,6 +8,8 @@ static func required_objective_complete(
 ) -> bool:
 	if state == null or map_definition == null:
 		return false
+	if state.mission_runtime_state != null:
+		return state.mission_runtime_state.primary_complete()
 	if _defending_force_neutralised(state):
 		return true
 	for unit: TacticalUnitState in state.get_player_units():

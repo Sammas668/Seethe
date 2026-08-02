@@ -19,6 +19,7 @@ static func build_result(
 
 	result.mission_id = setup.mission_id
 	result.source_campaign_revision = setup.source_campaign_revision
+	result.source_setup_hash = setup.finalized_setup_hash()
 	result.completed = true
 	result.successful = successful
 	result.mission_outcome = (
@@ -111,6 +112,7 @@ static func build_result(
 			)
 		)
 
+	_bind_generated_item_authority(result, setup, state)
 	return result
 
 
@@ -132,6 +134,7 @@ static func build_extraction_result(
 
 	result.mission_id = setup.mission_id
 	result.source_campaign_revision = setup.source_campaign_revision
+	result.source_setup_hash = setup.finalized_setup_hash()
 	result.completed = true
 	result.mission_outcome = manifest.mission_outcome
 	result.successful = manifest.mission_outcome == MissionOutcome.VICTORY
@@ -147,6 +150,7 @@ static func build_extraction_result(
 		and not manifest.captured_enemy_unit_ids.is_empty()
 	):
 		result.optional_objective_ids.append(setup.optional_captive_objective_id)
+	_apply_authored_objective_results(result, state)
 	result.summary_event_ids = [
 		&"mission.extraction.confirmed",
 		&"mission.result.committed",
@@ -167,16 +171,6 @@ static func build_extraction_result(
 		)
 		_append_extracted_item(result, extracted_item_ids, campaign_item)
 		campaign_destination_by_item_id[item_id] = destination
-		if setup.get_item(item_id) == null:
-			result.authorize_generated_item(
-				item_id,
-				StringName("%s.extraction.%s" % [setup.mission_id, item_id]),
-				"Extracted mission-generated item.",
-				tactical_item.definition_id,
-				tactical_item.quantity,
-				tactical_item.condition,
-				tactical_item.tactical_modifiers
-			)
 
 	for mission_character: PersistentCharacterState in setup.get_characters():
 		var character_result := MissionCharacterResult.new()
@@ -308,7 +302,49 @@ static func build_extraction_result(
 				captive_result.equipment_item_ids.append(item_id)
 		result.add_captive_result(captive_result)
 
+	_bind_generated_item_authority(result, setup, state)
 	return result
+
+
+static func _bind_generated_item_authority(
+		result: MissionResult,
+		setup: MissionSetupSnapshot,
+		state: TacticalState
+) -> void:
+	if result == null or setup == null or state == null:
+		return
+	for entry: Dictionary in result.extracted_item_entries:
+		var item_id := StringName(entry.get("item_id", ""))
+		if item_id.is_empty() or setup.get_item(item_id) != null:
+			continue
+		var provenance := state.generated_item_provenance_for_item(item_id)
+		if (
+			provenance != null
+			and not result.generated_item_provenance_ids.has(provenance.provenance_id)
+		):
+			result.generated_item_provenance_ids.append(provenance.provenance_id)
+
+
+static func _apply_authored_objective_results(
+		result: MissionResult,
+		state: TacticalState
+) -> void:
+	if result == null or state == null or state.mission_runtime_state == null:
+		return
+	var runtime: MissionRuntimeState = state.mission_runtime_state
+	result.completed_objective_ids.clear()
+	result.failed_objective_ids.clear()
+	result.optional_objective_ids.clear()
+	for objective_state: MissionObjectiveState in runtime.objectives():
+		result.objective_outcomes_by_id[objective_state.objective_id] = objective_state.to_dictionary()
+		if objective_state.is_complete():
+			result.completed_objective_ids.append(objective_state.objective_id)
+			if objective_state.optional:
+				result.optional_objective_ids.append(objective_state.objective_id)
+		elif objective_state.is_failed():
+			result.failed_objective_ids.append(objective_state.objective_id)
+	result.notoriety_preview_lines = runtime.notoriety_preview_lines.duplicate()
+	result.important_event_ids = runtime.important_event_ids.duplicate()
 
 
 static func _mission_statistics(

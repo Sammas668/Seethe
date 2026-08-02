@@ -36,6 +36,15 @@ var _runtime_index_cache: TacticalMapRuntimeIndex
 @export var allows_withdrawal: bool = true
 @export var requires_protagonist_extraction: bool = true
 @export var extraction_zones: Array[TacticalExtractionZoneDefinition] = []
+# Stage 4.6 authored-mission metadata. These definitions are inert map data;
+# application services decide how they become runtime state.
+@export var deployment_zones: Array[MapZoneDefinition] = []
+@export var patrol_paths: Array[PatrolPathDefinition] = []
+@export var objective_anchors: Array[MapAnchorDefinition] = []
+@export var recoverable_prop_anchors: Array[MapAnchorDefinition] = []
+@export var reinforcement_anchors: Array[MapAnchorDefinition] = []
+@export var civilian_work_anchors: Array[MapAnchorDefinition] = []
+@export var lighting_regions: Array[LightingRegionDefinition] = []
 
 
 func runtime_index() -> TacticalMapRuntimeIndex:
@@ -158,6 +167,34 @@ func extraction_zone_ids() -> Array[StringName]:
 	return result
 
 
+func deployment_zone(zone_id: StringName) -> MapZoneDefinition:
+	for zone: MapZoneDefinition in deployment_zones:
+		if zone != null and zone.zone_id == zone_id:
+			return zone
+	return null
+
+
+func patrol_path(path_id: StringName) -> PatrolPathDefinition:
+	for path: PatrolPathDefinition in patrol_paths:
+		if path != null and path.patrol_path_id == path_id:
+			return path
+	return null
+
+
+func authored_anchor(anchor_id: StringName) -> MapAnchorDefinition:
+	for collection: Array in [
+		objective_anchors,
+		recoverable_prop_anchors,
+		reinforcement_anchors,
+		civilian_work_anchors,
+	]:
+		for raw_anchor: Variant in collection:
+			var anchor := raw_anchor as MapAnchorDefinition
+			if anchor != null and anchor.anchor_id == anchor_id:
+				return anchor
+	return null
+
+
 func is_primary_objective_tile(tile: Vector2i) -> bool:
 	return primary_objective_tiles.has(tile)
 
@@ -231,6 +268,39 @@ func validate_definition() -> Array[String]:
 			errors.append("Tactical map duplicates extraction zone %s." % zone.zone_id)
 		seen_zone_ids[zone.zone_id] = true
 		errors.append_array(zone.validate_definition(self))
+	for zone: MapZoneDefinition in deployment_zones:
+		if zone == null:
+			errors.append("Tactical map contains a missing deployment zone.")
+			continue
+		if seen_zone_ids.has(zone.zone_id):
+			errors.append("Tactical map duplicates zone %s." % zone.zone_id)
+		seen_zone_ids[zone.zone_id] = true
+		errors.append_array(zone.validate_definition(self))
+	var seen_path_ids: Dictionary = {}
+	for path: PatrolPathDefinition in patrol_paths:
+		if path == null:
+			errors.append("Tactical map contains a missing patrol path.")
+			continue
+		if seen_path_ids.has(path.patrol_path_id):
+			errors.append("Tactical map duplicates patrol path %s." % path.patrol_path_id)
+		seen_path_ids[path.patrol_path_id] = true
+		errors.append_array(path.validate_definition(self))
+	var seen_anchor_ids: Dictionary = {}
+	for collection: Array in [objective_anchors, recoverable_prop_anchors, reinforcement_anchors, civilian_work_anchors]:
+		for raw_anchor: Variant in collection:
+			var anchor := raw_anchor as MapAnchorDefinition
+			if anchor == null:
+				errors.append("Tactical map contains a missing authored anchor.")
+				continue
+			if seen_anchor_ids.has(anchor.anchor_id):
+				errors.append("Tactical map duplicates anchor %s." % anchor.anchor_id)
+			seen_anchor_ids[anchor.anchor_id] = true
+			errors.append_array(anchor.validate_definition(self))
+	for region: LightingRegionDefinition in lighting_regions:
+		if region == null:
+			errors.append("Tactical map contains a missing lighting region.")
+		else:
+			errors.append_array(region.validate_definition(self))
 	return errors
 
 

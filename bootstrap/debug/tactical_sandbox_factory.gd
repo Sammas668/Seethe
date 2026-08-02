@@ -15,7 +15,9 @@ const CAMPAIGN_CHANGE_SET_SCRIPT: Script = preload(
 )
 
 const SANDBOX_MISSION_ID: StringName = &"mission.sandbox.farm_storehouse"
+const PROVISIONAL_PROTAGONIST_ID: StringName = &"character.protagonist.placeholder.0001"
 const MARAUDER_ID: StringName = &"character.reaver.marauder.0001"
+const MARAUDER_TWO_ID: StringName = &"character.reaver.marauder.0002"
 const ARCHER_ID: StringName = &"character.prototype.archer.0001"
 const SCOUT_ID: StringName = &"character.prototype.scout.0001"
 const ENEMY_ID: StringName = &"character.example.enemy_guard.0001"
@@ -25,6 +27,7 @@ const PRACTICE_DUMMY_ID: StringName = &"character.example.practice_dummy.0001"
 const GUARD_SQUAD_A_ID: StringName = &"squad.settlement_watch.a"
 const GUARD_SQUAD_B_ID: StringName = &"squad.settlement_watch.b"
 
+const PROVISIONAL_PROTAGONIST_TEMPLATE_ID: StringName = &"character_template.protagonist.provisional_scorned_champion"
 const MARAUDER_TEMPLATE_ID: StringName = &"character_template.reaver.marauder_tier_1"
 const ARCHER_TEMPLATE_ID: StringName = &"character_template.prototype.archer"
 const SCOUT_TEMPLATE_ID: StringName = &"character_template.prototype.scout"
@@ -210,6 +213,30 @@ static func _ensure_sandbox_campaign(
 		campaign: CampaignState,
 		catalogue: ContentCatalogue
 ) -> void:
+	var protagonist: PersistentCharacterState = campaign.get_character(
+		PROVISIONAL_PROTAGONIST_ID
+	)
+	if protagonist == null:
+		protagonist = CharacterFactory.create_player_character(
+			catalogue.character_template(PROVISIONAL_PROTAGONIST_TEMPLATE_ID),
+			PROVISIONAL_PROTAGONIST_ID,
+			"The Scorned Champion"
+		)
+		protagonist.add_history(
+			"Provisional protagonist identity; campaign progression is deferred to Stage 5.0f."
+		)
+		campaign.add_character(protagonist)
+	_ensure_character_items(
+		campaign,
+		protagonist,
+		catalogue.character_template(PROVISIONAL_PROTAGONIST_TEMPLATE_ID),
+		{
+			&"item.raiders_axe": &"instance.protagonist.axe",
+			&"item.rope": &"instance.protagonist.rope",
+			&"item.bandage": &"instance.protagonist.bandage",
+		}
+	)
+
 	var marauder: PersistentCharacterState = campaign.get_character(MARAUDER_ID)
 	if marauder == null:
 		marauder = CharacterFactory.create_player_character(
@@ -228,12 +255,39 @@ static func _ensure_sandbox_campaign(
 			&"item.reaver_dagger": &"instance.marauder.dagger",
 			&"item.manacles": &"instance.marauder.manacles",
 			&"item.rope": &"instance.marauder.rope",
-			&"item.rations": &"instance.marauder.rations",
 		}
 	)
 
 	if marauder != null and marauder.portrait_override_id.is_empty():
 		marauder.set_portrait_override_id(HAKON_PORTRAIT_ID)
+
+	_ensure_marauder_approved_loadout(campaign, marauder, &"instance.marauder")
+
+	var marauder_two: PersistentCharacterState = campaign.get_character(MARAUDER_TWO_ID)
+	if marauder_two == null:
+		marauder_two = CharacterFactory.create_player_character(
+			catalogue.character_template(MARAUDER_TEMPLATE_ID),
+			MARAUDER_TWO_ID,
+			"Svala Thorn"
+		)
+		marauder_two.add_history("Joined the first production Reaver raiding party.")
+		campaign.add_character(marauder_two)
+	_ensure_character_items(
+		campaign,
+		marauder_two,
+		catalogue.character_template(MARAUDER_TEMPLATE_ID),
+		{
+			&"item.raiders_axe": &"instance.marauder_two.axe",
+			&"item.mace": &"instance.marauder_two.mace",
+			&"item.reaver_dagger": &"instance.marauder_two.dagger",
+			&"item.manacles": &"instance.marauder_two.manacles",
+			&"item.rope": &"instance.marauder_two.rope",
+		}
+	)
+	if marauder_two != null and marauder_two.portrait_override_id.is_empty():
+		marauder_two.set_portrait_override_id(HAKON_PORTRAIT_ID)
+
+	_ensure_marauder_approved_loadout(campaign, marauder_two, &"instance.marauder_two")
 
 	var archer: PersistentCharacterState = campaign.get_character(ARCHER_ID)
 	if archer == null:
@@ -278,6 +332,16 @@ static func _ensure_sandbox_campaign(
 			&"item.empty_sack": &"instance.scout.sack",
 			&"item.sling": &"instance.scout.sling",
 		}
+	)
+
+
+static func _ensure_marauder_approved_loadout(
+		campaign: CampaignState,
+		character: PersistentCharacterState,
+		instance_prefix: StringName
+) -> void:
+	MarauderLoadoutMigration.repair_character(
+		campaign, character, instance_prefix
 	)
 
 

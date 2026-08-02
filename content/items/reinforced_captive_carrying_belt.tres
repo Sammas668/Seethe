@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"item.reinforced_captive_carrying_belt"
+display_name = "Deprecated Carrying Belt"
+description = "Legacy-save compatibility alias. New Marauders use the fixed Raider's Sack."
+weight_lb = 2.0
+inventory_footprint = Vector2i(1, 1)
+handedness = &"not_equippable"
+belt_allowed = false
+backpack_allowed = false
+equipment_tags = Array[StringName]([&"deprecated_legacy_item"])

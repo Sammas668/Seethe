@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.cure_light_wounds"
+display_name = "Cure Light Wounds"
+description = "Half Action, touch. Heals 1d8+5; Augmented Healing is included."
+action_cost_type = &"half"
+implementation_profile_id = &"ability.heal"
+targeting_rule_id = &"target.touch_creature"
+range_feet = 5
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &"resource.mercy.cure_light_wounds"
+resource_cost = 1
+spell_rank = 1
+caster_level = 3
+school_tags = Array[StringName]([&"healing"])
+dice_count = 1
+die_size = 8
+flat_bonus = 5
+damage_channel = &""
+save_type = &""
+save_dc = 0
+half_on_save = false
+condition_id = &""
+duration_rounds = 0
+concentration = false
+bonus_value = 0
+effect_tags = Array[StringName]([&"healing"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])

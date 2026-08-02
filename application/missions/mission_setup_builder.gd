@@ -10,8 +10,10 @@ static func create_from_campaign(
 	# Returns a mutable setup draft. Call finalize_setup() after all mission-only
 	# characters, ground items and intended participants have been added.
 	var result: MissionSetupSnapshot = MissionSetupSnapshot.new()
-	result.mission_id = mission_id_value
-	result.source_campaign_revision = campaign.revision if campaign != null else 0
+	result.configure_identity(
+		mission_id_value,
+		campaign.revision if campaign != null else 0
+	)
 	if campaign == null:
 		return result
 
@@ -27,6 +29,16 @@ static func create_from_campaign(
 		if source_character.team_id == &"player":
 			result.append_player_unit(character_id)
 	return result
+
+
+static func configure_authored_mission(
+		setup: MissionSetupSnapshot,
+		definition: MissionDefinition,
+		protagonist_character_id: StringName
+) -> bool:
+	if setup == null or setup.is_finalized() or definition == null:
+		return false
+	return setup.configure_authored_mission(definition, protagonist_character_id)
 
 
 static func configure_mission_definition(

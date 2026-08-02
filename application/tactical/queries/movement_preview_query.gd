@@ -30,6 +30,9 @@ func execute(
 	var unit: TacticalUnitState = _state_store.state.get_unit(unit_id)
 	if unit == null:
 		return MovementPathResult.failed("The selected unit does not exist.")
+	var movement_reason: String = unit.movement_unavailable_reason()
+	if not movement_reason.is_empty():
+		return MovementPathResult.failed(movement_reason)
 	var occupant: TacticalUnitState = _state_store.state.get_unit_at_tile(
 		destination,
 		unit_id

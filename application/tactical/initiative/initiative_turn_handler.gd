@@ -37,7 +37,8 @@ func end_active_turn(unit_id: StringName) -> OperationResult:
 	var squad_snapshots: Array[Dictionary] = _squad_snapshots()
 	var changes := TacticalChangeSet.new(
 		&"initiative_turn_advanced",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.initiative()
 	)
 	changes.stage(
 		Callable(self, "_advance_turn").bind(unit),
@@ -130,7 +131,8 @@ func normalize_active_turn() -> OperationResult:
 	var squad_snapshots: Array[Dictionary] = _squad_snapshots()
 	var changes := TacticalChangeSet.new(
 		&"initiative_ineligible_unit_skipped",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.initiative()
 	)
 	changes.stage(
 		Callable(self, "_skip_ineligible_active"),

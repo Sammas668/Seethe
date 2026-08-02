@@ -12,8 +12,11 @@ const CONTAINER_PRIMARY_HAND: StringName = &"main_hand"
 const CONTAINER_SECONDARY_HAND: StringName = &"off_hand"
 const CONTAINER_BELT: StringName = &"belt"
 const CONTAINER_BACKPACK: StringName = &"backpack"
+const CONTAINER_ARMOUR: StringName = &"armour"
+const CONTAINER_WORN_UTILITY: StringName = &"worn_utility"
 const CONTAINER_GROUND: StringName = &"ground"
 const CONTAINER_RESTRAINT: StringName = &"restraint"
+const CONTAINER_RAIDER_SACK: StringName = &"raider_sack"
 
 var location_type: StringName
 var owner_id: StringName
@@ -41,15 +44,22 @@ func _init(
 	source_label = source_label_value
 
 
-static func unit_hand(
+static func unit_slot(
 		unit_id: StringName,
-		hand_kind: StringName
+		slot_kind: StringName
 ) -> TacticalItemLocationState:
 	return TacticalItemLocationState.new(
 		LOCATION_UNIT_EQUIPMENT,
 		unit_id,
-		hand_kind
+		slot_kind
 	)
+
+
+static func unit_hand(
+		unit_id: StringName,
+		hand_kind: StringName
+) -> TacticalItemLocationState:
+	return unit_slot(unit_id, hand_kind)
 
 
 static func unit_grid(
@@ -77,6 +87,13 @@ static func ground(
 		position,
 		source_label_value
 	)
+
+
+static func raider_sack(
+		unit_id: StringName,
+		position: Vector2i = Vector2i.ZERO
+) -> TacticalItemLocationState:
+	return unit_grid(unit_id, CONTAINER_RAIDER_SACK, position)
 
 
 func clone() -> TacticalItemLocationState:

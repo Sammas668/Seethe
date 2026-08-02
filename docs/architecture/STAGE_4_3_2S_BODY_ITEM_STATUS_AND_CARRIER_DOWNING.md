@@ -56,7 +56,7 @@ commits first; tactical presentation then reads the body's authoritative
 location.
 
 The Belt no longer has a body-specific prohibition. Ordinary spatial fit remains
-authoritative: the current 4x4 Medium body cannot fit the current Belt, but a
+authoritative: the current 4x3 Medium body cannot fit the current Belt, but a
 future smaller body may legally fit and is then treated as packed.
 
 ## Incapacitated-carrier release

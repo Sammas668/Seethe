@@ -231,7 +231,8 @@ static func _test_tactical_change_set_rolls_back(
 
 	var rejected: TacticalChangeSet = TacticalChangeSet.new(
 		&"test_rejected_change",
-		revision_before
+		revision_before,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	rejected.stage(
 		Callable(harness, "apply"),
@@ -253,7 +254,8 @@ static func _test_tactical_change_set_rolls_back(
 
 	var accepted: TacticalChangeSet = TacticalChangeSet.new(
 		&"test_accepted_change",
-		state.revision
+		state.revision,
+		TacticalInvalidationContract.no_visual_change()
 	)
 	accepted.stage(
 		Callable(harness, "apply"),

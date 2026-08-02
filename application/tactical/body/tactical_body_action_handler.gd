@@ -116,7 +116,13 @@ func finish_off(
 	var actor_budget_before: Dictionary = _budget_snapshot(actor)
 	var actor_life_before: Dictionary = actor.life_state_snapshot()
 	var target_before: Dictionary = target.life_state_snapshot()
-	var changes := TacticalChangeSet.new(&"body_finished_off", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"body_finished_off",
+		_state_store.state.revision,
+		TacticalInvalidationContract.body_action(
+			actor.unit_id, target.unit_id, [target.body_item_id], true, true, true, target.team_id
+		)
+	)
 	changes.stage(
 		Callable(self, "_spend_action").bind(actor, ActionCost.full_action()),
 		Callable(self, "_restore_actor").bind(actor, actor_budget_before, actor_life_before),
@@ -160,7 +166,17 @@ func restrain(
 		return OperationResult.fail(&"rope_invalid", "That item cannot restrain a character.")
 	if not _item_is_usable(actor, rope):
 		return OperationResult.fail(&"rope_outside_reach", "The rope is outside reach.")
-	var cost_reason: String = ActionEconomyRules.unavailable_reason(actor, ActionCost.half_action())
+	var take_them_alive_qualifies: bool = (
+		actor.resolved_character != null
+		and actor.resolved_character.has_trait(&"trait.take_them_alive")
+		and target.qualifies_for_take_them_alive(actor.unit_id)
+	)
+	var restraint_cost: ActionCost = (
+		ActionCost.quick_action()
+		if take_them_alive_qualifies
+		else ActionCost.half_action()
+	)
+	var cost_reason: String = ActionEconomyRules.unavailable_reason(actor, restraint_cost)
 	if not cost_reason.is_empty():
 		return OperationResult.fail(&"restrain_action_unavailable", cost_reason)
 
@@ -168,23 +184,44 @@ func restrain(
 	var actor_life_before: Dictionary = actor.life_state_snapshot()
 	var target_before: Dictionary = target.life_state_snapshot()
 	var rope_before: TacticalItemLocationState = rope.location.clone()
-	var changes := TacticalChangeSet.new(&"body_restrained", _state_store.state.revision)
+	var rope_quantity_before: int = rope.quantity
+	var attached_restraint_id: StringName = (
+		StringName("%s.attached.%s.r%d" % [rope.item_id, target.unit_id, _state_store.state.revision])
+		if rope.quantity > 1
+		else rope.item_id
+	)
+	var changes := TacticalChangeSet.new(
+		&"body_restrained",
+		_state_store.state.revision,
+		TacticalInvalidationContract.body_action(
+			actor.unit_id, target.unit_id, [rope.item_id], true, false, false, target.team_id
+		)
+	)
 	changes.stage(
-		Callable(self, "_spend_action").bind(actor, ActionCost.half_action()),
+		Callable(self, "_spend_action").bind(actor, restraint_cost),
 		Callable(self, "_restore_actor").bind(actor, actor_budget_before, actor_life_before),
 		"The Restrain action cost could not be paid."
 	)
 	changes.stage(
-		Callable(self, "_attach_restraint").bind(target, rope),
-		Callable(self, "_restore_restraint").bind(target, target_before, rope, rope_before),
-		"The rope could not be attached as a restraint."
+		Callable(self, "_attach_restraint").bind(
+			target, rope, attached_restraint_id
+		),
+		Callable(self, "_restore_split_restraint").bind(
+			target, target_before, rope, rope_before, rope_quantity_before, attached_restraint_id
+		),
+		"The restraint could not be attached."
 	)
 	var committed: OperationResult = _state_store.commit(changes, _map_definition)
 	if not committed.success:
 		return committed
 	_record_event(
 		&"body_restrained",
-		"%s restrained %s with %s." % [actor.display_name, target.display_name, rope.display_name],
+		"%s restrained %s with %s%s." % [
+			actor.display_name,
+			target.display_name,
+			rope.display_name,
+			" using Take Them Alive" if restraint_cost.is_quick_action() else "",
+		],
 		actor.unit_id,
 		target.unit_id
 	)
@@ -211,7 +248,13 @@ func untie(
 	var actor_life_before: Dictionary = actor.life_state_snapshot()
 	var target_before: Dictionary = target.life_state_snapshot()
 	var rope_before: TacticalItemLocationState = rope.location.clone()
-	var changes := TacticalChangeSet.new(&"body_untied", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"body_untied",
+		_state_store.state.revision,
+		TacticalInvalidationContract.body_action(
+			actor.unit_id, target.unit_id, [rope.item_id], true, false, false, target.team_id
+		)
+	)
 	changes.stage(
 		Callable(self, "_spend_action").bind(actor, ActionCost.half_action()),
 		Callable(self, "_restore_actor").bind(actor, actor_budget_before, actor_life_before),
@@ -259,7 +302,16 @@ func search_body(
 	var locations_before: Dictionary = {}
 	for item: TacticalItemInstanceState in removable:
 		locations_before[item.item_id] = item.location.clone()
-	var changes := TacticalChangeSet.new(&"body_searched", _state_store.state.revision)
+	var searched_item_ids: Array[StringName] = []
+	for searched_item: TacticalItemInstanceState in removable:
+		searched_item_ids.append(searched_item.item_id)
+	var changes := TacticalChangeSet.new(
+		&"body_searched",
+		_state_store.state.revision,
+		TacticalInvalidationContract.body_action(
+			actor.unit_id, target.unit_id, searched_item_ids, true, false, false, target.team_id
+		)
+	)
 	changes.stage(
 		Callable(self, "_spend_action").bind(actor, ActionCost.full_action()),
 		Callable(self, "_restore_actor").bind(actor, actor_budget_before, actor_life_before),
@@ -293,13 +345,50 @@ func equipment_for_body(body_item_id: StringName) -> Array[TacticalItemInstanceS
 
 func _attach_restraint(
 		target: TacticalUnitState,
-		rope: TacticalItemInstanceState
+		source_item: TacticalItemInstanceState,
+		attached_item_id: StringName
 ) -> bool:
-	if not target.apply_restraint(rope.item_id):
+	if source_item.quantity <= 0 or attached_item_id.is_empty():
 		return false
-	rope.location = TacticalItemLocationState.body_attachment(target.unit_id)
+	var attached_item: TacticalItemInstanceState = source_item
+	if source_item.quantity > 1:
+		attached_item = TacticalItemInstanceState.new(
+			attached_item_id,
+			source_item.definition,
+			1,
+			source_item.condition,
+			TacticalItemLocationState.body_attachment(target.unit_id),
+			source_item.tactical_modifiers
+		)
+		source_item.quantity -= 1
+		if not _state_store.state.add_item(attached_item, _map_definition, false):
+			source_item.quantity += 1
+			return false
+	else:
+		source_item.location = TacticalItemLocationState.body_attachment(target.unit_id)
+	if not target.apply_restraint(attached_item.item_id):
+		if attached_item != source_item:
+			_state_store.state.remove_item(attached_item.item_id, false)
+			source_item.quantity += 1
+		return false
 	_state_store.state.rebuild_ground_item_index()
 	return true
+
+
+func _restore_split_restraint(
+		target: TacticalUnitState,
+		target_snapshot: Dictionary,
+		source_item: TacticalItemInstanceState,
+		source_location: TacticalItemLocationState,
+		source_quantity: int,
+		attached_item_id: StringName
+) -> void:
+	target.restore_life_state(target_snapshot)
+	if attached_item_id != source_item.item_id:
+		_state_store.state.remove_item(attached_item_id, false)
+	source_item.quantity = source_quantity
+	source_item.location = source_location.clone()
+	_state_store.state.rebuild_ground_item_index()
 
 
 func _release_restraint(

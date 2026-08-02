@@ -25,6 +25,28 @@ var _visibility_service: RefCounted
 var _geometry_cache: TacticalGeometryCacheService
 var _automatic_lean_candidates_evaluated: int = 0
 var _automatic_lean_candidates_rejected_cheaply: int = 0
+
+# Stage 4.5e1 keeps attack-mode entry responsive by separating a cheap
+# target-eligibility scan from the exact five-sample attack preview. Exact
+# geometry, cover, Lean and hit chance are still calculated for the hovered or
+# clicked target through execute().
+const LEGAL_TARGET_CACHE_LIMIT: int = 64
+var _legal_target_cache: Dictionary = {}
+var _attack_selection_queries: int = 0
+var _attack_selection_cache_hits: int = 0
+var _attack_selection_cache_misses: int = 0
+var _legal_target_units_examined: int = 0
+var _cheap_target_rejections: int = 0
+var _full_target_previews_built: int = 0
+var _last_legal_target_query_usec: int = 0
+
+# Stage 4.5e2 reuses an accepted exact preview at commit when the authoritative
+# state and geometry revisions still match. This validator deliberately avoids
+# rebuilding five-sample cover, automatic Lean, hit chance or display strings.
+var _commit_preview_validations: int = 0
+var _commit_preview_validation_failures: int = 0
+var _commit_previews_reused: int = 0
+var _last_commit_preview_validation_usec: int = 0
 # Stage 4.4 compatibility marker; the cache service is the sole wrapper around:
 # TacticalCombatGeometryQuery.evaluate(
 
@@ -89,6 +111,189 @@ func _is_supported_for_attacker(
 	return _definition_is_supported(attack, attacker.is_ai_controlled())
 
 
+func validate_committed_preview(preview) -> OperationResult:
+	var started_usec: int = Time.get_ticks_usec()
+	_commit_preview_validations += 1
+	if preview == null or not bool(preview.get("success")):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_preview_invalid",
+			"A valid attack preview is required."
+		)
+	if _state_store == null or _state_store.state == null or _catalogue == null:
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_service_missing",
+			"Combat preview services are unavailable."
+		)
+
+	var state: TacticalState = _state_store.state
+	if state.revision != int(preview.get("expected_state_revision")):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_preview_stale",
+			"The tactical state changed. Preview the attack again."
+		)
+	if state.geometry_revision() != int(preview.get("expected_geometry_revision")):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_geometry_stale",
+			"The battlefield geometry changed. Preview the attack again."
+		)
+
+	var attacker_id := StringName(preview.get("attacker_id"))
+	var target_id := StringName(preview.get("target_id"))
+	var action_id := StringName(preview.get("action_id"))
+	var attacker: TacticalUnitState = state.get_unit(attacker_id)
+	var target: TacticalUnitState = state.get_unit(target_id)
+	var attack: AttackDefinition = _catalogue.attack_definition(action_id)
+	if attacker == null or target == null or attack == null:
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_state_missing",
+			"The attacker, target, or attack definition is missing."
+		)
+
+	var is_reaction: bool = StringName(preview.get("action_source")) == &"reaction"
+	if attacker.is_defeated() or target.is_defeated():
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_unit_unavailable",
+			"The attacker or target is no longer available."
+		)
+	if not TEAM_RELATIONS_SCRIPT.are_hostile(attacker.team_id, target.team_id):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_target_not_hostile",
+			"The target is no longer hostile."
+		)
+	if not _is_supported_for_attacker(attacker, attack):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_implementation_unavailable",
+			"This attack is no longer supported for the attacker."
+		)
+	if not state.granted_action_ids_for_unit(attacker_id).has(action_id):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_weapon_changed",
+			"The weapon granting this attack is no longer equipped."
+		)
+	if attack.ammunition_per_attack > 0 and _ammunition_item_for(attacker_id, attack) == null:
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_ammunition_missing",
+			"This attack no longer has enough ammunition."
+		)
+
+	if is_reaction:
+		if not attacker.can_use_reaction():
+			_commit_preview_validation_failures += 1
+			_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+			return OperationResult.fail(
+				&"reaction_unavailable",
+				"The unit can no longer use its Reaction."
+			)
+	else:
+		if not state.can_unit_act(attacker_id):
+			_commit_preview_validation_failures += 1
+			_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+			return OperationResult.fail(
+				&"attacker_not_active",
+				"The attacker is no longer active."
+			)
+		var unavailable_reason: String = ActionEconomyRules.attack_unavailable_reason(
+			attacker,
+			attack
+		)
+		if not unavailable_reason.is_empty():
+			_commit_preview_validation_failures += 1
+			_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+			return OperationResult.fail(
+				&"attack_cost_unavailable",
+				unavailable_reason
+			)
+
+	if (
+		_visibility_service != null
+		and not is_reaction
+		and not bool(
+			_visibility_service.call(
+				"is_unit_visible_to_team",
+				attacker.team_id,
+				target
+			)
+		)
+	):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_target_not_visible",
+			"The target is no longer visible."
+		)
+
+	var attacker_cells: Array[Vector2i] = _occupied_cells(attacker)
+	var target_cells: Array[Vector2i] = _occupied_cells_at(
+		target,
+		preview.get("target_position_override")
+	)
+	if attack.attack_kind == AttackDefinition.ATTACK_RANGED:
+		var increment_feet: int = maxi(5, attack.range_profile.range_increment_feet)
+		var maximum_range_feet: int = (
+			increment_feet * maxi(1, attack.range_profile.maximum_increments)
+		)
+		if _minimum_distance_between_cells(attacker_cells, target_cells) > maximum_range_feet:
+			_commit_preview_validation_failures += 1
+			_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+			return OperationResult.fail(
+				&"attack_out_of_range",
+				"The target is no longer in range."
+			)
+	else:
+		var reach_feet: int = maxi(5, attack.range_profile.reach_feet)
+		if not TacticalMeleeReachRules.can_reach(
+			attacker_cells,
+			target_cells,
+			_map_definition,
+			reach_feet
+		):
+			_commit_preview_validation_failures += 1
+			_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+			return OperationResult.fail(
+				&"attack_out_of_reach",
+				"The target is no longer within melee reach."
+			)
+
+	# State and geometry revisions still match the accepted exact preview, so
+	# its line, cover, automatic-Lean origin and numeric result remain valid.
+	if (
+		not bool(preview.get("has_line_of_sight"))
+		or not bool(preview.get("has_line_of_effect"))
+		or StringName(preview.get("cover_category"))
+		== TacticalCombatGeometryResult.COVER_TOTAL
+	):
+		_commit_preview_validation_failures += 1
+		_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+		return OperationResult.fail(
+			&"attack_geometry_invalid",
+			"The accepted attack geometry is no longer legal."
+		)
+
+	_commit_previews_reused += 1
+	_last_commit_preview_validation_usec = Time.get_ticks_usec() - started_usec
+	return OperationResult.ok(preview, "Accepted attack preview revalidated cheaply.")
+
+
 func execute(
 		attacker_id: StringName,
 		target_id: StringName,
@@ -99,11 +304,12 @@ func execute(
 		target_position_override: Variant = null,
 		reaction_context: Dictionary = {}
 ):
+	_full_target_previews_built += 1
 	var preview = ATTACK_PREVIEW_SCRIPT.new()
 	preview.attacker_id = attacker_id
 	preview.target_id = target_id
 	preview.action_id = action_id
-	preview.power_attack_value = clampi(power_attack_value, 0, 3)
+	preview.power_attack_value = maxi(0, power_attack_value)
 	preview.damage_channel = damage_channel
 	preview.attack_origin_override = origin_override
 	preview.target_position_override = target_position_override
@@ -198,13 +404,36 @@ func execute(
 		return preview.reject(
 			"The selected attack is not granted by an equipped weapon."
 		)
-	if preview.power_attack_value > 0 and not attack.allows_power_attack():
-		return preview.reject("This attack does not support Power Attack.")
-	if (
-		damage_channel == TacticalUnitState.DAMAGE_CHANNEL_NONLETHAL
-		and not attack.supports_nonlethal
-	):
-		return preview.reject("This attack cannot deal nonlethal damage.")
+	if attack.ammunition_per_attack > 0 and _ammunition_item_for(attacker_id, attack) == null:
+		return preview.reject("This attack requires ammunition.")
+	if preview.power_attack_value > 0:
+		if not attack.allows_power_attack():
+			return preview.reject("This attack does not support Power Attack.")
+		if (
+			attacker.resolved_character == null
+			or not attacker.resolved_character.has_trait(&"feat.power_attack")
+		):
+			return preview.reject("This character does not possess Power Attack.")
+		var maximum_power_attack: int = mini(
+			attacker.resolved_character.stat_value(&"base_attack_bonus", 0),
+			int(attacker.resolved_character.feature_parameter(
+				&"feat.power_attack", &"maximum_value", 99
+			))
+		)
+		if preview.power_attack_value > maximum_power_attack:
+			return preview.reject(
+				"Power Attack cannot exceed the current BAB limit of %d."
+				% maximum_power_attack
+			)
+	if not attack.allows_damage_channel(damage_channel):
+		return preview.reject(
+			"This attack must deal %s damage."
+			% (
+				"nonlethal"
+				if attack.damage_mode_policy == AttackDefinition.DAMAGE_POLICY_NONLETHAL_ONLY
+				else "lethal"
+			)
+		)
 
 	if not is_reaction:
 		var unavailable_reason: String = ActionEconomyRules.attack_unavailable_reason(
@@ -326,12 +555,23 @@ func execute(
 		)
 		if not ignores_nonlethal_penalty:
 			nonlethal_penalty = -4
+	var guidance_bonus: int = (
+		attacker.timed_effect_value(&"effect.guidance")
+		if attacker.has_timed_effect(&"effect.guidance")
+		else 0
+	)
+	var source_item_id: StringName = _source_item_id(state, attacker_id, action_id)
+	var proficiency_penalty: int = _nonproficiency_penalty(
+		state, attacker, source_item_id
+	)
 	var attack_bonus: int = (
 		snapshot.attack_bonus_for(attack)
+		+ proficiency_penalty
 		- power_attack
 		+ nonlethal_penalty
 		+ range_penalty
 		+ preview.reaction_attack_modifier
+		+ guidance_bonus
 	)
 	var damage_bonus: int = (
 		snapshot.damage_bonus_for(attack)
@@ -346,13 +586,27 @@ func execute(
 		)
 	)
 
-	preview.source_item_id = _source_item_id(state, attacker_id, action_id)
+	preview.source_item_id = source_item_id
+	preview.nonproficiency_penalty = proficiency_penalty
 	preview.attack_display_name = attack.display_name
 	preview.attack_bonus = attack_bonus
-	preview.base_target_armour_class = target.armour_class
+	var target_denied_dexterity: bool = _target_denied_dexterity(
+		attacker, target
+	)
+	var contextual_armour_class: int = target.armour_class_for_context(
+		target_denied_dexterity, &""
+	)
+	preview.target_denied_dexterity = target_denied_dexterity
+	preview.uncanny_dodge_retained = (
+		target_denied_dexterity
+		and target.resolved_character != null
+		and target.resolved_character.has_trait(&"feature.uncanny_dodge")
+		and contextual_armour_class == target.armour_class
+	)
+	preview.base_target_armour_class = contextual_armour_class
 	preview.cover_ac_bonus = geometry.cover_ac_bonus
 	preview.effective_target_armour_class = (
-		target.armour_class + geometry.cover_ac_bonus
+		contextual_armour_class + geometry.cover_ac_bonus
 	)
 	# Compatibility field remains the opposing value used by attack resolution.
 	preview.target_armour_class = preview.effective_target_armour_class
@@ -365,7 +619,7 @@ func execute(
 	if normal_geometry != null and _geometry_allows_direct_attack(normal_geometry):
 		preview.normal_origin_hit_chance = _hit_chance_percent(
 			attack_bonus,
-			target.armour_class + normal_geometry.cover_ac_bonus
+			contextual_armour_class + normal_geometry.cover_ac_bonus
 		)
 	preview.critical_threat_minimum = attack.critical_threat_minimum
 	preview.critical_multiplier = attack.critical_multiplier
@@ -586,6 +840,20 @@ func performance_snapshot() -> Dictionary:
 		"automatic_lean_candidates_rejected_cheaply": (
 			_automatic_lean_candidates_rejected_cheaply
 		),
+		"attack_selection_queries": _attack_selection_queries,
+		"attack_selection_cache_hits": _attack_selection_cache_hits,
+		"attack_selection_cache_misses": _attack_selection_cache_misses,
+		"legal_target_cache_entries": _legal_target_cache.size(),
+		"legal_target_units_examined": _legal_target_units_examined,
+		"cheap_target_rejections": _cheap_target_rejections,
+		"full_target_previews_built": _full_target_previews_built,
+		"last_legal_target_query_usec": _last_legal_target_query_usec,
+		"commit_preview_validations": _commit_preview_validations,
+		"commit_preview_validation_failures": _commit_preview_validation_failures,
+		"commit_previews_reused": _commit_previews_reused,
+		"last_commit_preview_validation_usec": (
+			_last_commit_preview_validation_usec
+		),
 	}
 
 
@@ -634,21 +902,268 @@ func legal_target_ids(
 		origin_override: Variant = null,
 		target_position_override: Variant = null
 ) -> Array[StringName]:
+	var started_usec: int = Time.get_ticks_usec()
+	_attack_selection_queries += 1
 	var result: Array[StringName] = []
-	if _state_store == null or _state_store.state == null:
+	if _state_store == null or _state_store.state == null or _catalogue == null:
+		_last_legal_target_query_usec = Time.get_ticks_usec() - started_usec
 		return result
-	for target: TacticalUnitState in _state_store.state.get_units():
-		var preview = execute(
-			attacker_id,
-			target.unit_id,
-			action_id,
-			power_attack_value,
-			damage_channel,
+	var state: TacticalState = _state_store.state
+	var cache_key: String = _legal_target_cache_key(
+		attacker_id,
+		action_id,
+		power_attack_value,
+		damage_channel,
+		origin_override,
+		target_position_override
+	)
+	if _legal_target_cache.has(cache_key):
+		_attack_selection_cache_hits += 1
+		_last_legal_target_query_usec = Time.get_ticks_usec() - started_usec
+		return _string_name_array(_legal_target_cache[cache_key])
+	_attack_selection_cache_misses += 1
+
+	var attacker: TacticalUnitState = state.get_unit(attacker_id)
+	var attack: AttackDefinition = _catalogue.attack_definition(action_id)
+	if not _ordinary_attack_can_scan_targets(
+		state,
+		attacker,
+		attack,
+		action_id,
+		power_attack_value,
+		damage_channel
+	):
+		_store_legal_target_cache(cache_key, result)
+		_last_legal_target_query_usec = Time.get_ticks_usec() - started_usec
+		return result
+
+	var attacker_cells: Array[Vector2i] = _occupied_cells(attacker)
+	for target: TacticalUnitState in state.get_units():
+		_legal_target_units_examined += 1
+		if not _is_likely_legal_target(
+			state,
+			attacker,
+			target,
+			attack,
+			attacker_cells,
 			origin_override,
 			target_position_override
+		):
+			_cheap_target_rejections += 1
+			continue
+		result.append(target.unit_id)
+
+	_store_legal_target_cache(cache_key, result)
+	_last_legal_target_query_usec = Time.get_ticks_usec() - started_usec
+	return result
+
+
+func _ordinary_attack_can_scan_targets(
+		state: TacticalState,
+		attacker: TacticalUnitState,
+		attack: AttackDefinition,
+		action_id: StringName,
+		power_attack_value: int,
+		damage_channel: StringName
+) -> bool:
+	if state == null or attacker == null or attack == null:
+		return false
+	if damage_channel not in [
+		TacticalUnitState.DAMAGE_CHANNEL_LETHAL,
+		TacticalUnitState.DAMAGE_CHANNEL_NONLETHAL,
+	]:
+		return false
+	if not attacker.is_player_controlled() and not attacker.is_ai_controlled():
+		return false
+	if not state.can_unit_act(attacker.unit_id):
+		return false
+	if attacker.is_defeated() or attacker.action_budget.ended_activation:
+		return false
+	if not _is_supported_for_attacker(attacker, attack):
+		return false
+	if not state.granted_action_ids_for_unit(attacker.unit_id).has(action_id):
+		return false
+	if attack.ammunition_per_attack > 0 and _ammunition_item_for(attacker.unit_id, attack) == null:
+		return false
+	if power_attack_value > 0:
+		if not attack.allows_power_attack():
+			return false
+		if (
+			attacker.resolved_character == null
+			or not attacker.resolved_character.has_trait(&"feat.power_attack")
+		):
+			return false
+		var maximum_power_attack: int = mini(
+			attacker.resolved_character.stat_value(&"base_attack_bonus", 0),
+			int(attacker.resolved_character.feature_parameter(
+				&"feat.power_attack", &"maximum_value", 99
+			))
 		)
-		if preview.success:
-			result.append(target.unit_id)
+		if power_attack_value > maximum_power_attack:
+			return false
+	if not attack.allows_damage_channel(damage_channel):
+		return false
+	return ActionEconomyRules.attack_unavailable_reason(attacker, attack).is_empty()
+
+
+func _is_likely_legal_target(
+		state: TacticalState,
+		attacker: TacticalUnitState,
+		target: TacticalUnitState,
+		attack: AttackDefinition,
+		attacker_cells: Array[Vector2i],
+		origin_override: Variant,
+		target_position_override: Variant
+) -> bool:
+	if target == null or attacker.unit_id == target.unit_id:
+		return false
+	if not TEAM_RELATIONS_SCRIPT.are_hostile(attacker.team_id, target.team_id):
+		return false
+	if target.is_defeated():
+		return false
+	if (
+		attacker.is_ai_controlled()
+		and target.team_id == &"player"
+		and (
+			attacker.squad_id.is_empty()
+			or not state.is_unit_revealed_to_squad(target.unit_id, attacker.squad_id)
+		)
+	):
+		return false
+	if (
+		_visibility_service != null
+		and not bool(
+			_visibility_service.call(
+				"is_unit_visible_to_team",
+				attacker.team_id,
+				target
+			)
+		)
+	):
+		return false
+
+	var target_cells: Array[Vector2i] = _occupied_cells_at(
+		target,
+		target_position_override
+	)
+	if attack.attack_kind == AttackDefinition.ATTACK_RANGED:
+		var increment_feet: int = maxi(5, attack.range_profile.range_increment_feet)
+		var maximum_range_feet: int = (
+			increment_feet * maxi(1, attack.range_profile.maximum_increments)
+		)
+		if _minimum_distance_between_cells(attacker_cells, target_cells) > maximum_range_feet:
+			return false
+	else:
+		var reach_feet: int = maxi(5, attack.range_profile.reach_feet)
+		if not TacticalMeleeReachRules.can_reach(
+			attacker_cells,
+			target_cells,
+			_map_definition,
+			reach_feet
+		):
+			return false
+
+	return _cheap_attack_line_available(
+		state,
+		attacker,
+		target,
+		attack,
+		origin_override,
+		target_position_override
+	)
+
+
+func _cheap_attack_line_available(
+		state: TacticalState,
+		attacker: TacticalUnitState,
+		target: TacticalUnitState,
+		attack: AttackDefinition,
+		origin_override: Variant,
+		target_position_override: Variant
+) -> bool:
+	# A world-space firing-origin override may sit just outside the source tile
+	# for Lean. The tile-only cheap trace cannot represent that offset safely, so
+	# retain the candidate and let the exact hovered-target geometry decide.
+	if origin_override != null:
+		return true
+	var origin_tile: Vector2i = attacker.grid_position
+	var target_tile: Vector2i = target.grid_position
+	if target_position_override is Vector2i:
+		target_tile = target_position_override
+	if TacticalLineOfSightRules.has_line_of_sight(
+		origin_tile,
+		target_tile,
+		_map_definition,
+		state
+	):
+		return true
+	if attack.attack_kind != AttackDefinition.ATTACK_RANGED:
+		return false
+
+	# A blocked centre trace must not hide a target that could be attacked by
+	# automatic Lean. Enumerating legal origins is cheap; the exact five-sample
+	# geometry remains deferred until this target is actually inspected.
+	var target_direction: Vector2 = (
+		Vector2(target_tile) - Vector2(attacker.grid_position)
+	).normalized()
+	for firing_origin: TacticalFiringOrigin in TacticalFiringOriginQuery.legal_origins(
+		state,
+		_map_definition,
+		attacker
+	):
+		if firing_origin == null or not firing_origin.uses_automatic_lean:
+			continue
+		var origin_direction: Vector2 = Vector2(firing_origin.direction).normalized()
+		if (
+			origin_direction == Vector2.ZERO
+			or target_direction == Vector2.ZERO
+			or origin_direction.dot(target_direction) >= 0.05
+		):
+			return true
+	return false
+
+
+func _legal_target_cache_key(
+		attacker_id: StringName,
+		action_id: StringName,
+		power_attack_value: int,
+		damage_channel: StringName,
+		origin_override: Variant,
+		target_position_override: Variant
+) -> String:
+	var state: TacticalState = _state_store.state
+	var visibility_revision: int = (
+		int(_visibility_service.call("revision"))
+		if _visibility_service != null and _visibility_service.has_method("revision")
+		else 0
+	)
+	return "%s|%s|%d|%s|%s|%s|%d|%d|%d" % [
+		String(attacker_id),
+		String(action_id),
+		power_attack_value,
+		String(damage_channel),
+		str(origin_override),
+		str(target_position_override),
+		state.revision,
+		state.geometry_revision(),
+		visibility_revision,
+	]
+
+
+func _store_legal_target_cache(
+		cache_key: String,
+		result: Array[StringName]
+) -> void:
+	if _legal_target_cache.size() >= LEGAL_TARGET_CACHE_LIMIT:
+		_legal_target_cache.clear()
+	_legal_target_cache[cache_key] = result.duplicate()
+
+
+func _string_name_array(value: Variant) -> Array[StringName]:
+	var result: Array[StringName] = []
+	if value is Array:
+		for entry: Variant in value:
+			result.append(StringName(entry))
 	return result
 
 
@@ -713,6 +1228,35 @@ func _source_item_id(
 	return &""
 
 
+func _nonproficiency_penalty(
+		state: TacticalState,
+		attacker: TacticalUnitState,
+		item_id: StringName
+) -> int:
+	if state == null or attacker == null or item_id.is_empty():
+		return 0
+	var item: TacticalItemInstanceState = state.get_item(item_id)
+	if item == null or item.definition == null:
+		return 0
+	var required: StringName = item.definition.required_proficiency_id
+	if required.is_empty() or attacker.resolved_character.has_proficiency(required):
+		return 0
+	return -4
+
+
+func _target_denied_dexterity(
+		attacker: TacticalUnitState,
+		target: TacticalUnitState
+) -> bool:
+	if attacker == null or target == null:
+		return false
+	if target.is_unconscious() or target.action_incapacitated:
+		return true
+	if target.squad_id.is_empty():
+		return false
+	return attacker.is_hidden_from_squad(target.squad_id)
+
+
 func _hit_chance_percent(attack_bonus: int, armour_class: int) -> int:
 	var successful_faces: int = 0
 	for natural_roll: int in range(1, 21):
@@ -730,3 +1274,26 @@ func _damage_notation(count: int, size: int, bonus: int) -> String:
 	elif bonus < 0:
 		result += "%d" % bonus
 	return result
+
+
+func _ammunition_item_for(
+		unit_id: StringName,
+		attack: AttackDefinition
+) -> TacticalItemInstanceState:
+	if (
+		_state_store == null
+		or _state_store.state == null
+		or attack == null
+		or attack.ammunition_per_attack <= 0
+	):
+		return null
+	for item: TacticalItemInstanceState in _state_store.state.get_items():
+		if item == null or item.location == null or item.definition == null:
+			continue
+		if item.location.owner_id != unit_id:
+			continue
+		if not item.definition.has_tag(attack.ammunition_tag):
+			continue
+		if item.quantity >= attack.ammunition_per_attack:
+			return item
+	return null

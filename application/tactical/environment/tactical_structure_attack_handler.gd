@@ -125,8 +125,20 @@ func execute(preview_value: Dictionary) -> OperationResult:
 	var source_snapshot: Dictionary = environment.snapshot_source(source_id)
 	var damage_result: Dictionary = {}
 	var salvage_item_id: StringName = StringName("instance.salvage.%s" % source_id)
+	var salvage_provenance_id: StringName = _provenance_id_for_item(salvage_item_id)
 	var salvage_existed: bool = _state_store.state.get_item(salvage_item_id) != null
-	var changes := TacticalChangeSet.new(&"structure_attacked", _state_store.state.revision)
+	var provenance_existed: bool = (
+		_state_store.state.generated_item_provenance(salvage_provenance_id) != null
+	)
+	var structure_contract := TacticalInvalidationContract.environment_interaction(
+		attacker.unit_id, true
+	)
+	structure_contract.combat_events_changed = true
+	var changes := TacticalChangeSet.new(
+		&"structure_attacked",
+		_state_store.state.revision,
+		structure_contract
+	)
 	changes.stage(
 		func() -> bool:
 			if ActionEconomyRules.spend_attack(attacker, attack) < 0:
@@ -157,7 +169,11 @@ func execute(preview_value: Dictionary) -> OperationResult:
 			_restore_budget(attacker, budget_before)
 			environment.restore_source(source_id, source_snapshot)
 			if not salvage_existed and _state_store.state.get_item(salvage_item_id) != null:
-				_state_store.state.remove_item(salvage_item_id, false),
+				_state_store.state.remove_item(salvage_item_id, false)
+			if not provenance_existed:
+				_state_store.state.remove_generated_item_provenance(
+					salvage_provenance_id
+				),
 		"The structure attack could not be committed.",
 		&"structure_attack_commit_failed"
 	)
@@ -254,14 +270,58 @@ func _create_salvage_if_needed(source_id: StringName, damage_result: Dictionary,
 	if item_definition == null:
 		return true
 	var location_tile: Vector2i = _source_target_tile(source_id, Vector2i.ZERO)
-	var salvage := TacticalItemInstanceState.new(salvage_item_id, item_definition, quantity, 1.0, TacticalItemLocationState.ground(location_tile, "Structural salvage"))
-	if _state_store.state.get_item(salvage_item_id) == null and not _state_store.state.add_item(salvage, _map_definition, false):
-		return false
+	var salvage := TacticalItemInstanceState.new(
+		salvage_item_id,
+		item_definition,
+		quantity,
+		1.0,
+		TacticalItemLocationState.ground(location_tile, "Structural salvage")
+	)
+	if _state_store.state.get_item(salvage_item_id) == null:
+		if not _state_store.state.add_item(salvage, _map_definition, false):
+			return false
+		if not _register_salvage_provenance(salvage, source_id):
+			_state_store.state.remove_item(salvage_item_id, false)
+			return false
 	if runtime_opening != null:
 		runtime_opening.salvage_generated = true
 	if runtime_structure != null:
 		runtime_structure.salvage_generated = true
 	return true
+
+
+func _provenance_id_for_item(item_id: StringName) -> StringName:
+	return StringName(
+		"provenance.%s.%s" % [_state_store.state.mission_id, item_id]
+	)
+
+
+func _register_salvage_provenance(
+		salvage: TacticalItemInstanceState,
+		source_id: StringName
+) -> bool:
+	var state: TacticalState = _state_store.state
+	if state == null or salvage == null:
+		return false
+	var provenance := TacticalGeneratedItemProvenance.new()
+	provenance.provenance_id = _provenance_id_for_item(salvage.item_id)
+	provenance.mission_id = state.mission_id
+	provenance.source_setup_hash = state.source_setup_hash
+	provenance.generated_item_id = salvage.item_id
+	provenance.creation_kind = (
+		TacticalGeneratedItemProvenance.CREATION_STRUCTURAL_SALVAGE
+	)
+	provenance.source_event_id = StringName(
+		"event.%s.structure_destroyed.%s.%d"
+		% [state.mission_id, source_id, state.revision + 1]
+	)
+	provenance.source_entity_id = source_id
+	provenance.definition_id = salvage.definition_id
+	provenance.quantity = salvage.quantity
+	provenance.condition = salvage.condition
+	provenance.persistent_modifiers = salvage.tactical_modifiers.duplicate(true)
+	provenance.creation_revision = state.revision + 1
+	return state.register_generated_item_provenance(provenance)
 
 
 func _record_event(attacker: TacticalUnitState, preview_value: Dictionary, attack_roll: int, attack_total: int, hit: bool, damage_results: Array[int], damage: int, damage_result: Dictionary) -> void:

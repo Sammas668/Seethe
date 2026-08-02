@@ -34,7 +34,8 @@ func begin_enemy_phase(command: EndPhaseCommand) -> OperationResult:
 	var round_before: int = _state_store.state.phase_state.round_number
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"enemy_phase_started",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.initiative()
 	)
 	changes.stage(
 		Callable(self, "_set_phase").bind(TacticalPhaseState.ENEMY_PHASE),
@@ -83,7 +84,8 @@ func begin_environment_phase() -> OperationResult:
 	var round_before: int = _state_store.state.phase_state.round_number
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"world_phase_started",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.initiative()
 	)
 	changes.stage(
 		Callable(self, "_set_phase").bind(TacticalPhaseState.WORLD_PHASE),
@@ -136,7 +138,8 @@ func complete_world_phase() -> OperationResult:
 
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"player_phase_started",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.initiative()
 	)
 	changes.stage(
 		Callable(self, "_begin_next_player_phase").bind(unit_snapshots),

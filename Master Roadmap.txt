@@ -1,0 +1,1310 @@
+3. Master roadmap
+Stage	Milestone	Principal result
+4.5g	Tactical Foundation Lock	Stage 4.5 becomes a verified, clean and immutable baseline
+4.6	Authored Mission Framework	The sandbox becomes a real mission
+4.7	Starter Character and Unit Content	One complete protagonist path, follower type and enemy roster
+4.8	Tactical World Interaction	Doors, objectives, recoverable props, destruction and salvage
+4.9	First Tactical Vertical Slice	One polished raid works repeatedly from deployment to result
+5.0	Campaign Shell	New campaign, save/load and tactical transitions
+5.1	Region and Agent System	Missions appear through the authored starter region
+5.2	Stronghold Management MVP	The Fifth-God ruin becomes a functioning base
+5.3	Roster, Equipment and Recovery	Persistent recruits and loot become player-managed assets
+5.4	Economy, Research and Production	Loot feeds construction and organisational progression
+5.5	Notoriety and Base Defence	Regional retaliation completes the strategic pressure loop
+5.6	One-Archetype Campaign Slice	One complete campaign loop is playable
+6.0	Shared Ability and Spell Framework	The tactical system supports meaningfully different classes
+6.1	Four Starter Class Paths	Four level 1–3 protagonist options become playable
+6.2	Life-Realm Content Pack	A coherent first enemy faction and regional identity
+6.3	Mission Variety	Raid, Assault and Assassinate become distinct experiences
+6.4	Content-Driven Tactical Extensions	Only required advanced tactical rules are added
+6.5	Full Vertical Slice Lock	The representative Seethe experience is complete and polished
+
+Stage 4.5g — Tactical Foundation Lock
+
+Status: Next
+Purpose: Verify and freeze the existing tactical foundation before building substantial content.
+
+Stage 4.5f corrected the movement–Reaction architecture, but its runtime test suite has not yet been run in an environment containing Godot. Stage 4.5g converts the current working archive into a trusted baseline.
+
+4.5g1 — Complete runtime validation
+
+Run every existing Godot test suite, not only the Stage 4.5f runner.
+
+Validation must cover:
+
+campaign transactions;
+character resolution;
+inventory;
+mission setup and result handling;
+tactical movement;
+stealth and detection;
+initiative;
+combat;
+bodies and captives;
+extraction;
+cover;
+visibility;
+Reactions;
+interrupted movement.
+
+Repair:
+
+parser errors;
+stale constructor calls;
+invalid preloads;
+missing resources;
+runtime type failures;
+tests that only pass because they inspect source strings rather than behaviour.
+4.5g2 — Explicit invalidation contracts
+
+Stage 4.5f improved reason coverage and added a safe full-refresh fallback. The next step is to stop using reason strings as the authoritative source of invalidation.
+
+Every production TacticalChangeSet must carry an explicit contract:
+
+var changes := TacticalChangeSet.new(
+	&"inventory_transfer",
+	state.revision
+)
+
+changes.set_invalidation_contract(
+	TacticalInvalidationContract.inventory_changed(
+		affected_character_ids
+	)
+)
+
+The contract should be able to identify:
+
+token status
+action budget
+inventory
+occupancy
+specific moved observers
+team visibility
+geometry
+initiative
+environment
+combat log
+mission state
+
+The reason remains useful for diagnostics but does not decide what refreshes.
+
+Required behaviour
+An ordinary attack does not rebuild visibility.
+Moving one observer does not recalculate every observer.
+Inventory transfer does not rebuild board geometry.
+A life-state change updates tokens, initiative and occupancy only where required.
+Opening a Reaction prompt does not refresh fog.
+Unknown or missing contracts fail validation.
+4.5g3 — Immutable mission identity
+
+Finish the existing mission boundary before more mission content depends on it:
+
+MissionSetupSnapshot.finalise()
+→ canonical setup payload
+→ immutable setup hash
+→ tactical mission
+→ MissionResult.source_setup_hash
+→ campaign commit verifies the hash
+
+The canonical hash should include gameplay-relevant data:
+
+mission instance ID;
+mission definition ID;
+region and site;
+map identity or map seed;
+objective definitions;
+deployed character IDs;
+deployed item IDs and starting locations;
+difficulty and rules profile;
+authorised mission metadata.
+
+It must not depend on:
+
+dictionary ordering;
+object memory addresses;
+presentation state;
+editor-only metadata;
+non-gameplay timestamps.
+
+After finalisation, all mutation methods must reject changes to mission identity, deployment, objectives or metadata.
+
+4.5g4 — Trusted generated-item provenance
+
+Introduce authority for items that come into existence during tactical play.
+
+GeneratedItemProvenanceRecord
+├── provenance ID
+├── mission ID
+├── source setup hash
+├── generated item ID
+├── creation kind
+├── source entity or structure
+├── creation event ID
+├── tactical revision
+├── item definition
+├── quantity
+└── consumed/committed state
+
+Initial creation kinds should support:
+
+structural salvage;
+transformed equipment;
+mission-crafted items;
+corpse-generated loot;
+magically created persistent items.
+
+MissionResult may reference a provenance record. It may not create the record that proves its own legitimacy.
+
+4.5g5 — Performance benchmark scenario
+
+Create one repeatable tactical benchmark map containing:
+
+several friendly observers;
+several enemy observers;
+walls and openings;
+cover;
+a long movement path;
+an AoO boundary;
+an Overwatch boundary;
+a large visibility reveal;
+an attack;
+a body;
+extraction.
+
+Record:
+
+movement confirmation time;
+destination visibility preparation;
+fog update time;
+attack click-to-feedback time;
+Reaction resolution time;
+full versus incremental refresh counts;
+reaction-index rebuild counts;
+maximum frame spike after startup.
+
+Performance should be evaluated on the same representative machine between releases.
+
+4.5g6 — Repository and release lock
+
+The current project history is too sparse relative to the amount of implemented work.
+
+Required repository work:
+
+remove editor cache and generated test cache files;
+resolve all untracked production files;
+separate test, documentation and gameplay changes;
+update README and current stage markers;
+create a clean Stage 4.5g milestone commit;
+tag the current build;
+preserve the pre-4.5f archive as a fallback;
+package full-project and patch-only releases.
+Stage 4.5g completion gate
+All headless tests pass in Godot 4.7.1.
+One complete sandbox encounter runs without a runtime error.
+Failed commands leave revisions and RNG unchanged.
+No nested state commit occurs during notification delivery.
+Every production transaction has an explicit invalidation contract.
+Mission setup/result hash checks pass.
+Generated item provenance cannot be duplicated.
+The repository is clean after packaging.
+Stage 4.5g is preserved as the tactical foundation baseline.
+Stage 4.6 — Authored Mission Framework
+
+Purpose: Replace the debug sandbox with one genuine authored mission.
+
+The first mission should be a small Reaver raid against a Life-realm farm and storehouse, because the existing project already contains relevant map work, farmhand prototypes, guards, archers, grain crates and extraction systems.
+
+4.6a — Mission definitions
+
+Create a data-driven MissionDefinition containing:
+
+mission identity
+mission type
+authored map
+deployment zones
+enemy squads
+civilian population
+objectives
+optional objectives
+failure conditions
+extraction zones
+loot profile
+Notoriety event profile
+music and visual profile
+result rules
+
+Do not place mission logic directly in the tactical screen or map scene.
+
+4.6b — Authored map loading
+
+Support:
+
+authored map dimensions;
+walls and openings;
+deployment zones;
+patrol paths;
+objective anchors;
+extraction anchors;
+recoverable-prop anchors;
+reinforcement anchors;
+civilian work locations;
+authored lighting category placeholders.
+
+The first map remains single-floor. Multi-floor support is not required.
+
+4.6c — Objective state
+
+Implement a shared mission-objective model with real examples:
+
+Primary objective
+Steal supplies from the storehouse
+
+Completion requires extracting one or more qualifying supply objects.
+
+Optional objectives
+Take a guard captive
+Steal intact furniture
+Avoid killing civilians
+Leave before reinforcements arrive
+Failure conditions
+Protagonist dies
+All deployed characters are unable to continue
+Required objective item is destroyed or lost
+Mission-specific escape timer expires
+4.6d — Deployment and extraction
+
+The player must:
+
+inspect the mission;
+choose eligible characters;
+assign equipment;
+confirm deployment;
+enter the authored deployment area;
+complete or abandon objectives;
+reach extraction;
+receive a validated MissionResult.
+
+Extraction must distinguish:
+
+carried items;
+body inventory;
+restrained captives;
+abandoned equipment;
+destroyed objects;
+generated salvage;
+surviving deployed characters;
+dead or missing characters.
+4.6e — Mission summary
+
+The first real summary screen should report:
+
+mission outcome
+primary and optional objectives
+survivors
+injuries and deaths
+captives
+items recovered
+items lost
+generated salvage
+experience
+Notoriety lines
+combat statistics
+important narrative events
+
+At this stage, some campaign effects may be preview-only, but the result object must be structurally complete.
+
+Stage 4.6 completion gate
+
+The farm raid can be launched from a debug mission selector, completed, extracted and converted into a validated immutable result without manually editing state.
+
+Stage 4.7 — Starter Character and Unit Content
+
+Purpose: Replace prototype statistics with the first complete production-ready group of characters.
+
+The class system is protagonist-centred, while recruitable troops remain persistent individuals rather than disposable squad cards.
+
+4.7a — First protagonist path
+
+Use one protagonist class and archetype through levels 1–3.
+
+Recommended first path: Barbarian into Reaver, because the current tactical content and follower work already support it.
+
+The implementation must include:
+
+ability scores;
+BAB and saves;
+HP progression;
+skills used by current tactical systems;
+equipment proficiency;
+Rage;
+level-up choices;
+archetype selection at the intended milestone;
+a resolved character sheet;
+combat-log calculation breakdowns.
+
+The protagonist must remain distinct from an ordinary Marauder.
+
+4.7b — Tier I Marauder
+
+Complete the approved Marauder as a production troop:
+
+persistent identity;
+level and XP;
+wounds and death;
+mace and empty-hand use;
+lethal/nonlethal modes;
+Rage;
+Grapple/Shove/Restrain where currently supported;
+Take Them Alive;
+Raider’s Burden;
+captive carrying;
+campaign equipment persistence.
+
+Do not implement the Harpooner merely because its character sheet is already designed. Tier II should arrive with higher-rank progression after the first loop is proven.
+
+4.7c — Starter enemy roster
+
+Complete a small, coherent Life-realm roster:
+
+farmhand or civilian;
+ordinary guard;
+archer;
+patrol leader;
+healer or novice priest;
+optional hound or tracker.
+
+Each template needs:
+
+authored equipment;
+armour;
+perception;
+morale disposition;
+alert group;
+AI profile;
+surrender/capture eligibility;
+loot rules.
+4.7d — Character sheet UI
+
+The tactical character sheet should expose:
+
+attributes;
+HP and life state;
+AC;
+saves;
+attack routines;
+movement;
+perception;
+current conditions;
+reactions;
+equipment;
+carrying capacity;
+class and archetype features;
+calculation breakdowns.
+
+Do not build a full tabletop character creator for troops.
+
+4.7e — Content-authoring validation
+
+Validators must catch:
+
+duplicate content IDs;
+missing attack definitions;
+invalid item references;
+invalid proficiency references;
+impossible equipment assignments;
+missing AI profiles;
+inconsistent level data;
+missing portrait/token assets;
+missing result or loot profiles.
+Stage 4.7 completion gate
+
+The protagonist, two individually named Marauders and the complete starter enemy group can fight the farm raid using authored character and equipment definitions without debug-only stat injection.
+
+Stage 4.8 — Tactical World Interaction
+
+Purpose: Make the mission environment physically meaningful rather than decorative.
+
+4.8a — Doors and openings
+
+Implement:
+
+open;
+close;
+lock;
+unlock;
+force;
+destroy;
+peer through or around;
+line-of-sight and line-of-effect updates;
+AI door interaction.
+
+Door animation must not own authoritative state.
+
+4.8b — Recoverable props
+
+Support explicitly authored recoverable objects:
+
+grain crates;
+weapon racks;
+tables;
+beds;
+storage chests;
+intact furniture;
+rare installations.
+
+Decorative scenery remains non-recoverable unless authored otherwise.
+
+4.8c — Tactical structures
+
+Walls, gates and built-in structures must have:
+
+material definition;
+hardness;
+HP;
+cover contribution;
+line-of-effect blocking;
+damaged state;
+destroyed state;
+rubble or opening result;
+salvage-generation profile.
+
+Presentation should resolve wall appearance through a registry rather than directly preloading specific wood and stone definitions.
+
+4.8d — Structural salvage
+
+Destruction or dismantling creates tactical items through trusted provenance:
+
+wall destroyed
+→ creation event commits
+→ salvage item receives provenance
+→ item exists physically on map
+→ unit carries it to extraction
+→ MissionResult references provenance
+→ campaign accepts it once
+4.8e — Hazards and simple traps
+
+Implement only the first mission-relevant examples:
+
+broken glass;
+fire;
+unstable debris;
+alarm bell;
+simple tripwire or noise trap.
+
+The shared hazard framework must support:
+
+trigger timing;
+affected tiles;
+damage or condition;
+visibility;
+disarming where appropriate;
+event log entry.
+Stage 4.8 completion gate
+
+The player can enter the storehouse through a door or destroyed opening, steal an intact object, destroy a structure, recover legal salvage and extract it without stale cover, visibility or inventory state.
+
+Stage 4.9 — First Tactical Vertical Slice Lock
+
+Purpose: Turn the completed systems into a mission that is enjoyable and understandable.
+
+4.9a — Enemy behaviour
+
+Required behaviours:
+
+Unalerted
+patrol;
+guard;
+work;
+sleep or idle where appropriate;
+investigate noise;
+react to open doors and damaged structures;
+discover bodies;
+communicate alert.
+Alerted melee
+approach legal targets;
+use cover where useful;
+avoid obvious reaction hazards;
+attack;
+finish movement after attacking when legal;
+defend allies or objectives where role-appropriate.
+Alerted ranged
+seek firing positions;
+prefer cover;
+avoid unnecessary melee engagement;
+use Overwatch when no good shot exists;
+reposition when threatened;
+preserve ammunition.
+Morale-lite behaviour
+
+Before the full morale system exists, enemies may use authored decision thresholds for:
+
+flee;
+surrender;
+protect a civilian;
+guard an objective;
+abandon a lost position.
+4.9b — Tactical presentation decomposition
+
+Extract only the responsibilities exercised by the real mission.
+
+Recommended first extractions:
+
+TacticalReactionPromptController
+TacticalMissionFlowController
+TacticalBoardIntentController
+TacticalAttackPresentationController
+
+The purpose is to prevent a prompt or mission panel change from affecting movement, inventory or fog—not to make every file small.
+
+4.9c — Readability
+
+Polish:
+
+movement preview;
+dangerous-path segments;
+AoO and Overwatch markers;
+cover indicators;
+stealth and detection information;
+objective markers;
+interaction prompts;
+carried-object and captive indicators;
+combat-log grouping;
+immediate death/unconscious badges;
+extraction preview;
+mission summary.
+4.9d — Tactical save and recovery
+
+At minimum, support a safe tactical checkpoint or explicit restriction explaining when saving is allowed.
+
+A saved tactical mission must preserve:
+
+unit positions;
+action budgets;
+initiative;
+reactions;
+visibility and exploration;
+bodies;
+ground items;
+objectives;
+pending movement decisions;
+RNG streams;
+mission setup hash.
+4.9e — Balance and performance lock
+
+The first mission should support:
+
+stealth completion;
+partial combat;
+full alert combat;
+capture;
+lethal play;
+looting;
+early withdrawal.
+
+No one route must be mandatory.
+
+Stage 4.9 completion gate
+
+The farm/storehouse raid can be played repeatedly from deployment to result with no debug intervention, no known transaction defect and acceptable performance.
+
+This becomes the tactical vertical slice baseline.
+
+Stage 5.0 — Campaign Shell
+
+Purpose: Place the tactical mission inside an actual campaign session.
+
+Required systems
+main menu;
+new campaign;
+load campaign;
+one authoritative CampaignState;
+campaign save repository;
+strategic clock;
+scene transitions;
+active mission registry;
+immutable mission setup registration;
+result commit;
+autosave at safe boundaries;
+defeat/reload handling when the protagonist dies permanently.
+Initial screens
+Main Menu
+Stronghold
+Region Map
+Roster
+Equipment
+Mission Briefing
+Mission Summary
+
+Empty navigation buttons should not be added before their screen performs a real function.
+
+Stage 5.0 completion gate
+
+A campaign can be created, saved, loaded, launch the farm raid and safely apply its result exactly once.
+
+Stage 5.1 — Region and Agent System
+
+Purpose: Make missions arise from the strategic world rather than a debug menu.
+
+5.1a — Authored starter region
+
+Implement one Life-realm region containing:
+
+Fifth-God ruin;
+main settlement;
+farms;
+roads;
+religious site;
+military site;
+wilderness or border areas;
+authored mission sites;
+approach routes to the stronghold.
+5.1b — Region-map presentation
+
+The full intended design may support three zoom levels, but implementation should begin with one functional map and add zoom only after navigation works.
+
+Required interactions:
+
+pan;
+zoom;
+inspect site;
+inspect mission;
+select Agent;
+assign Agent;
+view travel or activity radius;
+pause and resume time.
+5.1c — Agents
+
+Agents should:
+
+be limited campaign assets;
+occupy a region location or assignment;
+reveal or generate nearby missions;
+improve mission information;
+force certain opportunities where authored;
+take time to relocate.
+
+Do not introduce a separate Intel currency merely because espionage systems often have one. The existing Agent system should be allowed to carry the initial discovery loop.
+
+5.1d — Mission lifecycle
+
+Missions need:
+
+discovery state;
+available state;
+expiry;
+risk and reward preview;
+travel or response time;
+site identity;
+generated setup parameters;
+launch and cancellation rules.
+Stage 5.1 completion gate
+
+Time can advance, an Agent discovers the farm raid, the mission popup pauses time, and the player can enter briefing and deploy.
+
+Stage 5.2 — Stronghold Management MVP
+
+Purpose: Make the Fifth-God ruin the campaign’s functional centre.
+
+The stronghold is a fixed authored ruin, uses a compact plot grid and should not become a colony simulator or free-placement furniture game.
+
+5.2a — Stronghold grid
+
+Prototype with the authored grid structure described in the guide:
+
+fixed Heart;
+fixed entrance;
+sealed plots;
+ruined plots;
+available plots;
+occupied plots;
+permanent blocks;
+orthogonal connectivity.
+
+The grid size remains data-driven.
+
+5.2b — Initial facilities
+
+Implement only facilities necessary for the first loop:
+
+Heart;
+Storehouse;
+Muster Hall;
+Recovery Chamber;
+Prison;
+Workshop;
+one Reaver signature facility or Warcamp foundation.
+5.2c — Construction
+
+Construction must support:
+
+resource requirements;
+furniture requirements;
+exact-item requirements where authored;
+inventory reservations;
+placement validation;
+construction time;
+cancellation;
+atomic consumption;
+damaged and completed state.
+
+Furniture is consumed as a project input. It is not individually positioned in the base.
+
+5.2d — Facility menus
+
+Every facility uses a shared menu contract:
+
+overview;
+actions;
+upgrades;
+defence;
+inventory where relevant;
+current projects;
+requirements and warnings.
+Stage 5.2 completion gate
+
+The player can recover furniture from a mission, reserve it, spend it with resources and construct one operational facility without item duplication.
+
+Stage 5.3 — Roster, Equipment, Recovery and Captives
+
+Purpose: Make tactical survivors and recovered objects matter between missions.
+
+Roster
+
+Every permanent recruit requires:
+
+name;
+troop type;
+troop tier;
+level;
+XP;
+equipment;
+injuries;
+mission history;
+kills and captures;
+availability;
+permanent death.
+
+Levelling a Marauder must not transform that character into a Harpooner. Troop Tier and individual level remain separate.
+
+Equipment
+
+Implement:
+
+stronghold storage;
+character loadouts;
+hands;
+armour;
+belt;
+backpack;
+ammunition;
+unavailable or reserved equipment;
+safe transfer between characters;
+mission deployment reservations.
+Injury and recovery
+
+Initial strategic injury states:
+
+Ready
+Wounded
+Gravely Wounded
+Dead
+
+Facilities and time determine recovery.
+
+Captives
+
+The Prison initially supports:
+
+inspect;
+restrain;
+release;
+ransom;
+interrogate;
+recruit where explicitly permitted;
+use in archetype-specific projects later.
+
+Do not add universal loyalty and personality simulation.
+
+Stage 5.3 completion gate
+
+A named Marauder can be recruited, equipped, deployed, wounded, returned, treated, redeployed and permanently lost.
+
+Stage 5.4 — Economy, Research and Production
+
+Purpose: Convert mission loot into meaningful strategic choices.
+
+Resources
+
+Initial shared resources:
+
+wood;
+stone;
+metal;
+food;
+magic;
+gold coins.
+
+Add archetype-specific resources only when the relevant archetype requires them.
+
+Item decisions
+
+Recovered objects may be:
+
+retained;
+equipped;
+sold;
+dismantled;
+consumed by construction;
+installed where eligible;
+protected from auto-selection.
+
+Examples:
+
+grain crate
+→ sell intact for coins
+→ dismantle into wood and food
+→ consume in a project
+
+weapon
+→ equip
+→ sell
+→ dismantle into metal
+Research MVP
+
+Implement a small curated research set, not a large technology tree.
+
+Initial projects might unlock:
+
+improved storage;
+basic smithing;
+structural salvage processing;
+better market access;
+first Reaver facility upgrade;
+captive handling;
+improved mission intelligence.
+
+Research grants organisational knowledge. Facilities make that knowledge operational. Destroying a facility must not erase learned Research.
+
+Production
+
+Initial production should support:
+
+repair;
+dismantling;
+one manufactured weapon or consumable;
+one commissioned market item;
+one facility upgrade.
+Stage 5.4 completion gate
+
+A mission reward can be sold, dismantled, researched from, consumed by construction or equipped, with every choice conserving item identity and resources.
+
+Stage 5.5 — Notoriety and Base Defence
+
+Purpose: Complete the campaign pressure loop.
+
+Regional Notoriety
+
+Each region owns one visible value from 0–100.
+
+Every mission produces an itemised report:
+
+Killed settlement guards: +8
+Killed civilians: +12
+Destroyed granary: +10
+Stole supplies unnoticed: +3
+Released captives: -2
+Total: +31
+
+Repeated events are grouped, but every point remains explainable.
+
+Threshold behaviour
+
+Suggested presentation:
+
+0–49   Local concern
+50–74  Organised investigation
+75–99  Retaliation preparing
+100    Raid operation created
+
+The exact labels can be tuned without introducing a second hidden threat meter.
+
+Raid operation
+
+At 100:
+
+create one incoming raid;
+identify its origin;
+show force composition;
+show arrival time;
+show approach route;
+allow preparation;
+permit interception only when explicitly authored.
+
+Resolving the raid reduces that region’s Notoriety by 50, following the current stronghold design.
+
+Base-defence assembly
+
+The player’s actual facility layout must generate the defence map:
+
+stronghold grid
+→ facility modules
+→ automatic connectors
+→ entrance and Heart
+→ tactical defence map
+
+The first implementation needs only the currently supported facilities and authored connection rules.
+
+Stage 5.5 completion gate
+
+Notoriety can reach 100, create a visible incoming raid, generate a tactical map from the real stronghold and apply the defence result back to the campaign.
+
+Stage 5.6 — One-Archetype Campaign Vertical Slice
+
+Purpose: Prove the entire game loop with the narrowest complete content set.
+
+Recommended content scope
+Player
+one protagonist class/archetype through levels 1–3;
+Tier I Marauders;
+a small persistent roster;
+starter equipment and consumables.
+Region
+one Life-realm region;
+one Fifth-God stronghold;
+one settlement;
+several authored sites;
+Agents;
+Notoriety.
+Missions
+at least three farm/storehouse variants;
+one larger settlement raid;
+one base-defence mission;
+optional captive and salvage objectives.
+Strategic systems
+construction;
+recovery;
+equipment;
+recruitment;
+limited Research;
+limited manufacturing;
+buying and selling;
+Notoriety;
+save/load.
+Stage 5.6 completion gate
+
+A new campaign can progress through several missions, improve the roster and stronghold, trigger retaliation, survive or fail a base attack and continue without developer intervention.
+
+This is the first point at which Seethe is a small game rather than a collection of connected systems.
+
+Stage 6.0 — Shared Ability, Status and Spell Framework
+
+Purpose: Support genuinely different protagonist classes without class-specific tactical hacks.
+
+Implement only what the selected four starter paths require.
+
+Core framework
+ability definitions;
+target profiles;
+area shapes;
+resource costs;
+saving throws;
+attack rolls;
+concentration;
+duration and expiry timing;
+stacking policies;
+dispelling or cancellation;
+provocation;
+Reaction interruption;
+combat-log calculations;
+AI usability metadata.
+Initial area shapes
+single target;
+adjacent;
+line;
+cone;
+radius;
+ground tile;
+self aura.
+Initial status families
+bonuses and penalties;
+damage over time;
+movement restriction;
+concealment;
+fear;
+charm or control;
+concentration;
+temporary HP;
+ongoing area effects.
+Spellcasting boundary
+
+Spellcasting should reuse:
+
+the existing action budget;
+attack preview;
+line of sight;
+line of effect;
+cover;
+Reactions;
+event journal;
+status framework.
+
+It must not become a parallel combat engine.
+
+Stage 6.1 — Four Starter Class and Archetype Paths
+
+Purpose: Deliver the originally intended four-class level 1–3 vertical-slice choice.
+
+The exact four pairs should be locked before implementation. Selection should favour mechanical contrast and shared-system coverage.
+
+A useful set should collectively test:
+
+martial melee;
+ranged or stealth play;
+prepared or spontaneous magic;
+summoning, control or support;
+one socially or strategically distinctive archetype.
+
+Each path needs:
+
+levels 1–3;
+character-sheet progression;
+one signature tactical mechanic;
+one early strategic expression;
+complete UI;
+AI support where abilities can be used by enemies;
+content validation;
+balance against the same mission set.
+
+Do not implement all three archetypes for any class at this stage.
+
+Stage 6.2 — Life-Realm Content Pack
+
+Purpose: Make the starter region feel like a real civilisation rather than generic training content.
+
+Enemy content
+civilians;
+guards;
+archers;
+militia;
+priests or healers;
+hounds or living trackers;
+elite order representative;
+one boss or local authority.
+Environment
+farms;
+healing houses;
+granaries;
+sacred groves;
+Sanctuary structures;
+Life-realm furniture;
+religious symbols;
+biological hazards or growth;
+nonlethal restraint infrastructure.
+Narrative expression
+
+Ilyra’s realm should contain real benefits and sincere believers as well as oppressive preservation. The Four are active and their civilisations should not be portrayed as empty caricatures.
+
+Stage 6.3 — Mission Variety
+
+Purpose: Make the three core mission categories mechanically distinct.
+
+Raid
+enter
+→ steal or capture
+→ choose when to withdraw
+
+Primary pressures:
+
+carrying capacity;
+time;
+patrol escalation;
+optional loot;
+escape.
+Assault
+break a defended position
+→ seize or destroy a fixed objective
+→ survive organised resistance
+
+Primary pressures:
+
+cover;
+fortifications;
+reinforcements;
+destructible routes;
+attrition.
+Assassinate
+locate a protected target
+→ isolate, kill or capture
+→ escape the response
+
+Primary pressures:
+
+intelligence;
+stealth;
+target movement;
+witnesses;
+body identification;
+rapid retaliation.
+
+Each type should use the same mission framework rather than separate hard-coded modes.
+
+Stage 6.4 — Content-Driven Tactical Extensions
+
+Purpose: Implement advanced rules only when real content requires them.
+
+Likely packages include:
+
+Concealment and lighting
+
+Add when darkness, smoke, foliage or magical obscurity become common mission elements.
+
+Grappling and resisting creatures
+
+Complete the opposed manoeuvre framework when more player and enemy abilities use it.
+
+Forced movement
+
+Add Shove, pull, collision, ledges and throws when the relevant archetype or enemy requires them.
+
+Summons and created units
+
+Add when one of the four starter classes needs a summon, raised creature or temporary construct.
+
+Large footprints and unusual bodies
+
+Add with the first large creature, swarm, hydra or construct.
+
+Elevation and multiple floors
+
+Add when an authored mission is designed around vertical play—not merely to demonstrate technical capability.
+
+Mounts
+
+Add with the first genuine mounted unit. Do not infer the full mount system from normal character movement.
+
+Stage 6.5 — Full Vertical Slice Lock
+
+Purpose: Produce the representative playable slice used to judge whether Seethe works as a game.
+
+Required player journey
+Create campaign
+→ choose one of four protagonist paths
+→ awaken the Fifth-God stronghold
+→ recruit and equip troops
+→ place an Agent
+→ discover a mission
+→ deploy
+→ infiltrate or fight
+→ steal, destroy or capture
+→ extract
+→ receive itemised consequences
+→ heal and replace losses
+→ build and Research
+→ increase Notoriety
+→ face a regional raid
+→ defend the real stronghold layout
+→ continue the campaign
+Final vertical-slice requirements
+four level 1–3 protagonist paths;
+one complete follower line at Tier I;
+one coherent enemy civilisation;
+three mission types;
+several authored maps;
+stronghold management;
+persistent roster and equipment;
+construction and Research;
+Agents and region missions;
+Notoriety;
+base defence;
+save/load;
+tutorials;
+final art direction applied to principal screens and units;
+sound and music pass;
+accessibility and control settings;
+performance budgets;
+release packaging.
+4. Post-vertical-slice direction
+
+These should not receive detailed implementation work until Stage 6.5 proves the central loop.
+
+Stage 7 — First content alpha
+protagonist levels 4–6;
+first Tier II followers, including the Harpooner where appropriate;
+additional Research;
+expanded stronghold facilities;
+more enemy roles;
+more mission maps;
+advanced injuries;
+more complete morale.
+Stage 8 — Second divine region
+second god and civilisation;
+new regional mechanics;
+new enemy faction;
+new site architecture;
+new mission complications;
+cross-region travel and strategic decisions.
+Stage 9 — Archetype expansion
+additional archetypes for implemented classes;
+additional follower trees;
+hybrid-class interactions;
+more signature facilities;
+archetype-specific campaign actions.
+Stage 10 — Campaign alpha
+several regions;
+broader level progression;
+late-game retaliation;
+multiple base-defence approaches;
+advanced production;
+campaign narrative structure;
+complete victory and defeat paths.
+5. Features deliberately deferred
+
+The following should not block the first complete campaign slice:
+
+every class;
+every archetype;
+every Reaver tier;
+multiple simultaneous regions;
+procedurally generated campaign geography;
+free-form stronghold construction;
+detailed worker simulation;
+universal loyalty simulation;
+full diplomacy;
+multiplayer;
+extensive mod tooling;
+complete multi-floor procedural maps;
+every unusual creature body type;
+all tactical rules from the design bible;
+final commercial save-migration guarantees;
+final endgame systems.
+6. Immediate work order
+
+The practical next sequence is:
+
+Stage 4.5g
+Runtime and repository lock
+        ↓
+Stage 4.6
+One real mission
+        ↓
+Stage 4.7
+Production-ready characters
+        ↓
+Stage 4.8
+Physical objectives and environment
+        ↓
+Stage 4.9
+Tactical vertical slice
+        ↓
+Stages 5.0–5.6
+Complete one-archetype campaign loop
+        ↓
+Stages 6.0–6.5
+Expand into the full four-class vertical slice
+
+This direction avoids both major risks:
+
+continuing to refine tactical architecture without producing a game loop;
+multiplying classes, spells and missions before the campaign can preserve and use their outcomes.
+
+The next implementation brief should therefore be Stage 4.5g — Tactical Foundation and Mission Boundary Lock, followed immediately by the first authored mission rather than another broad tactical feature.

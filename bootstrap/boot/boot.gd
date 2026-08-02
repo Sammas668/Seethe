@@ -1,38 +1,96 @@
 extends Node
 
-# Legacy validator marker: Stage 4.2.5.5 tactical visibility and detection hardening loaded.
-# Legacy validator marker: Stage 4.2.6 initiative lifecycle and basic AI completion loaded.
-# Legacy validator marker: Stage 4.3.1 downed, Dying and death foundation loaded.
-# Legacy validator marker: Stage 4.3.1a token status and shared squad alert correction loaded.
-# Legacy validator marker: Stage 4.3.1b dying tracker and enemy-only awareness icon adjustment loaded.
-# Legacy validator marker: Stage 4.3.1c immediate life-state presentation and initiative AI handoff hotfix loaded.
-# Legacy validator marker: Stage 4.3.1d diagonal melee contact and alert deduplication loaded.
-# Legacy validator marker: Stage 4.3.1e Disabled action and non-blocking hit reaction correction loaded.
-# Legacy validator marker: print("Seethe Stage 4.3.2 body items, medical interaction and restraint loaded.")
-# Legacy validator marker: print("Seethe Stage 4.3.2s body status and carrier-downing correction loaded.")
-# Legacy validator marker: print("Seethe Stage 4.3.3 extraction, captive recovery and mission resolution loaded.")
-
-const TACTICAL_UI_SANDBOX: PackedScene = preload(
+const TACTICAL_SCREEN_SCENE: PackedScene = preload(
 	"res://presentation/tactical/tactical_screen.tscn"
 )
-const TACTICAL_SANDBOX_FACTORY_SCRIPT: Script = preload(
-	"res://bootstrap/debug/tactical_sandbox_factory.gd"
+const MISSION_SELECTOR_SCENE: PackedScene = preload(
+	"res://presentation/debug/debug_mission_selector.tscn"
 )
+const AUTHORED_MISSION_FACTORY_SCRIPT: Script = preload(
+	"res://bootstrap/debug/authored_mission_factory.gd"
+)
+
+var _loading_layer: CanvasLayer
+var _mission_selector: DebugMissionSelector
+var _tactical_screen: Node
 
 
 func _ready() -> void:
-	# Legacy validator marker: print("Seethe Stage 4.3.3 extraction, captive recovery and mission resolution loaded.")
-	print("Seethe Stage 4.4 directional cover, line of effect and openings loaded.")
-	call_deferred("_open_tactical_ui_sandbox")
+	print("Seethe Stage 4.7 Hotfix 5f enemy movement pipeline and cadence optimisation loaded.")
+	call_deferred("_open_mission_selector")
 
 
-func _open_tactical_ui_sandbox() -> void:
-	var session: TacticalSession = (
-		TACTICAL_SANDBOX_FACTORY_SCRIPT.create_session()
-	)
-	var screen: Node = TACTICAL_UI_SANDBOX.instantiate()
-	if screen == null:
-		push_error("Could not instantiate the tactical UI sandbox.")
+func _open_mission_selector() -> void:
+	if _tactical_screen != null:
+		_tactical_screen.queue_free()
+		_tactical_screen = null
+	if _mission_selector == null:
+		_mission_selector = MISSION_SELECTOR_SCENE.instantiate() as DebugMissionSelector
+		if _mission_selector == null:
+			push_error("Could not instantiate the Stage 4.6 mission selector.")
+			return
+		_mission_selector.launch_requested.connect(_on_mission_launch_requested)
+		add_child(_mission_selector)
+	_mission_selector.prepare_for_display()
+
+
+func _on_mission_launch_requested(
+		mission_definition: MissionDefinition,
+		selected_character_ids: Array[StringName]
+) -> void:
+	if mission_definition == null:
 		return
-	screen.call("configure", session)
-	add_child(screen)
+	_show_loading_screen(
+		"Finalising mission setup and assembling %s…" % mission_definition.display_name
+	)
+	await get_tree().process_frame
+	var session: TacticalSession = AUTHORED_MISSION_FACTORY_SCRIPT.create_session(
+		mission_definition,
+		selected_character_ids
+	)
+	if session == null:
+		_close_loading_screen()
+		push_error("Could not create the authored mission session.")
+		if _mission_selector != null:
+			_mission_selector.report_launch_failure(
+				"Mission assembly failed. Review the error log, then try again."
+			)
+		return
+	_mission_selector.hide()
+	_tactical_screen = TACTICAL_SCREEN_SCENE.instantiate()
+	if _tactical_screen == null:
+		_close_loading_screen()
+		push_error("Could not instantiate the tactical screen.")
+		return
+	_tactical_screen.call("configure", session)
+	if _tactical_screen.has_signal("mission_finished"):
+		_tactical_screen.connect("mission_finished", _on_mission_finished)
+	add_child(_tactical_screen)
+	_close_loading_screen()
+
+
+func _on_mission_finished() -> void:
+	_open_mission_selector()
+
+
+func _show_loading_screen(message: String) -> void:
+	_close_loading_screen()
+	_loading_layer = CanvasLayer.new()
+	_loading_layer.layer = 1000
+	add_child(_loading_layer)
+	var background := ColorRect.new()
+	background.color = Color(0.025, 0.02, 0.03, 1.0)
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_loading_layer.add_child(background)
+	var label := Label.new()
+	label.text = message
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	background.add_child(label)
+
+
+func _close_loading_screen() -> void:
+	if _loading_layer != null:
+		_loading_layer.queue_free()
+		_loading_layer = null

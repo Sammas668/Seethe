@@ -59,9 +59,14 @@ func execute(unit_id: StringName, target_tile: Vector2i) -> OperationResult:
 	var facing_before: Vector2i = unit.facing_direction
 	var remaining_before: int = unit.action_budget.remaining_turn_capacity_feet
 	var spent_before: int = unit.action_budget.normal_capacity_spent_feet
+	var facing_contract := TacticalInvalidationContract.observer_facing(
+		unit.unit_id, unit.team_id
+	)
+	facing_contract.action_budget_changed = true
 	var changes := TacticalChangeSet.new(
 		&"unit_faced_direction",
-		_state_store.state.revision
+		_state_store.state.revision,
+		facing_contract
 	)
 	changes.stage(
 		Callable(self, "_apply_facing").bind(unit, new_facing),

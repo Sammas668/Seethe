@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"item.marauder_keys"
+display_name = "Raider's Keys"
+description = "A compact ring of keys for manacles and captured locks."
+weight_lb = 0.25
+inventory_footprint = Vector2i(1, 1)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = true
+maximum_stack_size = 1
+equipment_tags = Array[StringName]([&"tool", &"keys", &"restraint_support"])
+tactical_visual_category = &"tool"

@@ -1295,3 +1295,43 @@ Preserve the boundaries. Expand the tree only when the game earns the complexity
 # Implemented milestone
 
 The project now includes Stage 1 tactical movement. See `docs/architecture/STAGE_1_TACTICAL_MOVEMENT_IMPLEMENTATION.md` for file ownership, controls, validation rules and deferred work.
+
+---
+
+# Stage 4.6 authored mission boundary
+
+Authored mission content now follows this ownership rule:
+
+```text
+content MissionDefinition/TacticalMapDefinition
+→ application assembly and objective services
+→ domain MissionRuntimeState
+→ presentation selector, objective panel and summary
+```
+
+Mission-specific farm IDs and conditions must remain out of `TacticalScreen`. New missions should be registered as authored resources and use shared objective kinds rather than presentation branches.
+
+# Stage 4.7 production character-content boundary
+
+Stage 4.7 establishes a content-owned production roster without moving campaign progression into tactical presentation.
+
+- `CharacterTemplateDefinition` owns authored progression, role, proficiency, AI-profile, capture and loot metadata.
+- `PersistentCharacterState` owns individual identity, XP, injuries, history, equipment references and permanent death.
+- item definitions and item instances own weapons, shields, medical supplies and ammunition.
+- `CharacterResolver` produces the read-only `ResolvedCharacterSnapshot` consumed by tactical state, preview and character-sheet presentation.
+- `MissionCharacterPlacementDefinition` owns position, facing, squad and optional mission AI-profile override; it does not own statistics.
+- `TacticalAIProfileDefinition` describes intent priorities only. AI actions still pass through ordinary application handlers and transactions.
+- the fixed protagonist is marked provisional. Level-up, class-rank and archetype decisions remain a campaign concern for Stage 5.0f.
+
+The tactical HUD scene remains frozen. Stage 4.7 character information is contained within the existing scrollable unit-management window.
+
+
+## Stage 4.7 Hotfix 1 — character-sheet fidelity boundary
+
+Production character totals must resolve from approved templates, authoritative item instances and active effects. The farm mission selects template and placement IDs; it does not restate statistics. `TacticalAbilityDefinition` is the narrow shared definition used by the approved Mercy-Bearer package, while `TacticalAbilityService` owns validation, cost/resource spending, deterministic resolution and tactical commit. The exact four-sheet fixture is validation authority only and does not become a parallel runtime character model. Deprecated generic Life-realm templates are unregistered and unused.
+
+## Stage 4.7 Hotfix 5e — enemy-turn responsiveness boundary
+
+Hotfix 5e preserves the existing layer ownership while replacing repeated AI route searches with one parity-aware reachable field per activation. `domain/tactical` owns legal movement cost, binary-heap A* and route reconstruction. `application/tactical/ai` owns destination choice, selected-route transport and one-actor activation progression. `presentation/tactical` owns animation duration, non-blocking feedback and safe frame yielding. Presentation may yield only after a complete activation result; it must never divide an application transaction, movement interruption, attack or Reaction chain.
+
+The selected AI path is advisory until application commit revalidates it against current tactical state. Diagnostics may observe unit type, AI profile, candidate counts and timing, but they do not become gameplay authority or expose hidden actors through the player HUD.

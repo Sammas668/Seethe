@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+[resource]
+script = ExtResource("1_def")
+id = &"item.guard_shield"
+display_name = "Settlement Shield"
+description = "A plain wooden shield marked with the local Ilyran watch seal."
+weight_lb = 8.0
+inventory_footprint = Vector2i(2, 3)
+handedness = &"one_handed"
+belt_allowed = false
+backpack_allowed = true
+equipment_tags = Array[StringName]([&"shield", &"defence", &"guard"])
+stat_modifiers = {"armour_class": 2}
+tactical_visual_category = &"weapon"

@@ -18,6 +18,7 @@ var selected: bool = false
 var visual_category: StringName = &"misc"
 var instance_kind: StringName = &"item"
 var _status_snapshot: Dictionary = {}
+var fixed_fixture: bool = false
 var _status_overlay: TacticalBodyStatusOverlay
 
 
@@ -39,7 +40,8 @@ func configure(
 		footprint_value: Vector2i,
 		visual_category_value: StringName = &"misc",
 		instance_kind_value: StringName = &"item",
-		status_snapshot_value: Dictionary = {}
+		status_snapshot_value: Dictionary = {},
+		fixed_fixture_value: bool = false
 ) -> void:
 	source_kind = source_kind_value
 	item_id = item_id_value
@@ -48,8 +50,9 @@ func configure(
 	visual_category = visual_category_value
 	instance_kind = instance_kind_value
 	_status_snapshot = status_snapshot_value.duplicate(true)
+	fixed_fixture = fixed_fixture_value
 	text = item_name
-	tooltip_text = item_name
+	tooltip_text = item_name + ("\nPermanent Belt item — left-click to open." if fixed_fixture else "")
 	_refresh_status_overlay()
 	_refresh_style()
 
@@ -68,6 +71,8 @@ func _on_gui_input(event: InputEvent) -> void:
 
 
 func _get_drag_data(_position: Vector2) -> Variant:
+	if fixed_fixture:
+		return null
 	if item_name.is_empty():
 		return null
 
@@ -126,6 +131,13 @@ func _refresh_style() -> void:
 	normal_style.corner_radius_bottom_left = 2
 	normal_style.corner_radius_bottom_right = 2
 
+	if fixed_fixture:
+		normal_style.border_color = Color(0.86, 0.58, 0.18, 1.0)
+		normal_style.border_width_left = 2
+		normal_style.border_width_top = 2
+		normal_style.border_width_right = 2
+		normal_style.border_width_bottom = 2
+
 	if selected:
 		normal_style.border_color = Color(0.96, 0.74, 0.20, 1.0)
 		normal_style.border_width_left = 3
@@ -139,7 +151,7 @@ func _refresh_style() -> void:
 	add_theme_stylebox_override("normal", normal_style)
 	add_theme_stylebox_override("hover", hover_style)
 	add_theme_stylebox_override("pressed", hover_style)
-	add_theme_font_size_override("font_size", 11)
+	add_theme_font_size_override("font_size", 12 if fixed_fixture else 11)
 	add_theme_color_override("font_color", Color(0.94, 0.94, 0.91, 1.0))
 
 
@@ -165,6 +177,8 @@ func _item_colour() -> Color:
 			return Color(0.20, 0.17, 0.11, 0.98)
 		&"loot":
 			return Color(0.25, 0.18, 0.09, 0.98)
+		&"container":
+			return Color(0.30, 0.20, 0.08, 0.99)
 		&"weapon":
 			return Color(0.13, 0.19, 0.22, 0.98)
 		&"body":

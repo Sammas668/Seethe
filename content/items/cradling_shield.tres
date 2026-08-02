@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+[resource]
+script = ExtResource("1_def")
+id = &"item.mercy.cradling_shield"
+display_name = "Cradling Shield"
+description = "A shield shaped to shelter a patient or captive while the Mercy-Bearer works."
+weight_lb = 8.0
+inventory_footprint = Vector2i(2, 3)
+handedness = &"one_handed"
+belt_allowed = false
+backpack_allowed = true
+stackable = false
+maximum_stack_size = 1
+equipment_tags = Array[StringName]([&"shield", &"defence", &"mercy"])
+granted_action_ids = Array[StringName]([])
+defence_profile_id = &""
+stat_modifiers = {"armour_class": 2}
+tactical_visual_category = &"weapon"
+permits_first_aid = false
+first_aid_bonus = 0
+is_restraint = false

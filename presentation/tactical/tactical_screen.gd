@@ -1,6 +1,7 @@
 extends Node2D
 
 signal movement_presentation_finished
+signal mission_finished
 
 const UNIT_VIEW_SCENE: PackedScene = preload(
 	"res://presentation/tactical/tactical_unit_view.tscn"
@@ -48,13 +49,42 @@ enum PresentationCadenceEvent {
 	INTERRUPTION,
 }
 
+enum TacticalPresentationVisibility {
+	UNOBSERVED,
+	PARTIALLY_OBSERVED,
+	OBSERVED,
+}
+
 const INVALID_BOARD_TILE: Vector2i = Vector2i(-1, -1)
-const ACTIVATION_HANDOFF_SECONDS: float = 0.15
-const AI_MOVE_TO_ATTACK_SECONDS: float = 0.18
-const PHASE_HANDOFF_SECONDS: float = 0.25
-const REVEAL_ACKNOWLEDGEMENT_SECONDS: float = 0.35
-const ALERT_ACKNOWLEDGEMENT_SECONDS: float = 0.40
-const INTERRUPTION_ACKNOWLEDGEMENT_SECONDS: float = 0.25
+const ACTIVATION_HANDOFF_SECONDS: float = 0.0
+const AI_MOVE_TO_ATTACK_SECONDS: float = 0.0
+const PHASE_HANDOFF_SECONDS: float = 0.0
+const AI_VISIBLE_MOVE_SHORT_START_SECONDS: float = 0.06
+const AI_VISIBLE_MOVE_SHORT_STEP_SECONDS: float = 0.045
+const AI_VISIBLE_MOVE_LONG_STEP_SECONDS: float = 0.015
+const AI_VISIBLE_MOVE_ORDINARY_CAP_SECONDS: float = 0.34
+const AI_VISIBLE_MOVE_MAX_SECONDS: float = 0.40
+const AI_VISIBLE_MOVE_ORDINARY_CAP_STEPS: int = 16
+const ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC: int = 8000
+const ENEMY_HANDOFF_IDLE_WARMUP_BUDGET_USEC: int = 1500
+const ENEMY_CHAIN_WARMUP_BUDGET_USEC: int = 1800
+const HIDDEN_AI_VISIBILITY_FAST_BUDGET_USEC: int = 16000
+const AI_DESTINATION_VISIBILITY_FINAL_BUDGET_USEC: int = 3000
+const REVEAL_ACKNOWLEDGEMENT_SECONDS: float = 0.20
+const ALERT_ACKNOWLEDGEMENT_SECONDS: float = 0.25
+const ALERT_ACTION_LEAD_SECONDS: float = 0.06
+const ALERT_FLASH_SECONDS: float = 0.25
+const INTERRUPTION_ACKNOWLEDGEMENT_SECONDS: float = 0.15
+const AI_VISIBLE_SHORT_ACTION_HANDOFF_SECONDS: float = 0.07
+const AI_VISIBLE_MOVEMENT_SUPPLIES_CADENCE_SECONDS: float = 0.10
+const ENEMY_STALL_THRESHOLDS_USEC: Array[int] = [
+	250_000,
+	500_000,
+	1_000_000,
+	2_000_000,
+	5_000_000,
+]
+const ENEMY_STALL_HISTORY_LIMIT: int = 20
 
 @onready var _board_view: Variant = $BoardView
 @onready var _unit_layer: Node2D = $BoardView/UnitLayer
@@ -151,6 +181,7 @@ var _mission_resolution_window: TacticalMissionResolutionWindow
 var _mission_resolution_request_in_progress: bool = false
 var _attack_targeting: bool = false
 var _first_aid_targeting: bool = false
+var _grapple_targeting: bool = false
 var _selected_attack_id: StringName = &""
 var _selected_attack_target_id: StringName = &""
 var _power_attack_value: int = 0
@@ -160,6 +191,43 @@ var _selected_damage_channel: StringName = (
 var _legal_attack_target_ids: Array[StringName] = []
 var _attack_preview
 var _attack_origin_override: Variant = null
+
+# Stage 4.5e1 enters targeting mode before any legal-target scan. The scan is
+# deferred to the next idle step so the cursor, status and board mode can render
+# immediately. Exact per-target previews remain hover/click driven.
+var _attack_targeting_generation: int = 0
+var _attack_selection_started_usec: int = 0
+var _attack_selections: int = 0
+var _deferred_attack_target_scans: int = 0
+var _last_attack_selection_total_usec: int = 0
+var _last_attack_target_scan_usec: int = 0
+var _targeted_attack_presentation_refreshes: int = 0
+
+# Stage 4.5e2 lets the impact event render before broad attack reconciliation.
+# Attack state changes are collapsed into one deferred refresh, while the old
+# contextual target under the cursor remains cleared until mouse movement.
+var _post_attack_reconciliation_scheduled: bool = false
+var _pending_post_attack_reasons: Dictionary = {}
+var _pending_post_attack_flags: TacticalInvalidationFlags
+var _active_state_change_flags: TacticalInvalidationFlags
+var _post_attack_reconciliations: int = 0
+var _post_attack_refreshes_avoided: int = 0
+var _immediate_combat_impacts_presented: int = 0
+var _last_post_attack_reconciliation_usec: int = 0
+var _legal_attack_targets_dirty: bool = false
+
+# Stage 4.5e4 acknowledges a valid hostile click without inserting a rendered
+# frame before authoritative commitment. The command pulse is fire-and-forget;
+# the current click frame proceeds directly into the cached-preview commit path.
+var _attack_command_in_progress: bool = false
+var _attack_command_acknowledgements: int = 0
+var _attack_command_frame_yields: int = 0 # Legacy counter; must remain zero.
+var _attack_command_dead_frames_avoided: int = 0
+var _attack_click_started_usec: int = 0
+var _last_attack_click_to_result_usec: int = 0
+var _last_attack_click_to_impact_usec: int = 0
+var _attack_clicks_using_primed_preview: int = 0
+var _attack_click_preview_fallbacks: int = 0
 var _opening_popup: PopupMenu
 var _opening_menu_options: Array[Dictionary] = []
 var _interact_mode_active: bool = false
@@ -191,6 +259,7 @@ var _last_movement_handoff_total_usec: int = 0
 var _last_post_movement_refresh_usec: int = 0
 var _targeted_post_movement_refresh_count: int = 0
 var _deferred_state_change_reasons: Dictionary = {}
+var _deferred_state_change_flags: Dictionary = {}
 var _post_commit_perception_flush_scheduled: bool = false
 var _deferred_damage_events: Array[Dictionary] = []
 var _pending_ai_movement_events: Array[Dictionary] = []
@@ -205,7 +274,101 @@ var _cadence_wait_depth: int = 0
 var _queued_state_cadence_event: int = PresentationCadenceEvent.NONE
 var _queued_state_cadence_unit_id: StringName = &""
 var _state_cadence_runner_scheduled: bool = false
+var _contact_presentation_ready_unit_id: StringName = &""
+var _contact_ai_warmup_started_usec: int = 0
+var _contact_ai_warmup_completed_usec: int = 0
+var _contact_ai_warmup_processing_usec: int = 0
+var _contact_ai_warmup_frames: int = 0
+var _contact_ai_warmup_abandoned: bool = false
+var _contact_detected_usec: int = 0
+var _contact_ai_pulse_started_usec: int = 0
+var _contact_first_movement_tween_started_usec: int = 0
+var _duplicate_contact_refreshes_avoided: int = 0
 var _last_handoff_pulsed_unit_id: StringName = &""
+var _last_ai_resolution_observable: bool = false
+var _enemy_phase_had_observable_activity: bool = false
+var _unobserved_ai_movement_batches_completed_immediately: int = 0
+var _unobserved_ai_movement_events_skipped: int = 0
+var _partially_observed_ai_movement_events_presented: int = 0
+var _observed_ai_movement_events_presented: int = 0
+var _unobserved_ai_activation_handoffs_skipped: int = 0
+var _unobserved_enemy_phase_handoffs_skipped: int = 0
+var _enemy_phase_frame_yields: int = 0
+var _enemy_phase_hidden_activations_batched: int = 0
+var _side_based_enemy_activation_pulses: int = 0
+var _observable_stationary_activation_frame_yields: int = 0
+var _last_ai_activation_presented_movement: bool = false
+var _last_ai_visible_movement_duration_seconds: float = 0.0
+var _last_ai_activation_simulation_usec: int = 0
+var _last_ai_activation_presentation_usec: int = 0
+var _last_ai_activation_total_usec: int = 0
+var _enemy_planning_slice_count: int = 0
+var _enemy_planning_yield_count: int = 0
+var _enemy_planning_max_slices_per_frame: int = 0
+var _enemy_hidden_planning_frames: int = 0
+var _destination_visibility_yield_count: int = 0
+var _destination_visibility_same_frame_completions: int = 0
+var _destination_visibility_final_budget_overruns: int = 0
+var _visible_activation_dead_frames_avoided: int = 0
+var _enemy_phase_requested_usec: int = 0
+var _end_phase_to_first_enemy_feedback_usec: int = 0
+var _end_phase_to_first_visible_action_usec: int = 0
+var _first_enemy_feedback_recorded: bool = false
+var _first_visible_enemy_action_recorded: bool = false
+var _end_phase_to_first_visible_movement_usec: int = 0
+var _frames_yielded_before_first_visible_action: int = 0
+var _hidden_actors_before_first_visible_action: int = 0
+var _enemy_phase_committed_usec: int = 0
+var _first_actor_feedback_started_usec: int = 0
+var _first_movement_tween_started_usec: int = 0
+var _ai_destination_visibility_pump_active: bool = false
+var _movement_handoff_finishing: bool = false
+# Hotfix 5f5: safe AI planning is moved into player decision time so End Turn
+# becomes a handoff rather than the point where enemy thinking begins.
+var _player_to_enemy_handoff_in_progress: bool = false
+var _handoff_requested_usec: int = 0
+var _handoff_feedback_started_usec: int = 0
+var _handoff_to_authoritative_commit_usec: int = 0
+var _handoff_to_movement_tween_usec: int = 0
+var _handoff_idle_warmup_processing_usec: int = 0
+var _handoff_idle_warmup_frames: int = 0
+var _handoff_warmup_ready_frames: int = 0
+var _handoff_full_refreshes_avoided: int = 0
+var _handoff_duplicate_ai_schedules_avoided: int = 0
+# Hotfix 5f6 pipelines consecutive enemies: the next actor is planned while the
+# current actor's cosmetic movement/damage presentation is still playing.
+var _prepared_ai_presentation_unit_id: StringName = &""
+var _chain_warmup_processing_usec: int = 0
+var _chain_warmup_frames: int = 0
+var _chain_warmup_ready_frames: int = 0
+var _chain_warmup_reused_count: int = 0
+var _duplicate_enemy_refreshes_avoided: int = 0
+var _hidden_actor_refreshes_avoided: int = 0
+var _forced_inter_actor_frames_avoided: int = 0
+var _presentation_wall_time_excluded_usec: int = 0
+var _last_enemy_to_enemy_handoff_usec: int = 0
+var _enemy_handoff_started_usec: int = 0
+var _enemy_highlight_started_usec: int = 0
+var _last_enemy_highlight_to_action_usec: int = 0
+var _pre_activation_handoff_validations: int = 0
+# Hotfix 5f8 records the exact live planning stage whenever a highlighted
+# enemy has not produced movement or an attack within a latency threshold.
+var _enemy_stall_active_unit_id: StringName = &""
+var _enemy_stall_thresholds_emitted: Dictionary = {}
+var _enemy_stall_history: Array[Dictionary] = []
+var _enemy_stall_threshold_event_count: int = 0
+# Hotfix 5f9 keeps contact non-blocking and adds only adaptive readability
+# spacing after visible actions that supplied no meaningful movement time.
+var _blocking_alert_acknowledgement_usec: int = 0
+var _adaptive_visible_handoff_usec: int = 0
+var _adaptive_visible_handoff_count: int = 0
+# Hotfix 5f10 suppresses broad presentation reconciliation for one authoritative
+# batch of completely hidden no-action actors, then publishes one final refresh
+# when control returns to the player.
+var _hidden_auto_pass_refreshes_avoided: int = 0
+var _last_empty_enemy_phase_usec: int = 0
+var _end_phase_to_player_control_restored_usec: int = 0
+var _enemy_phase_input_lock_started_usec: int = 0
 
 # Stage 4.5 player Reaction decision presentation. The application layer owns
 # legality and resolution; this panel only returns the selected choice.
@@ -302,11 +465,17 @@ func _ready() -> void:
 	_create_roster_buttons()
 
 	_facade.state_changed.connect(_on_state_changed)
+	_facade.state_changed_with_flags.connect(_on_state_changed_with_flags)
 	_facade.damage_committed.connect(_on_damage_committed)
 	_facade.movement_committed.connect(_on_ai_movement_committed)
 	_facade.reaction_decision_requested.connect(_on_reaction_decision_requested)
 	_facade.reaction_decision_cleared.connect(_on_reaction_decision_cleared)
 	_create_reaction_prompt()
+	var restored_reaction_request: ReactionDecisionRequest = (
+		_facade.pending_reaction_decision()
+	)
+	if restored_reaction_request != null:
+		_on_reaction_decision_requested(restored_reaction_request)
 
 
 	_abilities_button.pressed.connect(func() -> void: _toggle_action_category(&"abilities"))
@@ -351,6 +520,65 @@ func _process(_delta: float) -> void:
 	# the cursor-attached preview needs per-frame positioning.
 	if _attack_cursor_preview != null and _attack_cursor_preview.visible:
 		_position_attack_cursor_preview()
+	_step_idle_enemy_handoff_warmup()
+
+
+func _step_idle_enemy_handoff_warmup() -> void:
+	if (
+		_facade == null
+		or not is_inside_tree()
+		or _facade.mission_resolution_locked()
+		or _player_to_enemy_handoff_in_progress
+		or _movement_commit_in_progress
+		or _reaction_prompt_request != null
+		or _inventory_open
+		or _mission_resolution_request_in_progress
+		or _attack_command_in_progress
+		or _facing_commit_in_progress
+	):
+		return
+
+	# Player-time warmup remains available while the player is deciding. During
+	# an Enemy Phase, lookahead is permitted only after the current actor has
+	# committed: movement/cadence presentation then supplies safe rendered frames.
+	var chain_overlap: bool = (
+		(
+			_movement_animation_active
+			and (_initiative_ai_in_progress or _world_phase_in_progress)
+		)
+		or (
+			_cadence_wait_depth > 0
+			and (_initiative_ai_in_progress or _world_phase_in_progress)
+		)
+	)
+	var player_idle: bool = (
+		not _initiative_ai_in_progress
+		and not _world_phase_in_progress
+		and not _movement_animation_active
+		and _cadence_wait_depth <= 0
+	)
+	if not chain_overlap and not player_idle:
+		return
+	var next_ai_id: StringName = _facade.peek_next_ai_handoff_unit_id()
+	if next_ai_id.is_empty():
+		return
+	var budget_usec: int = (
+		ENEMY_CHAIN_WARMUP_BUDGET_USEC
+		if chain_overlap
+		else ENEMY_HANDOFF_IDLE_WARMUP_BUDGET_USEC
+	)
+	var started_usec: int = Time.get_ticks_usec()
+	var result: OperationResult = _facade.warmup_next_ai_handoff(budget_usec)
+	var elapsed_usec: int = maxi(0, Time.get_ticks_usec() - started_usec)
+	_handoff_idle_warmup_processing_usec += elapsed_usec
+	_handoff_idle_warmup_frames += 1
+	if chain_overlap:
+		_chain_warmup_processing_usec += elapsed_usec
+		_chain_warmup_frames += 1
+	if result != null and result.code == &"enemy_handoff_warmup_ready":
+		_handoff_warmup_ready_frames += 1
+		if chain_overlap:
+			_chain_warmup_ready_frames += 1
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -412,7 +640,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_A:
 				_select_weapon_from_hand(TacticalInventoryState.KIND_PRIMARY_HAND)
 			KEY_ESCAPE:
-				if _first_aid_targeting:
+				if _grapple_targeting:
+					_cancel_grapple_targeting("Grapple targeting cancelled.")
+				elif _first_aid_targeting:
 					_cancel_first_aid_targeting("First Aid targeting cancelled.")
 				elif _attack_targeting:
 					_clear_weapon_selection("Weapon targeting cancelled.")
@@ -472,7 +702,7 @@ func _on_board_tile_hovered(tile: Vector2i) -> void:
 
 
 func _on_board_tile_left_clicked(tile: Vector2i) -> void:
-	if _inventory_open:
+	if _inventory_open or _attack_command_in_progress:
 		return
 
 	if _board_intent_mode in [BoardIntentMode.OVERWATCH_PREVIEW, BoardIntentMode.BRACE_PREVIEW]:
@@ -481,6 +711,10 @@ func _on_board_tile_left_clicked(tile: Vector2i) -> void:
 
 	if _first_aid_targeting:
 		_execute_first_aid_at_tile(tile)
+		return
+
+	if _grapple_targeting:
+		_execute_grapple_at_tile(tile)
 		return
 
 	if _interact_mode_active:
@@ -523,12 +757,15 @@ func _on_board_tile_left_clicked(tile: Vector2i) -> void:
 
 
 func _on_board_right_clicked(tile: Vector2i) -> void:
-	if _inventory_open:
+	if _inventory_open or _attack_command_in_progress:
 		return
 	if _interact_mode_active:
 		_interact_mode_active = false
 		_active_category = &""
 		_context_tray.visible = false
+	if _grapple_targeting:
+		_cancel_grapple_targeting("Grapple targeting cancelled.")
+		return
 	if _first_aid_targeting:
 		_cancel_first_aid_targeting("First Aid targeting cancelled.")
 		return
@@ -1029,7 +1266,8 @@ func _dragged_body_visual_cells(unit_id: StringName) -> Dictionary:
 
 func _animate_dragged_body_paths(
 		body_cells_before: Dictionary,
-		carrier_path: Array[Vector2i]
+		carrier_path: Array[Vector2i],
+		carrier_duration: float = -1.0
 ) -> Array[StringName]:
 	var animated_ids: Array[StringName] = []
 	if carrier_path.size() <= 1:
@@ -1047,7 +1285,7 @@ func _animate_dragged_body_paths(
 			var cell: Vector2i = carrier_path[index]
 			if body_path.is_empty() or body_path.back() != cell:
 				body_path.append(cell)
-		if view.animate_path(body_path):
+		if view.animate_path(body_path, [], carrier_duration):
 			animated_ids.append(linked_unit_id)
 	return animated_ids
 
@@ -1092,6 +1330,23 @@ func _begin_movement_presentation_batch(events: Array[Dictionary]) -> void:
 			or bool(event.get("force_full_visibility", false))
 		)
 		var completed_path: Array[Vector2i] = _movement_path_from_event(event)
+		var presentation_path: Array[Vector2i] = completed_path
+		var moving_unit: TacticalUnitState = _facade.state().get_unit(
+			moving_unit_id
+		)
+		if moving_unit != null and moving_unit.is_ai_controlled():
+			var visibility_kind: int = _ai_movement_event_visibility(event)
+			match visibility_kind:
+				TacticalPresentationVisibility.UNOBSERVED:
+					presentation_path.clear()
+					_unobserved_ai_movement_events_skipped += 1
+				TacticalPresentationVisibility.PARTIALLY_OBSERVED:
+					presentation_path = _observable_ai_path_segment(completed_path)
+					_partially_observed_ai_movement_events_presented += 1
+					_last_ai_resolution_observable = true
+				TacticalPresentationVisibility.OBSERVED:
+					_observed_ai_movement_events_presented += 1
+					_last_ai_resolution_observable = true
 		var dragged_body_cells_before: Dictionary = {}
 		var dragged_value: Variant = event.get("dragged_body_cells_before", {})
 		if dragged_value is Dictionary:
@@ -1105,16 +1360,106 @@ func _begin_movement_presentation_batch(events: Array[Dictionary]) -> void:
 				if reaction_event_value is Dictionary:
 					reaction_events.append((reaction_event_value as Dictionary).duplicate(true))
 		var moving_view := _unit_views.get(moving_unit_id) as TacticalUnitView
-		if moving_view != null and moving_view.animate_path(completed_path, reaction_events):
+		if moving_view != null and not presentation_path.is_empty():
+			moving_view.visible = true
+		var movement_duration: float = _movement_animation_duration(
+			moving_unit,
+			presentation_path
+		)
+		if (
+			moving_unit != null
+			and moving_unit.is_ai_controlled()
+			and movement_duration > 0.0
+		):
+			_last_ai_visible_movement_duration_seconds = maxf(
+				_last_ai_visible_movement_duration_seconds,
+				movement_duration
+			)
+		if (
+			moving_view != null
+			and moving_view.animate_path(
+				presentation_path,
+				reaction_events,
+				movement_duration
+			)
+		):
 			_animating_unit_ids[moving_unit_id] = true
 		for body_unit_id: StringName in _animate_dragged_body_paths(
 			dragged_body_cells_before,
-			completed_path
+			presentation_path,
+			movement_duration
 		):
 			_animating_unit_ids[body_unit_id] = true
 
+	if (
+		_last_ai_resolution_observable
+		and _handoff_to_movement_tween_usec == 0
+		and _handoff_requested_usec > 0
+	):
+		_handoff_to_movement_tween_usec = maxi(
+			0,
+			Time.get_ticks_usec() - _handoff_requested_usec
+		)
+	if (
+		_last_ai_resolution_observable
+		and _first_movement_tween_started_usec == 0
+		and _enemy_phase_requested_usec > 0
+	):
+		_first_movement_tween_started_usec = Time.get_ticks_usec()
+		_end_phase_to_first_visible_movement_usec = maxi(
+			0,
+			_first_movement_tween_started_usec - _enemy_phase_requested_usec
+		)
+	if (
+		_contact_detected_usec > 0
+		and _contact_first_movement_tween_started_usec <= 0
+		and _contact_ai_pulse_started_usec > 0
+	):
+		_contact_first_movement_tween_started_usec = Time.get_ticks_usec()
+
+	# Player movement still uses its click-preview preparation fallback. Enemy
+	# destination FOV is advanced asynchronously while the token tween is visible.
+	var player_preparing_unit_ids: Array[StringName] = []
+	for unit_id_value: Variant in _movement_presentation_unit_ids.keys():
+		var unit_id := StringName(unit_id_value)
+		var unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+		if unit != null and unit.is_player_controlled():
+			player_preparing_unit_ids.append(unit_id)
+	if not player_preparing_unit_ids.is_empty():
+		_facade.prepare_visibility_for_units(player_preparing_unit_ids)
+	if _facade.has_pending_enemy_destination_visibility():
+		call_deferred("_pump_ai_destination_visibility_during_movement")
+
 	if _animating_unit_ids.is_empty():
 		call_deferred("_finish_movement_presentation")
+
+
+func _movement_animation_duration(
+		unit: TacticalUnitState,
+		path: Array[Vector2i]
+) -> float:
+	if path.size() <= 1:
+		return 0.0
+	if unit == null or not unit.is_ai_controlled():
+		return -1.0
+	var steps: int = path.size() - 1
+	# Hotfix 5f9 slightly restores visual weight without returning to slow enemy
+	# travel. Intermediate tiles remain linear; only the final step settles.
+	var short_steps: int = mini(steps, 3)
+	var duration: float = (
+		AI_VISIBLE_MOVE_SHORT_START_SECONDS
+		+ float(maxi(0, short_steps - 1)) * AI_VISIBLE_MOVE_SHORT_STEP_SECONDS
+	)
+	if steps > 3:
+		duration += float(steps - 3) * AI_VISIBLE_MOVE_LONG_STEP_SECONDS
+	# Legacy validation reference for the shared cap relationship:
+	# minf(AI_VISIBLE_MOVE_ORDINARY_CAP_SECONDS, AI_VISIBLE_MOVE_MAX_SECONDS)
+	var cap_seconds: float = (
+		AI_VISIBLE_MOVE_ORDINARY_CAP_SECONDS
+		if steps <= AI_VISIBLE_MOVE_ORDINARY_CAP_STEPS
+		else AI_VISIBLE_MOVE_MAX_SECONDS
+	)
+	return minf(duration, cap_seconds)
 
 
 func _movement_path_from_event(event: Dictionary) -> Array[Vector2i]:
@@ -1126,6 +1471,70 @@ func _movement_path_from_event(event: Dictionary) -> Array[Vector2i]:
 		if tile_value is Vector2i:
 			path.append(tile_value)
 	return path
+
+
+func _ai_movement_event_visibility(event: Dictionary) -> int:
+	var path: Array[Vector2i] = _movement_path_from_event(event)
+	var visible_tiles: int = 0
+	for tile: Vector2i in path:
+		if _facade.is_tile_visible_to_player(tile):
+			visible_tiles += 1
+	var observable_reaction: bool = _movement_event_has_observable_reaction(event)
+	var unit_id: StringName = StringName(event.get("unit_id", &""))
+	var final_visible: bool = (
+		not unit_id.is_empty()
+		and _facade.is_unit_visible_to_player(unit_id)
+	)
+	if visible_tiles <= 0 and not final_visible and not observable_reaction:
+		return TacticalPresentationVisibility.UNOBSERVED
+	if (
+		visible_tiles == path.size()
+		and not path.is_empty()
+		and not observable_reaction
+	):
+		return TacticalPresentationVisibility.OBSERVED
+	return TacticalPresentationVisibility.PARTIALLY_OBSERVED
+
+
+func _movement_event_has_observable_reaction(event: Dictionary) -> bool:
+	var reaction_value: Variant = event.get("reaction_events", [])
+	if not (reaction_value is Array):
+		return false
+	for reaction_event_value: Variant in reaction_value:
+		if not (reaction_event_value is Dictionary):
+			continue
+		var reaction_event: Dictionary = reaction_event_value
+		var source_id: StringName = StringName(
+			reaction_event.get("source_unit_id", &"")
+		)
+		var target_id: StringName = StringName(
+			reaction_event.get("target_unit_id", &"")
+		)
+		var source: TacticalUnitState = _facade.state().get_unit(source_id)
+		var target: TacticalUnitState = _facade.state().get_unit(target_id)
+		if (
+			(source != null and source.is_player_controlled())
+			or (target != null and target.is_player_controlled())
+			or (not source_id.is_empty() and _facade.is_unit_visible_to_player(source_id))
+			or (not target_id.is_empty() and _facade.is_unit_visible_to_player(target_id))
+		):
+			return true
+	return false
+
+
+func _observable_ai_path_segment(path: Array[Vector2i]) -> Array[Vector2i]:
+	var best_segment: Array[Vector2i] = []
+	var current_segment: Array[Vector2i] = []
+	for tile: Vector2i in path:
+		if _facade.is_tile_visible_to_player(tile):
+			current_segment.append(tile)
+			continue
+		if current_segment.size() > best_segment.size():
+			best_segment = current_segment.duplicate()
+		current_segment.clear()
+	if current_segment.size() > best_segment.size():
+		best_segment = current_segment.duplicate()
+	return best_segment
 
 
 func _on_movement_reaction_presentation(event: Dictionary) -> void:
@@ -1163,10 +1572,92 @@ func _on_unit_movement_animation_finished(unit_id: StringName) -> void:
 		_finish_movement_presentation()
 
 
-func _finish_movement_presentation() -> void:
-	if not _movement_animation_active:
+func _pump_ai_destination_visibility_during_movement() -> void:
+	if _ai_destination_visibility_pump_active:
 		return
+	_ai_destination_visibility_pump_active = true
+	while (
+		_movement_animation_active
+		and not _movement_handoff_finishing
+		and _facade.has_pending_enemy_destination_visibility()
+	):
+		var frame_started_usec: int = Time.get_ticks_usec()
+		while (
+			_facade.has_pending_enemy_destination_visibility()
+			and Time.get_ticks_usec() - frame_started_usec < 3000
+		):
+			var remaining_usec: int = maxi(
+				250,
+				3000 - (Time.get_ticks_usec() - frame_started_usec)
+			)
+			if _facade.step_pending_enemy_destination_visibility(remaining_usec):
+				break
+		if _facade.has_pending_enemy_destination_visibility():
+			await get_tree().process_frame
+	_ai_destination_visibility_pump_active = false
+
+
+func _complete_pending_ai_destination_visibility(
+		frame_budget_usec: int = ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+) -> void:
+	var safe_frame_budget_usec: int = maxi(250, frame_budget_usec)
+	while _facade.has_pending_enemy_destination_visibility():
+		var frame_started_usec: int = Time.get_ticks_usec()
+		while (
+			_facade.has_pending_enemy_destination_visibility()
+			and Time.get_ticks_usec() - frame_started_usec
+			< safe_frame_budget_usec
+		):
+			var remaining_usec: int = maxi(
+				250,
+				safe_frame_budget_usec
+				- (Time.get_ticks_usec() - frame_started_usec)
+			)
+			if _facade.step_pending_enemy_destination_visibility(remaining_usec):
+				break
+		if _facade.has_pending_enemy_destination_visibility():
+			_destination_visibility_yield_count += 1
+			if not _first_visible_enemy_action_recorded:
+				_frames_yielded_before_first_visible_action += 1
+			await get_tree().process_frame
+
+
+func _complete_pending_ai_destination_visibility_same_frame(
+		final_budget_usec: int = AI_DESTINATION_VISIBILITY_FINAL_BUDGET_USEC
+) -> void:
+	if not _facade.has_pending_enemy_destination_visibility():
+		return
+	var started_usec: int = Time.get_ticks_usec()
+	var safe_budget_usec: int = maxi(250, final_budget_usec)
+	while (
+		_facade.has_pending_enemy_destination_visibility()
+		and Time.get_ticks_usec() - started_usec < safe_budget_usec
+	):
+		var remaining_usec: int = maxi(
+			250,
+			safe_budget_usec - (Time.get_ticks_usec() - started_usec)
+		)
+		if _facade.step_pending_enemy_destination_visibility(remaining_usec):
+			break
+	if not _facade.has_pending_enemy_destination_visibility():
+		_destination_visibility_same_frame_completions += 1
+		return
+
+	# A rare cold field may exceed the final presentation allowance. Finish it in
+	# the same handoff rather than inserting one or more empty rendered frames.
+	# The earlier movement-time pump normally makes this fallback exceptional.
+	_destination_visibility_final_budget_overruns += 1
+	_facade.step_pending_enemy_destination_visibility(1_000_000)
+
+
+func _finish_movement_presentation() -> void:
+	if not _movement_animation_active or _movement_handoff_finishing:
+		return
+	_movement_handoff_finishing = true
 	_animating_unit_ids.clear()
+	# Most destination FOV work completes during the tween. Any cold-field
+	# remainder is finished in this handoff without yielding an empty frame.
+	_complete_pending_ai_destination_visibility_same_frame()
 
 	var moved_unit_ids: Array[StringName] = []
 	for unit_id_value: Variant in _movement_presentation_unit_ids.keys():
@@ -1177,8 +1668,9 @@ func _finish_movement_presentation() -> void:
 	)
 
 	# Stage 4.4e3 releases only the moved observers' visibility contributions for
-	# ordinary movement. Geometry changes, removals and attacks that may defeat a
-	# stationary observer retain the safe full rebuild. Perception remains behind
+	# ordinary movement. Geometry changes and removals retain the safe full
+	# rebuild. Attacks request it only when their precise flags report a genuine
+	# sight-field change. Perception remains behind
 	# the same presentation boundary, so its internal commits are collected below.
 	var force_full_visibility: bool = (
 		_movement_force_full_visibility
@@ -1196,7 +1688,15 @@ func _finish_movement_presentation() -> void:
 	_deferred_state_change_reasons.clear()
 	for reason: StringName in deferred_reasons:
 		if _board_view != null and _board_view.has_method("notify_state_changed"):
-			_board_view.call("notify_state_changed", reason)
+			var deferred_flags: TacticalInvalidationFlags = (
+				_deferred_state_change_flags.get(reason)
+				as TacticalInvalidationFlags
+			)
+			if deferred_flags != null:
+				_board_view.call("notify_state_changed", reason, deferred_flags)
+			else:
+				_board_view.call("notify_state_changed", reason)
+	_deferred_state_change_flags.clear()
 
 	_process_post_movement_refresh(deferred_reasons)
 	_last_movement_handoff_total_usec = (
@@ -1206,13 +1706,18 @@ func _finish_movement_presentation() -> void:
 	)
 	_movement_presentation_unit_ids.clear()
 	_movement_force_full_visibility = false
+	_movement_handoff_finishing = false
 	_complete_movement_handoff_after_frame()
 
 func _deferred_visibility_requires_full_rebuild() -> bool:
+	for flags_value: Variant in _deferred_state_change_flags.values():
+		var flags := flags_value as TacticalInvalidationFlags
+		if flags != null and flags.visibility_changed:
+			return true
+	# Compatibility fallback for state changes that do not yet publish flags.
 	for reason_value: Variant in _deferred_state_change_reasons.keys():
 		var reason := StringName(reason_value)
-		if reason in [
-			&"attack_resolved",
+		if not _deferred_state_change_flags.has(reason) and reason in [
 			&"character_resolved",
 			&"runtime_spawn",
 			&"unit_removed",
@@ -1250,6 +1755,7 @@ func _process_post_movement_refresh(
 		and new_enemy_squad_alerted
 	)
 	if alert_triggered:
+		_reset_contact_transition_metrics()
 		_play_alert_flash()
 		_set_pending_movement_cadence(PresentationCadenceEvent.ALERT_TRIGGERED)
 	_known_aware_enemy_squad_ids = aware_enemy_squad_ids
@@ -1264,27 +1770,24 @@ func _process_post_movement_refresh(
 		)
 	):
 		_set_pending_movement_cadence(PresentationCadenceEvent.ENEMY_REVEALED)
+		_last_ai_resolution_observable = true
+	if alert_triggered:
+		_last_ai_resolution_observable = true
 
-	var moved_ai_unit: bool = false
-	for moved_unit_value: Variant in _movement_presentation_unit_ids.keys():
-		var moved_unit: TacticalUnitState = _facade.state().get_unit(
-			StringName(moved_unit_value)
-		)
-		if moved_unit != null and moved_unit.is_ai_controlled():
-			moved_ai_unit = true
-			break
-	if moved_ai_unit and deferred_reasons.has(&"attack_resolved"):
-		_set_pending_movement_cadence(PresentationCadenceEvent.AI_MOVE_TO_ATTACK)
 	if _movement_interruption_pending:
 		_set_pending_movement_cadence(PresentationCadenceEvent.INTERRUPTION)
 
 	if phase_state.is_initiative_combat():
 		var active: TacticalUnitState = _facade.active_initiative_unit()
-		if active != null:
+		if active != null and _unit_handoff_is_observable(active):
 			_selected_unit_id = active.unit_id
+			if alert_triggered and active.is_ai_controlled():
+				_contact_presentation_ready_unit_id = active.unit_id
+				_play_active_unit_handoff_pulse(active.unit_id)
 			if (
 				not _movement_control_owner_before_commit.is_empty()
 				and active.unit_id != _movement_control_owner_before_commit
+				and _last_handoff_pulsed_unit_id != active.unit_id
 			):
 				_set_pending_movement_cadence(
 					PresentationCadenceEvent.ACTIVATION_HANDOFF
@@ -1312,13 +1815,11 @@ func _complete_movement_handoff_after_frame() -> void:
 	# followed by unexplained dead air. The following rendered frame presents the
 	# final position, fog delta and hit confirmation together.
 	_apply_deferred_damage_events()
-	await get_tree().process_frame
 
-	# Any additional wait now happens after hit confirmation has already begun.
-	# PresentationCadenceEvent.AI_MOVE_TO_ATTACK remains a valid selected event,
-	# but it no longer postpones the target's damage confirmation.
-	# Ordinary movement still has no fixed delay. No fixed dead-air follows it,
-	# while meaningful reveal, alert, interruption and activation events retain
+	# Any additional wait now happens only for an authored visible consequence.
+	# Move-to-attack no longer owns a separate cadence event. Ordinary movement
+	# has no fixed dead-air after its final tile, while meaningful reveal, alert,
+	# interruption and activation events retain their authored cadence.
 	# their central cadence values.
 	var cadence_event: int = _pending_movement_cadence_event
 	_pending_movement_cadence_event = PresentationCadenceEvent.NONE
@@ -1383,17 +1884,114 @@ func _cadence_seconds(event_kind: int) -> float:
 
 
 func _await_presentation_cadence(event_kind: int) -> void:
-	var seconds: float = _cadence_seconds(event_kind)
+	var authored_seconds: float = _cadence_seconds(event_kind)
+	var blocking_seconds: float = authored_seconds
+	if event_kind == PresentationCadenceEvent.ALERT_TRIGGERED:
+		# The alert flash remains visible for its authored duration, but only a short
+		# readable lead blocks authoritative commitment. Planning continues during it.
+		blocking_seconds = minf(authored_seconds, ALERT_ACTION_LEAD_SECONDS)
 	_last_cadence_event = event_kind
-	_last_cadence_seconds = seconds
+	_last_cadence_seconds = blocking_seconds
 	_cadence_event_count_by_kind[event_kind] = int(
 		_cadence_event_count_by_kind.get(event_kind, 0)
 	) + 1
+	if blocking_seconds <= 0.0:
+		return
+	if event_kind == PresentationCadenceEvent.ALERT_TRIGGERED:
+		var alert_started_usec: int = Time.get_ticks_usec()
+		var seconds: float = blocking_seconds
+		await _await_alert_cadence_with_contact_warmup(seconds)
+		_blocking_alert_acknowledgement_usec += maxi(
+			0, Time.get_ticks_usec() - alert_started_usec
+		)
+		return
+	_cadence_wait_depth += 1
+	await get_tree().create_timer(blocking_seconds).timeout
+	_cadence_wait_depth = maxi(0, _cadence_wait_depth - 1)
+
+
+func _await_alert_cadence_with_contact_warmup(seconds: float) -> void:
+	_cadence_wait_depth += 1
+	var timer: SceneTreeTimer = get_tree().create_timer(seconds)
+	while timer.time_left > 0.0:
+		_step_contact_ai_warmup()
+		if timer.time_left <= 0.0:
+			break
+		await get_tree().process_frame
+	_cadence_wait_depth = maxi(0, _cadence_wait_depth - 1)
+
+
+func _adaptive_visible_handoff_seconds(
+		next_unit: TacticalUnitState
+) -> float:
+	if (
+		next_unit == null
+		or not next_unit.is_ai_controlled()
+		or not _unit_handoff_is_observable(next_unit)
+		or not _last_ai_resolution_observable
+	):
+		return 0.0
+	if (
+		_last_ai_activation_presented_movement
+		and _last_ai_visible_movement_duration_seconds
+		>= AI_VISIBLE_MOVEMENT_SUPPLIES_CADENCE_SECONDS
+	):
+		return 0.0
+	return AI_VISIBLE_SHORT_ACTION_HANDOFF_SECONDS
+
+
+func _await_adaptive_visible_handoff(
+		next_unit: TacticalUnitState
+) -> void:
+	var seconds: float = _adaptive_visible_handoff_seconds(next_unit)
 	if seconds <= 0.0:
 		return
+	var started_usec: int = Time.get_ticks_usec()
+	_adaptive_visible_handoff_count += 1
 	_cadence_wait_depth += 1
 	await get_tree().create_timer(seconds).timeout
 	_cadence_wait_depth = maxi(0, _cadence_wait_depth - 1)
+	_adaptive_visible_handoff_usec += maxi(
+		0, Time.get_ticks_usec() - started_usec
+	)
+
+
+func _step_contact_ai_warmup() -> void:
+	if (
+		_facade == null
+		or not _facade.is_initiative_combat()
+		or _facade.mission_resolution_locked()
+		or _contact_ai_warmup_abandoned
+		or _contact_ai_warmup_completed_usec > 0
+	):
+		return
+	var active: TacticalUnitState = _facade.active_initiative_unit()
+	if (
+		active == null
+		or not active.is_ai_controlled()
+		or not active.can_take_actions()
+		or active.unit_id != _contact_presentation_ready_unit_id
+	):
+		_facade.cancel_contact_ai_warmup()
+		_contact_ai_warmup_abandoned = true
+		return
+	if _contact_ai_warmup_started_usec <= 0:
+		_contact_ai_warmup_started_usec = Time.get_ticks_usec()
+	var started_usec: int = Time.get_ticks_usec()
+	var result: OperationResult = _facade.warmup_active_ai_initiative(4000)
+	_contact_ai_warmup_processing_usec += maxi(
+		0,
+		Time.get_ticks_usec() - started_usec
+	)
+	_contact_ai_warmup_frames += 1
+	if result == null or not result.success:
+		_facade.cancel_contact_ai_warmup()
+		_contact_ai_warmup_abandoned = true
+		return
+	if result.code == &"enemy_contact_warmup_ready":
+		_contact_ai_warmup_completed_usec = Time.get_ticks_usec()
+	elif result.code == &"no_change":
+		_contact_ai_warmup_abandoned = true
 
 
 func _queue_state_change_cadence(
@@ -1417,7 +2015,15 @@ func _run_queued_state_change_cadence() -> void:
 		var unit_id: StringName = _queued_state_cadence_unit_id
 		_queued_state_cadence_event = PresentationCadenceEvent.NONE
 		_queued_state_cadence_unit_id = &""
-		if not unit_id.is_empty():
+		if event_kind == PresentationCadenceEvent.ACTIVATION_HANDOFF:
+			var handoff_unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+			if handoff_unit != null and not _unit_handoff_is_observable(handoff_unit):
+				_unobserved_ai_activation_handoffs_skipped += 1
+				continue
+		if (
+			not unit_id.is_empty()
+			and _last_handoff_pulsed_unit_id != unit_id
+		):
 			_play_active_unit_handoff_pulse(unit_id)
 		await _await_presentation_cadence(event_kind)
 	_state_cadence_runner_scheduled = false
@@ -1425,7 +2031,15 @@ func _run_queued_state_change_cadence() -> void:
 
 
 func _play_active_unit_handoff_pulse(unit_id: StringName) -> void:
+	var unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+	if unit != null and not _unit_handoff_is_observable(unit):
+		return
 	_last_handoff_pulsed_unit_id = unit_id
+	if (
+		unit_id == _contact_presentation_ready_unit_id
+		and _contact_ai_pulse_started_usec <= 0
+	):
+		_contact_ai_pulse_started_usec = Time.get_ticks_usec()
 	var view := _unit_views.get(unit_id) as TacticalUnitView
 	if view != null and view.has_method("play_active_handoff_pulse"):
 		view.call("play_active_handoff_pulse")
@@ -1439,6 +2053,36 @@ func _visible_enemy_unit_id_set() -> Dictionary:
 		if _facade.is_unit_visible_to_player(unit.unit_id):
 			result[unit.unit_id] = true
 	return result
+
+
+func _unit_handoff_is_observable(unit: TacticalUnitState) -> bool:
+	return (
+		unit != null
+		and (
+			unit.is_player_controlled()
+			or _facade.is_unit_visible_to_player(unit.unit_id)
+		)
+	)
+
+
+func _has_visible_enemy_turn_participant() -> bool:
+	if _facade == null or _facade.state() == null:
+		return false
+	for unit: TacticalUnitState in _facade.state().get_enemy_turn_units():
+		if (
+			unit != null
+			and unit.should_receive_enemy_turn()
+			and _facade.is_unit_visible_to_player(unit.unit_id)
+		):
+			return true
+	return false
+
+
+func _select_unit_for_observable_handoff(unit: TacticalUnitState) -> bool:
+	if not _unit_handoff_is_observable(unit):
+		return false
+	_selected_unit_id = unit.unit_id
+	return true
 
 
 func _has_new_dictionary_key(current: Dictionary, previous: Dictionary) -> bool:
@@ -1458,7 +2102,15 @@ func _flush_deferred_state_changes_without_animation() -> void:
 	_deferred_state_change_reasons.clear()
 	for reason: StringName in reasons:
 		if _board_view != null and _board_view.has_method("notify_state_changed"):
-			_board_view.call("notify_state_changed", reason)
+			var deferred_flags: TacticalInvalidationFlags = (
+				_deferred_state_change_flags.get(reason)
+				as TacticalInvalidationFlags
+			)
+			if deferred_flags != null:
+				_board_view.call("notify_state_changed", reason, deferred_flags)
+			else:
+				_board_view.call("notify_state_changed", reason)
+	_deferred_state_change_flags.clear()
 	_process_state_change_after_commit(reasons.back(), false)
 	_apply_deferred_damage_events()
 
@@ -1478,6 +2130,7 @@ func _on_ai_movement_committed(event: Dictionary) -> void:
 
 func _select_unit(unit_id: StringName) -> void:
 	_interact_mode_active = false
+	_grapple_targeting = false
 	if _first_aid_targeting:
 		_cancel_first_aid_targeting()
 	if _attack_targeting:
@@ -1557,6 +2210,7 @@ func _execute_budget_action(
 
 
 func _toggle_interact_mode() -> void:
+	_grapple_targeting = false
 	if _inventory_open:
 		_close_inventory()
 	if _selected_unit_id.is_empty() or not _selected_unit_is_player_controlled():
@@ -1629,6 +2283,7 @@ func _handle_interact_click(tile: Vector2i) -> void:
 
 
 func _toggle_action_category(category: StringName) -> void:
+	_grapple_targeting = false
 	if category != &"interact":
 		_interact_mode_active = false
 	if _first_aid_targeting:
@@ -1780,23 +2435,59 @@ func _refresh_context_action_availability() -> void:
 					else "Commit the previewed attack and roll."
 				)
 			&"damage_mode_toggle":
-				button.disabled = false
+				var damage_mode_attack: AttackDefinition = _facade.attack_definition(_selected_attack_id)
+				var selectable_mode: bool = (
+					damage_mode_attack != null
+					and damage_mode_attack.damage_mode_policy == AttackDefinition.DAMAGE_POLICY_SELECTABLE
+				)
+				button.disabled = not selectable_mode
 				button.tooltip_text = (
-					"Switch between lethal and nonlethal damage. "
-					+ "Nonlethal attacks normally take a −4 attack penalty."
+					"Switch between lethal and nonlethal damage. Nonlethal attacks normally take a −4 attack penalty."
+					if selectable_mode
+					else "This authored weapon has a fixed damage mode."
 				)
 			&"power_attack_down":
-				button.disabled = _power_attack_value <= 0
-				button.tooltip_text = "Reduce Power Attack by 1."
+				var power_down_attack: AttackDefinition = _facade.attack_definition(_selected_attack_id)
+				var power_down_eligible: bool = (
+					power_down_attack != null
+					and power_down_attack.allows_power_attack()
+					and unit.resolved_character != null
+					and unit.resolved_character.has_trait(&"feat.power_attack")
+				)
+				button.disabled = not power_down_eligible or _power_attack_value <= 0
+				button.tooltip_text = (
+					"Reduce Power Attack by 1."
+					if power_down_eligible
+					else "This character or attack does not possess Power Attack."
+				)
 			&"power_attack_up":
-				button.disabled = _power_attack_value >= 3
-				button.tooltip_text = "Increase Power Attack by 1: −1 attack, +1 damage."
+				var power_up_attack: AttackDefinition = _facade.attack_definition(_selected_attack_id)
+				var power_up_eligible: bool = (
+					power_up_attack != null
+					and power_up_attack.allows_power_attack()
+					and unit.resolved_character != null
+					and unit.resolved_character.has_trait(&"feat.power_attack")
+				)
+				button.disabled = not power_up_eligible or _power_attack_value >= _maximum_power_attack_value()
+				button.tooltip_text = (
+					"Increase Power Attack by 1: −1 attack, +1 damage."
+					if power_up_eligible
+					else "This character or attack does not possess Power Attack."
+				)
 			&"attack_cancel":
 				button.disabled = false
 			&"enter_stealth":
 				var stealth_reason: String = _facade.stealth_unavailable_reason(unit.unit_id)
 				button.disabled = not stealth_reason.is_empty()
 				button.tooltip_text = stealth_reason if not stealth_reason.is_empty() else "Enter Stealth and display the mask icon."
+			&"rage_toggle":
+				var rage_active: bool = unit.active_character_modifier_ids.has(&"effect.rage")
+				button.disabled = not rage_active and not unit.rage_available()
+				button.tooltip_text = (
+					"End Rage voluntarily and become Fatigued for this encounter."
+					if rage_active
+					else "Quick Action. One use per mission; lasts seven rounds."
+				)
 			&"ready_stance", &"sprint":
 				var reason: String = _facade.action_unavailable_reason(
 					unit.unit_id,
@@ -1816,6 +2507,9 @@ func _refresh_context_action_availability() -> void:
 				var reason: String = _facade.reaction_unavailable_reason(unit.unit_id, ReactionReservationState.KIND_BRACE)
 				button.disabled = not reason.is_empty()
 				button.tooltip_text = reason if not reason.is_empty() else "Reserve the Reaction with a spear or Brace-capable weapon."
+			&"grapple":
+				button.disabled = false
+				button.tooltip_text = "Half Action opposed Manoeuvre; choose an adjacent hostile."
 			&"first_aid":
 				button.disabled = false
 				button.tooltip_text = (
@@ -1878,6 +2572,8 @@ func _on_context_action_pressed(index: int) -> void:
 			_execute_budget_action("Ready Stance", &"ready_stance")
 		&"rage_toggle":
 			_toggle_rage()
+		&"grapple":
+			_begin_or_resolve_grapple()
 		&"first_aid":
 			_begin_first_aid_targeting()
 		&"sprint":
@@ -1959,9 +2655,12 @@ func _select_weapon_from_hand(hand_kind: StringName) -> void:
 			"%s selected: %s. Left-click a legal hostile to attack."
 			% [hand_label, item.display_name]
 		)
+	# One hand selection performs at most one contextual preview. A broad
+	# presentation refresh used to invoke the same preview a second time.
 	_refresh_contextual_hand_attack_hover_preview()
 	_refresh_weapon_attack_strip()
-	_refresh_all_presentation()
+	_refresh_hud()
+	_refresh_board_view()
 
 
 func _apply_hand_selection(hand_kind: StringName, remember: bool) -> void:
@@ -2015,7 +2714,7 @@ func _cycle_attack_mode() -> void:
 func _cycle_power_attack() -> void:
 	if _selected_attack_id.is_empty():
 		return
-	_power_attack_value = (_power_attack_value + 1) % 4
+	_power_attack_value = (_power_attack_value + 1) % (_maximum_power_attack_value() + 1)
 	_refresh_attack_configuration()
 
 
@@ -2035,7 +2734,7 @@ func _refresh_attack_configuration() -> void:
 	_refresh_attack_cursor_preview()
 	if _attack_targeting or _contextual_attack_hover_active:
 		_set_status(_attack_preview_status())
-	_refresh_all_presentation()
+	_refresh_all_presentation(false)
 
 
 func _execute_direct_attack(target: TacticalUnitState) -> void:
@@ -2050,42 +2749,92 @@ func _execute_direct_attack(target: TacticalUnitState) -> void:
 			% _selected_hand_label(_selected_weapon_hand_kind)
 		)
 		_clear_contextual_attack_hover_preview()
-		_refresh_all_presentation()
+		_refresh_hud()
+		_refresh_board_view()
 		return
-	var preview = _facade.preview_attack(
-		_selected_unit_id,
-		target.unit_id,
-		_selected_attack_id,
-		_power_attack_value,
-		_selected_damage_channel,
-		_attack_origin_override
-	)
+
+	# Acknowledge the hostile click before any fallback preview work. This pulse
+	# is presentation-only and never waits; a rejected command simply clears the
+	# in-progress guard after legality is reported.
+	_attack_command_in_progress = true
+	_attack_click_started_usec = Time.get_ticks_usec()
+	_attack_command_acknowledgements += 1
+	_attack_command_dead_frames_avoided += 1
+	_play_attack_command_acknowledgement(_selected_unit_id)
+
+	# Reuse the already accepted hovered/selected exact preview when it matches
+	# this click. The facade cache remains the fallback for a click that arrives
+	# without a preceding hover preview, but no artificial frame is inserted
+	# before either path commits.
+	var preview = _attack_preview
+	if (
+		preview == null
+		or StringName(preview.get("target_id")) != target.unit_id
+		or StringName(preview.get("attacker_id")) != _selected_unit_id
+		or StringName(preview.get("action_id")) != _selected_attack_id
+	):
+		_attack_click_preview_fallbacks += 1
+		preview = _facade.preview_attack(
+			_selected_unit_id,
+			target.unit_id,
+			_selected_attack_id,
+			_power_attack_value,
+			_selected_damage_channel,
+			_attack_origin_override
+		)
+	else:
+		_attack_clicks_using_primed_preview += 1
 	_selected_attack_target_id = target.unit_id
 	_attack_preview = preview
 	_contextual_attack_hover_active = not _attack_targeting
 	if preview == null or not bool(preview.get("success")):
+		_attack_command_in_progress = false
+		_last_attack_click_to_result_usec = (
+			Time.get_ticks_usec() - _attack_click_started_usec
+		)
+		_attack_click_started_usec = 0
 		_set_status(
 			str(preview.get("reason"))
 			if preview != null
 			else "That target is unavailable."
 		)
 		_refresh_attack_cursor_preview()
-		_refresh_all_presentation()
+		_refresh_hud()
+		_refresh_board_view()
 		return
+
+	# Zero-dead-frame commitment: do not await process_frame here. The accepted
+	# preview enters the authoritative handler during the same input frame.
 	var result: OperationResult = _facade.execute_attack_preview(preview)
-	_refresh_unit_status_badge_immediately(target.unit_id)
+	_last_attack_click_to_result_usec = (
+		Time.get_ticks_usec() - _attack_click_started_usec
+	)
+	_attack_command_in_progress = false
+	_attack_click_started_usec = 0
 	_set_status(result.message)
 	_selected_attack_target_id = &""
 	_attack_preview = null
 	_contextual_attack_hover_active = false
-	if _attack_targeting:
-		_refresh_legal_attack_targets()
-	else:
-		_sync_selected_hand_attack()
+	_legal_attack_target_ids.clear()
+	_legal_attack_targets_dirty = true
+	_hide_attack_cursor_preview()
 	_refresh_weapon_attack_strip()
-	_refresh_contextual_hand_attack_hover_preview()
-	_refresh_attack_cursor_preview()
-	_refresh_all_presentation()
+
+	if not result.success:
+		# A rejected commit has no attack_resolved state signal to drive the
+		# consolidated refresh. Update only the currently relevant controls.
+		_refresh_hud()
+		_refresh_board_view()
+		return
+
+	# state_changed already queued one consolidated reconciliation. Do not
+	# rebuild contextual hover, legal targets or the complete presentation here.
+	_post_attack_refreshes_avoided += 1
+
+func _play_attack_command_acknowledgement(unit_id: StringName) -> void:
+	var view := _unit_views.get(unit_id) as TacticalUnitView
+	if view != null and view.has_method("play_attack_command_pulse"):
+		view.call("play_attack_command_pulse")
 
 
 func _clear_weapon_selection(message: String = "") -> void:
@@ -2100,7 +2849,7 @@ func _clear_weapon_selection(message: String = "") -> void:
 		_set_status(message)
 	_refresh_contextual_hand_attack_hover_preview()
 	_refresh_weapon_attack_strip()
-	_refresh_all_presentation()
+	_refresh_all_presentation(false)
 
 
 func _refresh_weapon_attack_strip() -> void:
@@ -2134,7 +2883,7 @@ func _refresh_weapon_attack_strip() -> void:
 	)
 	_attack_mode_button.disabled = not usable
 	_power_attack_down_button.disabled = not usable or _power_attack_value <= 0
-	_power_attack_up_button.disabled = not usable or _power_attack_value >= 3
+	_power_attack_up_button.disabled = not usable or _power_attack_value >= _maximum_power_attack_value()
 	_power_attack_value_button.disabled = not usable
 	_power_attack_value_button.text = str(_power_attack_value)
 	_left_hand_button.button_pressed = (
@@ -2232,6 +2981,7 @@ func _hide_attack_cursor_preview() -> void:
 
 
 func _begin_first_aid_targeting() -> void:
+	_grapple_targeting = false
 	if not _selected_unit_is_player_controlled():
 		_set_status("Only an active player character can use First Aid.")
 		return
@@ -2298,6 +3048,7 @@ func _refresh_first_aid_hover_preview() -> void:
 
 
 func _begin_attack_targeting(action_id: StringName, origin_override: Variant = null) -> void:
+	_grapple_targeting = false
 	if not _selected_unit_is_player_controlled():
 		_set_status("Only player-controlled units can attack in Stage 4.0.")
 		return
@@ -2312,23 +3063,100 @@ func _begin_attack_targeting(action_id: StringName, origin_override: Variant = n
 		_set_status(reason)
 		return
 
+	var started_usec: int = Time.get_ticks_usec()
 	_clear_board_intent()
 	_attack_targeting = true
 	_attack_origin_override = origin_override
 	_selected_attack_id = action_id
 	_selected_attack_target_id = &""
 	_attack_preview = null
+	_legal_attack_target_ids.clear()
 	_movement_mode = &"normal"
 	_context_tray.visible = false
 	_active_category = &""
-	_refresh_legal_attack_targets()
-	_refresh_weapon_attack_strip()
+	_attack_targeting_generation += 1
+	_attack_selections += 1
+	_attack_selection_started_usec = started_usec
+	var generation: int = _attack_targeting_generation
+	var selected_unit_id: StringName = _selected_unit_id
+	var selected_action_id: StringName = _selected_attack_id
+
 	var attack: AttackDefinition = _facade.attack_definition(action_id)
+	if attack != null:
+		_selected_damage_channel = attack.default_damage_channel()
+		if not attack.allows_power_attack():
+			_power_attack_value = 0
 	_set_status(
 		"%s selected. Hover a hostile for hit chance; left-click attacks and right-click cancels targeting."
 		% (attack.display_name if attack != null else "Attack")
 	)
-	_refresh_all_presentation()
+	# Cursor, HUD and attack-mode board state are published before target
+	# discovery. This function now returns without building full previews.
+	_refresh_attack_targeting_presentation()
+	_deferred_attack_target_scans += 1
+	_complete_deferred_attack_target_scan(
+		generation,
+		selected_unit_id,
+		selected_action_id
+	)
+
+
+func _complete_deferred_attack_target_scan(
+		generation: int,
+		unit_id: StringName,
+		action_id: StringName
+) -> void:
+	# Guarantee one rendered frame of immediate targeting feedback before even
+	# the cheap candidate scan runs.
+	await get_tree().process_frame
+	if (
+		generation != _attack_targeting_generation
+		or not _attack_targeting
+		or unit_id != _selected_unit_id
+		or action_id != _selected_attack_id
+	):
+		return
+	var started_usec: int = Time.get_ticks_usec()
+	_refresh_legal_attack_targets()
+	_last_attack_target_scan_usec = Time.get_ticks_usec() - started_usec
+	_last_attack_selection_total_usec = (
+		Time.get_ticks_usec() - _attack_selection_started_usec
+	)
+	_refresh_board_view()
+
+
+func _schedule_lazy_post_attack_target_scan() -> void:
+	if not _attack_targeting or not _legal_attack_targets_dirty:
+		return
+	var generation: int = _attack_targeting_generation
+	var unit_id: StringName = _selected_unit_id
+	var action_id: StringName = _selected_attack_id
+	_complete_lazy_post_attack_target_scan(generation, unit_id, action_id)
+
+
+func _complete_lazy_post_attack_target_scan(
+	generation: int,
+	unit_id: StringName,
+	action_id: StringName
+) -> void:
+	await get_tree().process_frame
+	if (
+		generation != _attack_targeting_generation
+		or not _attack_targeting
+		or not _legal_attack_targets_dirty
+		or unit_id != _selected_unit_id
+		or action_id != _selected_attack_id
+	):
+		return
+	_refresh_legal_attack_targets()
+	_refresh_board_view()
+
+
+func _refresh_attack_targeting_presentation() -> void:
+	_targeted_attack_presentation_refreshes += 1
+	_refresh_weapon_attack_strip()
+	_refresh_hud()
+	_refresh_board_view()
 
 
 func _begin_active_hand_attack() -> void:
@@ -2360,6 +3188,7 @@ func _active_hand_has_stage_4_attack() -> bool:
 
 
 func _refresh_legal_attack_targets() -> void:
+	_legal_attack_targets_dirty = false
 	_legal_attack_target_ids = _facade.legal_attack_target_ids(
 		_selected_unit_id,
 		_selected_attack_id,
@@ -2407,7 +3236,7 @@ func _refresh_attack_hover_preview() -> void:
 
 
 func _refresh_contextual_hand_attack_hover_preview() -> void:
-	if _attack_targeting or _first_aid_targeting:
+	if _attack_targeting or _first_aid_targeting or _grapple_targeting:
 		return
 	_clear_contextual_attack_hover_preview(false)
 	if (
@@ -2543,6 +3372,10 @@ func _configure_attack_targeting_controls() -> void:
 
 
 func _toggle_damage_mode() -> void:
+	var attack: AttackDefinition = _facade.attack_definition(_selected_attack_id)
+	if attack == null or attack.damage_mode_policy != AttackDefinition.DAMAGE_POLICY_SELECTABLE:
+		_set_status("This authored weapon has a fixed damage mode.")
+		return
 	_selected_damage_channel = (
 		TacticalUnitState.DAMAGE_CHANNEL_LETHAL
 		if _selected_damage_channel
@@ -2563,11 +3396,27 @@ func _toggle_damage_mode() -> void:
 	_refresh_weapon_attack_strip()
 	_refresh_attack_cursor_preview()
 	_set_status(_attack_preview_status())
-	_refresh_all_presentation()
+	_refresh_all_presentation(false)
+
+
+func _maximum_power_attack_value() -> int:
+	var unit: TacticalUnitState = _facade.state().get_unit(_selected_unit_id)
+	if unit == null or unit.resolved_character == null:
+		return 0
+	if not unit.resolved_character.has_trait(&"feat.power_attack"):
+		return 0
+	return mini(
+		unit.resolved_character.stat_value(&"base_attack_bonus", 0),
+		int(unit.resolved_character.feature_parameter(
+			&"feat.power_attack", &"maximum_value", 99
+		))
+	)
 
 
 func _adjust_power_attack(delta: int = 0) -> void:
-	_power_attack_value = clampi(_power_attack_value + delta, 0, 3)
+	_power_attack_value = clampi(
+		_power_attack_value + delta, 0, _maximum_power_attack_value()
+	)
 	if _attack_targeting:
 		_refresh_legal_attack_targets()
 	if not _selected_attack_target_id.is_empty():
@@ -2582,7 +3431,7 @@ func _adjust_power_attack(delta: int = 0) -> void:
 	_refresh_weapon_attack_strip()
 	_refresh_attack_cursor_preview()
 	_set_status(_attack_preview_status())
-	_refresh_all_presentation()
+	_refresh_all_presentation(false)
 
 
 func _confirm_selected_attack() -> void:
@@ -2593,21 +3442,36 @@ func _confirm_selected_attack() -> void:
 	):
 		_set_status("Choose a highlighted target before confirming the attack.")
 		return
-	var committed_target_id: StringName = _selected_attack_target_id
+	_attack_command_in_progress = true
+	_attack_click_started_usec = Time.get_ticks_usec()
+	_attack_command_acknowledgements += 1
+	_attack_command_dead_frames_avoided += 1
+	_attack_clicks_using_primed_preview += 1
+	_play_attack_command_acknowledgement(_selected_unit_id)
+	# Explicit confirmation already owns an accepted exact preview. Commit it in
+	# this frame rather than yielding an otherwise empty acknowledgement frame.
 	var result: OperationResult = _facade.execute_attack_preview(_attack_preview)
-	_refresh_unit_status_badge_immediately(committed_target_id)
+	_last_attack_click_to_result_usec = (
+		Time.get_ticks_usec() - _attack_click_started_usec
+	)
+	_attack_command_in_progress = false
+	_attack_click_started_usec = 0
 	if not result.success:
 		_set_status(result.message)
-		_refresh_legal_attack_targets()
+		_legal_attack_targets_dirty = true
+		_schedule_lazy_post_attack_target_scan()
 		_configure_attack_targeting_controls()
-		_refresh_all_presentation()
+		_refresh_hud()
+		_refresh_board_view()
 		return
 	_clear_attack_targeting_state()
 	_context_tray.visible = false
 	_active_category = &""
 	_set_status(result.message)
-	_refresh_all_presentation()
-
+	_hide_attack_cursor_preview()
+	_refresh_weapon_attack_strip()
+	_post_attack_refreshes_avoided += 1
+	# The attack_resolved state signal owns the single deferred reconciliation.
 
 func _cancel_attack_targeting(message: String) -> void:
 	_clear_attack_targeting_state()
@@ -2618,9 +3482,11 @@ func _cancel_attack_targeting(message: String) -> void:
 
 
 func _clear_attack_targeting_state() -> void:
+	_attack_targeting_generation += 1
 	_attack_targeting = false
 	_selected_attack_target_id = &""
 	_legal_attack_target_ids.clear()
+	_legal_attack_targets_dirty = false
 	_attack_preview = null
 	_attack_origin_override = null
 	_contextual_attack_hover_active = false
@@ -2688,23 +3554,38 @@ func _configure_ability_actions() -> void:
 	var unit: TacticalUnitState = _facade.state().get_unit(_selected_unit_id)
 	var can_rage: bool = (
 		unit != null
-		and unit.resolved_character.archetype_name == "Reaver"
+		and unit.resolved_character != null
+		and unit.resolved_character.has_trait(&"feature.rage")
 		and _facade.has_character_modifier(&"effect.rage")
 	)
 	var rage_label := "Rage [Quick]"
-	if can_rage and unit.active_character_modifier_ids.has(&"effect.rage"):
-		rage_label = "End Rage [Quick]"
+	if can_rage:
+		if unit.active_character_modifier_ids.has(&"effect.rage"):
+			rage_label = "End Rage [Free]"
+		else:
+			var rage_maximum: int = int(unit.ability_resource_maximums.get(&"resource.rage", 1))
+			rage_label = "Rage [Quick · %d/%d]" % [
+				unit.ability_uses(&"resource.rage"),
+				rage_maximum,
+			]
 
+	var grapple_label: String = "Grapple [Half]"
+	if unit != null and unit.is_grappling():
+		grapple_label = "Release Grapple [Free]"
+	elif unit != null and unit.is_grappled():
+		grapple_label = "Break Hold [Half]"
 	_configure_context_actions(
 		[
 			"Ready Stance [Quick]",
 			rage_label if can_rage else "Class Ability",
+			grapple_label,
 			"Archetype Ability",
 			"Spellbook",
 		],
 		[
 			&"ready_stance",
 			&"rage_toggle" if can_rage else &"class_ability",
+			&"grapple",
 			&"archetype_ability",
 			&"spellbook",
 		]
@@ -2719,14 +3600,18 @@ func _toggle_rage() -> void:
 	if unit == null:
 		return
 	var activating := not unit.active_character_modifier_ids.has(&"effect.rage")
-	var result: OperationResult = _facade.spend_action(
-		unit.unit_id,
-		"Rage" if activating else "End Rage",
-		&"rage_toggle"
-	)
-	if not result.success:
-		_set_status(result.message)
+	if activating and not unit.rage_available():
+		_set_status("Rage has no remaining use or the Marauder is Fatigued.")
 		return
+	if activating:
+		var result: OperationResult = _facade.spend_action(
+			unit.unit_id,
+			"Rage",
+			&"rage_toggle"
+		)
+		if not result.success:
+			_set_status(result.message)
+			return
 	if not _facade.set_character_modifier_active(
 		unit.unit_id,
 		&"effect.rage",
@@ -2739,6 +3624,59 @@ func _toggle_rage() -> void:
 		% ("Rage activated" if activating else "Rage ended")
 	)
 	_hide_context_tray()
+	_refresh_all_presentation()
+
+
+func _begin_or_resolve_grapple() -> void:
+	if _first_aid_targeting:
+		_cancel_first_aid_targeting()
+	if _attack_targeting:
+		_clear_attack_targeting_state()
+	_clear_board_intent(false)
+	var unit: TacticalUnitState = _facade.state().get_unit(_selected_unit_id)
+	if unit == null:
+		return
+	if unit.is_grappling():
+		var release_result: OperationResult = _facade.release_grapple(unit.unit_id)
+		_set_status(release_result.message)
+		_hide_context_tray()
+		_refresh_all_presentation()
+		return
+	if unit.is_grappled():
+		var break_result: OperationResult = _facade.break_grapple_hold(unit.unit_id)
+		_set_status(break_result.message)
+		_hide_context_tray()
+		_refresh_all_presentation()
+		return
+	_grapple_targeting = true
+	_hide_context_tray()
+	_set_status("Grapple selected. Choose an adjacent hostile target.")
+	_refresh_all_presentation()
+
+
+func _cancel_grapple_targeting(message: String = "") -> void:
+	_grapple_targeting = false
+	if not message.is_empty():
+		_set_status(message)
+	_refresh_all_presentation()
+
+
+func _execute_grapple_at_tile(tile: Vector2i) -> void:
+	var target: TacticalUnitState = _facade.visible_unit_at_tile(tile, _selected_unit_id)
+	if target == null:
+		_set_status("Choose an adjacent hostile target.")
+		return
+	var reason: String = _facade.grapple_unavailable_reason(
+		_selected_unit_id, target.unit_id
+	)
+	if not reason.is_empty():
+		_set_status(reason)
+		return
+	var result: OperationResult = _facade.initiate_grapple(
+		_selected_unit_id, target.unit_id
+	)
+	_grapple_targeting = false
+	_set_status(result.message)
 	_refresh_all_presentation()
 
 
@@ -2806,13 +3744,13 @@ func _open_hand_actions(hand_name: String, use_main_hand: bool) -> void:
 		_configure_context_actions(
 			[
 				"Ranged Attack [Half]" if ranged_item else "Attack [Half]",
-				"Overwatch" if ranged_item else "Full Attack [Full]",
+				"Overwatch" if ranged_item else "",
 				"Drop",
 				"Inspect",
 			],
 			[
 				&"hand_attack",
-				&"hand_overwatch" if ranged_item else &"hand_full_attack",
+				&"hand_overwatch" if ranged_item else &"",
 				&"hand_drop",
 				&"hand_inspect",
 			]
@@ -3159,6 +4097,10 @@ func _destination_preview_for(
 		)
 		_reaction_preview_query_count += 1
 		var final_tile: Vector2i = result.path_result.path.back()
+		# Stage 4.5e7a calculates only the deliberately clicked destination field.
+		# This preserves the smooth arrival handoff without baking every walkable
+		# origin synchronously during mission startup.
+		_facade.prepare_visibility_for_destination(unit.unit_id, final_tile)
 		result.cover_preview = _facade.preview_destination_cover(
 			unit.unit_id,
 			final_tile
@@ -3261,6 +4203,112 @@ func _cover_icon_category(category: StringName) -> StringName:
 	return &""
 
 
+func _begin_enemy_stall_watch(unit_id: StringName) -> void:
+	if unit_id.is_empty():
+		return
+	if _enemy_stall_active_unit_id != unit_id or _enemy_highlight_started_usec <= 0:
+		_enemy_stall_active_unit_id = unit_id
+		_enemy_stall_thresholds_emitted.clear()
+		_enemy_highlight_started_usec = Time.get_ticks_usec()
+
+
+func _finish_enemy_stall_watch(unit_id: StringName) -> void:
+	if (
+		unit_id.is_empty()
+		or _enemy_stall_active_unit_id != unit_id
+		or _enemy_highlight_started_usec <= 0
+	):
+		return
+	_last_enemy_highlight_to_action_usec = maxi(
+		0,
+		Time.get_ticks_usec() - _enemy_highlight_started_usec
+	)
+	_enemy_highlight_started_usec = 0
+	_enemy_stall_active_unit_id = &""
+	_enemy_stall_thresholds_emitted.clear()
+
+
+func _record_enemy_stall_thresholds(unit_id: StringName) -> void:
+	if (
+		unit_id.is_empty()
+		or _enemy_stall_active_unit_id != unit_id
+		or _enemy_highlight_started_usec <= 0
+	):
+		return
+	var elapsed_usec: int = maxi(
+		0,
+		Time.get_ticks_usec() - _enemy_highlight_started_usec
+	)
+	for threshold_usec: int in ENEMY_STALL_THRESHOLDS_USEC:
+		if elapsed_usec < threshold_usec:
+			break
+		var threshold_key: String = str(threshold_usec)
+		if _enemy_stall_thresholds_emitted.has(threshold_key):
+			continue
+		_enemy_stall_thresholds_emitted[threshold_key] = true
+		var enemy_snapshot: Dictionary = _facade.enemy_ai_performance_snapshot()
+		var planner: Dictionary = enemy_snapshot.get("last_plan", {})
+		var activation_timing: Dictionary = enemy_snapshot.get(
+			"activation_timing", {}
+		)
+		var activation_last: Dictionary = activation_timing.get("last", {})
+		var handoff_warmup: Dictionary = enemy_snapshot.get(
+			"handoff_warmup", {}
+		)
+		var pending_planning: Dictionary = enemy_snapshot.get(
+			"pending_planning", {}
+		)
+		var unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+		var entry: Dictionary = {
+			"threshold_usec": threshold_usec,
+			"highlight_to_action_usec": elapsed_usec,
+			"unit_id": unit_id,
+			"unit_type": unit.roster_role if unit != null else &"unknown",
+			"ai_profile": unit.ai_profile_id if unit != null else &"",
+			"planning_stage": planner.get("planning_stage", &"unknown"),
+			"planning_wall_clock_usec": planner.get("total_usec", 0),
+			"planning_processing_usec": planner.get("processing_usec", 0),
+			"planning_slice_count": planner.get("planning_slices", 0),
+			"frame_yield_count": pending_planning.get(
+				"frame_yields", _enemy_planning_yield_count
+			),
+			"reachable_field_builds": planner.get("reachable_field_builds", 0),
+			"reachable_field_expansions": planner.get("pathfinding_expansions", 0),
+			"reachable_tiles_generated": planner.get("reachable_tile_count", 0),
+			"targeted_melee_search_builds": planner.get(
+				"targeted_melee_search_builds", 0
+			),
+			"targeted_melee_expansions": planner.get(
+				"targeted_melee_expansions", 0
+			),
+			"targeted_melee_goal_count": planner.get(
+				"targeted_melee_goal_count", 0
+			),
+			"movement_capacity_searched": planner.get(
+				"targeted_melee_attack_capacity_feet", 0
+			),
+			"targets_considered": planner.get("target_count", 0),
+			"candidate_tiles_considered": planner.get("candidate_count", 0),
+			"warmup_ready": handoff_warmup.get("ready", false),
+			"warmup_reused": activation_last.get("handoff_warmup_reused", false),
+			"warmup_invalidation_reason": handoff_warmup.get(
+				"last_invalidation_reason", &""
+			),
+			"perception_usec": activation_last.get("perception", 0),
+			"ability_usec": activation_last.get("ability_selection", 0),
+			"support_usec": activation_last.get("support_and_rescue", 0),
+			"transaction_usec": activation_last.get("simulation_usec", 0),
+		}
+		_enemy_stall_history.append(entry)
+		while _enemy_stall_history.size() > ENEMY_STALL_HISTORY_LIMIT:
+			_enemy_stall_history.pop_front()
+		_enemy_stall_threshold_event_count += 1
+		push_warning(
+			"Stage 4.7 Hotfix 5f8 enemy stall attribution: %s"
+			% JSON.stringify(entry)
+		)
+
+
 func _print_tactical_performance_snapshot() -> void:
 	var snapshot: Dictionary = _facade.performance_snapshot()
 	snapshot["destination_preview"] = {
@@ -3272,6 +4320,30 @@ func _print_tactical_performance_snapshot() -> void:
 		"hover_hud_refreshes": _hover_hud_refresh_count,
 		"hover_board_refreshes": _hover_board_refresh_count,
 	}
+	snapshot["attack_selection_screen"] = {
+		"attack_selections": _attack_selections,
+		"deferred_target_scans": _deferred_attack_target_scans,
+		"targeted_presentation_refreshes": _targeted_attack_presentation_refreshes,
+		"last_attack_selection_total_usec": _last_attack_selection_total_usec,
+		"last_attack_target_scan_usec": _last_attack_target_scan_usec,
+	}
+	snapshot["post_attack"] = {
+		"reconciliations": _post_attack_reconciliations,
+		"broad_refreshes_avoided": _post_attack_refreshes_avoided,
+		"immediate_impacts_presented": _immediate_combat_impacts_presented,
+		"last_reconciliation_usec": _last_post_attack_reconciliation_usec,
+		"reconciliation_scheduled": _post_attack_reconciliation_scheduled,
+		"command_in_progress": _attack_command_in_progress,
+		"command_acknowledgements": _attack_command_acknowledgements,
+		"command_frame_yields": _attack_command_frame_yields,
+		"dead_frames_avoided": _attack_command_dead_frames_avoided,
+		"clicks_using_primed_preview": _attack_clicks_using_primed_preview,
+		"click_preview_fallbacks": _attack_click_preview_fallbacks,
+		"last_click_to_result_usec": _last_attack_click_to_result_usec,
+		"last_click_to_impact_usec": _last_attack_click_to_impact_usec,
+	}
+	if _combat_log != null and _combat_log.has_method("performance_snapshot"):
+		snapshot["combat_log"] = _combat_log.call("performance_snapshot")
 	snapshot["movement_handoff"] = {
 		"targeted_refresh_count": _targeted_post_movement_refresh_count,
 		"last_refresh_usec": _last_post_movement_refresh_usec,
@@ -3280,12 +4352,189 @@ func _print_tactical_performance_snapshot() -> void:
 		"last_cadence_seconds": _last_cadence_seconds,
 		"cadence_event_counts": _cadence_event_count_by_kind.duplicate(true),
 	}
+	snapshot["offscreen_enemy_presentation"] = {
+		"unobserved_movement_batches_completed_immediately": (
+			_unobserved_ai_movement_batches_completed_immediately
+		),
+		"unobserved_movement_events_skipped": (
+			_unobserved_ai_movement_events_skipped
+		),
+		"partially_observed_movement_events_presented": (
+			_partially_observed_ai_movement_events_presented
+		),
+		"observed_movement_events_presented": (
+			_observed_ai_movement_events_presented
+		),
+		"unobserved_activation_handoffs_skipped": (
+			_unobserved_ai_activation_handoffs_skipped
+		),
+		"unobserved_enemy_phase_handoffs_skipped": (
+			_unobserved_enemy_phase_handoffs_skipped
+		),
+		"enemy_phase_frame_yields": _enemy_phase_frame_yields,
+		"hidden_activations_batched": _enemy_phase_hidden_activations_batched,
+		"side_based_activation_pulses": _side_based_enemy_activation_pulses,
+		"observable_stationary_frame_yields": (
+			_observable_stationary_activation_frame_yields
+		),
+		"last_activation_simulation_usec": _last_ai_activation_simulation_usec,
+		"last_activation_presentation_usec": _last_ai_activation_presentation_usec,
+		"last_activation_total_usec": _last_ai_activation_total_usec,
+		"planning_slice_count": _enemy_planning_slice_count,
+		"planning_yield_count": _enemy_planning_yield_count,
+		"planning_max_slices_per_frame": (
+			_enemy_planning_max_slices_per_frame
+		),
+		"hidden_planning_frames": _enemy_hidden_planning_frames,
+		"destination_visibility_yield_count": (
+			_destination_visibility_yield_count
+		),
+		"destination_visibility_same_frame_completions": (
+			_destination_visibility_same_frame_completions
+		),
+		"destination_visibility_final_budget_overruns": (
+			_destination_visibility_final_budget_overruns
+		),
+		"visible_activation_dead_frames_avoided": (
+			_visible_activation_dead_frames_avoided
+		),
+		"end_phase_to_first_enemy_feedback_usec": (
+			_end_phase_to_first_enemy_feedback_usec
+		),
+		"end_phase_to_first_visible_action_usec": (
+			_end_phase_to_first_visible_action_usec
+		),
+		"end_phase_to_first_visible_movement_usec": (
+			_end_phase_to_first_visible_movement_usec
+		),
+		"frames_yielded_before_first_visible_action": (
+			_frames_yielded_before_first_visible_action
+		),
+		"hidden_actors_before_first_visible_action": (
+			_hidden_actors_before_first_visible_action
+		),
+		"enemy_phase_commit_usec": maxi(
+			0, _enemy_phase_committed_usec - _enemy_phase_requested_usec
+		),
+		"first_actor_feedback_started_usec": _first_actor_feedback_started_usec,
+		"first_movement_tween_started_usec": _first_movement_tween_started_usec,
+	}
+	snapshot["empty_enemy_phase"] = {
+		"hidden_auto_pass_refreshes_avoided": (
+			_hidden_auto_pass_refreshes_avoided
+		),
+		"last_empty_enemy_phase_usec": _last_empty_enemy_phase_usec,
+		"end_phase_to_player_control_restored_usec": (
+			_end_phase_to_player_control_restored_usec
+		),
+		"enemy_phase_input_lock_usec": (
+			maxi(
+				0,
+				Time.get_ticks_usec() - _enemy_phase_input_lock_started_usec
+			)
+			if _enemy_phase_input_lock_started_usec > 0
+			else 0
+		),
+	}
+	snapshot["player_to_enemy_handoff"] = {
+		"handoff_requested_usec": _handoff_requested_usec,
+		"feedback_started_usec": _handoff_feedback_started_usec,
+		"idle_warmup_processing_usec": (
+			_handoff_idle_warmup_processing_usec
+		),
+		"idle_warmup_frames": _handoff_idle_warmup_frames,
+		"warmup_ready_frames": _handoff_warmup_ready_frames,
+		"handoff_to_feedback_usec": (
+			maxi(0, _handoff_feedback_started_usec - _handoff_requested_usec)
+			if _handoff_feedback_started_usec > 0 and _handoff_requested_usec > 0
+			else 0
+		),
+		"handoff_to_authoritative_commit_usec": (
+			_handoff_to_authoritative_commit_usec
+		),
+		"handoff_to_movement_tween_usec": _handoff_to_movement_tween_usec,
+		"full_refreshes_before_ai_avoided": _handoff_full_refreshes_avoided,
+		"duplicate_ai_schedules_avoided": (
+			_handoff_duplicate_ai_schedules_avoided
+		),
+		"chain_warmup_processing_usec": _chain_warmup_processing_usec,
+		"chain_warmup_frames": _chain_warmup_frames,
+		"chain_warmup_ready_frames": _chain_warmup_ready_frames,
+		"chain_warmup_reused_count": _chain_warmup_reused_count,
+		"pre_activation_handoff_validations": (
+			_pre_activation_handoff_validations
+		),
+		"enemy_highlight_to_action_usec": (
+			_last_enemy_highlight_to_action_usec
+		),
+		"enemy_to_enemy_handoff_usec": _last_enemy_to_enemy_handoff_usec,
+		"duplicate_enemy_refreshes_avoided": (
+			_duplicate_enemy_refreshes_avoided
+		),
+		"hidden_actor_refreshes_avoided": _hidden_actor_refreshes_avoided,
+		"forced_inter_actor_frames_avoided": (
+			_forced_inter_actor_frames_avoided
+		),
+		"presentation_wall_time_excluded_usec": (
+			_presentation_wall_time_excluded_usec
+		),
+	}
+	snapshot["enemy_runtime_stall_attribution"] = {
+		"active_unit_id": _enemy_stall_active_unit_id,
+		"threshold_event_count": _enemy_stall_threshold_event_count,
+		"history": _enemy_stall_history.duplicate(true),
+	}
+	snapshot["enemy_cadence_polish"] = {
+		"blocking_alert_acknowledgement_usec": (
+			_blocking_alert_acknowledgement_usec
+		),
+		"adaptive_visible_handoff_usec": _adaptive_visible_handoff_usec,
+		"adaptive_visible_handoff_count": _adaptive_visible_handoff_count,
+		"last_visible_movement_duration_seconds": (
+			_last_ai_visible_movement_duration_seconds
+		),
+	}
+	snapshot["contact_transition"] = {
+		"contact_detected_usec": _contact_detected_usec,
+		"activation_pulse_started_usec": _contact_ai_pulse_started_usec,
+		"first_movement_tween_started_usec": (
+			_contact_first_movement_tween_started_usec
+		),
+		"contact_to_activation_pulse_usec": (
+			maxi(0, _contact_ai_pulse_started_usec - _contact_detected_usec)
+			if _contact_ai_pulse_started_usec > 0 and _contact_detected_usec > 0
+			else 0
+		),
+		"activation_pulse_to_movement_tween_usec": (
+			maxi(
+				0,
+				_contact_first_movement_tween_started_usec
+				- _contact_ai_pulse_started_usec
+			)
+			if (
+				_contact_first_movement_tween_started_usec > 0
+				and _contact_ai_pulse_started_usec > 0
+			)
+			else 0
+		),
+		"warmup_started_usec": _contact_ai_warmup_started_usec,
+		"warmup_completed_usec": _contact_ai_warmup_completed_usec,
+		"warmup_processing_usec": _contact_ai_warmup_processing_usec,
+		"warmup_frames": _contact_ai_warmup_frames,
+		"warmup_abandoned": _contact_ai_warmup_abandoned,
+		"duplicate_contact_refreshes_avoided": (
+			_duplicate_contact_refreshes_avoided
+		),
+		"presentation_ready_unit_id": _contact_presentation_ready_unit_id,
+	}
 	if _board_view != null and _board_view.has_method("performance_snapshot"):
 		snapshot["board"] = _board_view.call("performance_snapshot")
 	print("Stage 4.4e performance: %s" % JSON.stringify(snapshot))
 
 
-func _refresh_all_presentation() -> void:
+func _refresh_all_presentation(
+		refresh_contextual_attack: bool = true
+) -> void:
 	_ensure_selected_unit_is_visible()
 	if _selected_unit_is_player_controlled():
 		var remembered_hand: StringName = _valid_hand_kind_or_primary(
@@ -3303,7 +4552,7 @@ func _refresh_all_presentation() -> void:
 			_select_default_weapon_for_unit()
 		else:
 			_sync_selected_hand_attack()
-	if not _attack_targeting:
+	if refresh_contextual_attack and not _attack_targeting:
 		_refresh_contextual_hand_attack_hover_preview()
 	_update_unit_selection_visuals()
 	_update_unit_finished_visuals()
@@ -3346,19 +4595,43 @@ func _refresh_hud() -> void:
 
 	if phase_state.is_initiative_combat():
 		var active: TacticalUnitState = _facade.active_initiative_unit()
-		var active_name: String = active.display_name if active != null else "No active unit"
-		var active_total: int = (
-			_facade.initiative_total(active.unit_id) if active != null else 0
+		var hidden_ai_active: bool = (
+			active != null
+			and active.is_ai_controlled()
+			and not _facade.is_unit_visible_to_player(active.unit_id)
 		)
-		_phase_label.text = "ROUND %d · INITIATIVE · %s (%d)" % [
-			phase_state.round_number,
-			active_name,
-			active_total,
-		]
-		_round_short_label.text = "Round %d\n%s" % [
-			phase_state.round_number,
-			"CONTACT" if phase_state.contact_round_active else "INITIATIVE",
-		]
+		if hidden_ai_active:
+			_phase_label.text = "ROUND %d · INITIATIVE · ENEMY ACTIVITY" % [
+				phase_state.round_number,
+			]
+			_round_short_label.text = "Round %d\n%s" % [
+				phase_state.round_number,
+				"CONTACT" if phase_state.contact_round_active else "INITIATIVE",
+			]
+			if not _selected_unit_id.is_empty():
+				var selected_hidden: TacticalUnitState = _facade.state().get_unit(
+					_selected_unit_id
+				)
+				if (
+					selected_hidden != null
+					and selected_hidden.is_ai_controlled()
+					and not _facade.is_unit_visible_to_player(selected_hidden.unit_id)
+				):
+					_selected_unit_id = &""
+		else:
+			var active_name: String = active.display_name if active != null else "No active unit"
+			var active_total: int = (
+				_facade.initiative_total(active.unit_id) if active != null else 0
+			)
+			_phase_label.text = "ROUND %d · INITIATIVE · %s (%d)" % [
+				phase_state.round_number,
+				active_name,
+				active_total,
+			]
+			_round_short_label.text = "Round %d\n%s" % [
+				phase_state.round_number,
+				"CONTACT" if phase_state.contact_round_active else "INITIATIVE",
+			]
 	else:
 		_phase_label.text = "ROUND %d · INFILTRATION · %s" % [
 			phase_state.round_number,
@@ -3368,10 +4641,12 @@ func _refresh_hud() -> void:
 			phase_state.round_number,
 			phase_name,
 		]
-	_objective_label.text = "OBJECTIVE · %s%s" % [
-		_facade.primary_objective_text(),
-		" · COMPLETE" if _facade.required_objective_complete() else "",
-	]
+	var objective_hud_text: String = _facade.objective_hud_text()
+	var compact_objective_text: String = objective_hud_text.get_slice("\n", 0)
+	_objective_label.text = "OBJECTIVE · %s" % compact_objective_text
+	_objective_label.tooltip_text = objective_hud_text
+	_objective_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_objective_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	if phase_state.is_initiative_combat():
 		_hint_label.text = _initiative_order_summary(false)
 		_hint_label.tooltip_text = _initiative_order_summary(true)
@@ -3699,6 +4974,9 @@ func _initiative_order_summary(full: bool) -> String:
 		if unit == null:
 			continue
 		var active_marker: String = ">" if index == phase_state.active_initiative_index else ""
+		if unit.is_ai_controlled() and not _facade.is_unit_visible_to_player(unit_id):
+			labels.append("%s%d Unknown enemy" % [active_marker, index + 1])
+			continue
 		var life_suffix: String = ""
 		match unit.life_state_id():
 			TacticalUnitState.LIFE_STATE_DYING:
@@ -3731,10 +5009,16 @@ func _initiative_order_summary(full: bool) -> String:
 				pending_id
 			)
 			if pending_unit != null:
-				pending_labels.append("%s %d" % [
-					pending_unit.display_name,
-					phase_state.initiative_total(pending_id),
-				])
+				if (
+					pending_unit.is_ai_controlled()
+					and not _facade.is_unit_visible_to_player(pending_id)
+				):
+					pending_labels.append("Unknown enemy")
+				else:
+					pending_labels.append("%s %d" % [
+						pending_unit.display_name,
+						phase_state.initiative_total(pending_id),
+					])
 		if not pending_labels.is_empty():
 			labels.append(
 				"JOINS NEXT ROUND: %s"
@@ -3783,6 +5067,13 @@ func _disable_command_buttons(reason: String) -> void:
 	_power_attack_up_button.disabled = true
 
 
+func _reset_player_to_enemy_handoff_timeline() -> void:
+	_handoff_requested_usec = Time.get_ticks_usec()
+	_handoff_feedback_started_usec = 0
+	_handoff_to_authoritative_commit_usec = 0
+	_handoff_to_movement_tween_usec = 0
+
+
 func _on_end_unit_pressed() -> void:
 	if not _selected_unit_is_player_controlled():
 		_set_status("Only player-controlled units have activations here.")
@@ -3794,7 +5085,12 @@ func _on_end_unit_pressed() -> void:
 
 	var result: OperationResult
 	if _facade.is_initiative_combat():
+		_reset_player_to_enemy_handoff_timeline()
+		_player_to_enemy_handoff_in_progress = true
+		if _board_view != null:
+			_board_view.set_input_enabled(false)
 		result = _facade.end_initiative_turn(unit.unit_id)
+		_player_to_enemy_handoff_in_progress = false
 	else:
 		if unit.action_budget.ended_activation:
 			result = _facade.reactivate_unit(_selected_unit_id)
@@ -3804,10 +5100,46 @@ func _on_end_unit_pressed() -> void:
 	_set_status(result.message)
 	_movement_mode = &"normal"
 	_clear_board_intent(false)
-	_refresh_hud()
-	_refresh_board_view()
 	if result.success and _facade.is_initiative_combat():
-		_schedule_initiative_ai()
+		_begin_seamless_initiative_handoff()
+	else:
+		_refresh_hud()
+		_refresh_board_view()
+		if (
+			_board_view != null
+			and _facade.state().phase_state.is_player_phase()
+			and not _facade.mission_resolution_locked()
+		):
+			_board_view.set_input_enabled(true)
+
+
+func _begin_seamless_initiative_handoff() -> void:
+	var active: TacticalUnitState = _facade.active_initiative_unit()
+	if active == null or not active.is_ai_controlled():
+		_refresh_all_presentation()
+		if (
+			_board_view != null
+			and active != null
+			and active.is_player_controlled()
+			and not _facade.mission_resolution_locked()
+		):
+			_board_view.set_input_enabled(true)
+		return
+	_handoff_feedback_started_usec = Time.get_ticks_usec()
+	if _unit_handoff_is_observable(active):
+		_selected_unit_id = active.unit_id
+		_contact_presentation_ready_unit_id = active.unit_id
+		_update_unit_selection_visuals()
+		_update_unit_finished_visuals()
+		_refresh_hud()
+		if _last_handoff_pulsed_unit_id != active.unit_id:
+			_play_active_unit_handoff_pulse(active.unit_id)
+	else:
+		_unobserved_ai_activation_handoffs_skipped += 1
+		_refresh_hud()
+	# The state callback was deliberately prevented from scheduling this actor.
+	# Start the warmed AI coordinator immediately in the same input frame.
+	_run_initiative_ai()
 
 
 func _on_end_phase_pressed() -> void:
@@ -3821,33 +5153,79 @@ func _on_end_phase_pressed() -> void:
 		if active == null or not active.is_player_controlled():
 			_set_status("Only the active player unit can end this initiative turn.")
 			return
-		var initiative_result: OperationResult = _facade.end_initiative_turn(active.unit_id)
+		_reset_player_to_enemy_handoff_timeline()
+		_player_to_enemy_handoff_in_progress = true
+		if _board_view != null:
+			_board_view.set_input_enabled(false)
+		var initiative_result: OperationResult = _facade.end_initiative_turn(
+			active.unit_id
+		)
+		_player_to_enemy_handoff_in_progress = false
 		_set_status(initiative_result.message)
 		_clear_board_intent(false)
-		_refresh_all_presentation()
 		if initiative_result.success:
-			_schedule_initiative_ai()
+			_begin_seamless_initiative_handoff()
+		else:
+			_refresh_all_presentation()
+			if _board_view != null:
+				_board_view.set_input_enabled(true)
 		return
 
+	_enemy_phase_requested_usec = Time.get_ticks_usec()
+	_enemy_phase_input_lock_started_usec = _enemy_phase_requested_usec
+	_end_phase_to_player_control_restored_usec = 0
+	_last_empty_enemy_phase_usec = 0
+	_reset_player_to_enemy_handoff_timeline()
+	_enemy_phase_requested_usec = _handoff_requested_usec
+	_player_to_enemy_handoff_in_progress = true
+	if _board_view != null:
+		_board_view.set_input_enabled(false)
 	var begin_result: OperationResult = _facade.begin_enemy_phase()
+	_player_to_enemy_handoff_in_progress = false
 	if not begin_result.success:
 		_set_status(begin_result.message)
+		_refresh_all_presentation()
+		if _board_view != null:
+			_board_view.set_input_enabled(true)
+		_enemy_phase_input_lock_started_usec = 0
 		return
 
 	_close_inventory_silently()
+	if _board_view != null:
+		_board_view.set_input_enabled(false)
 	_clear_attack_targeting_state()
 	_world_phase_in_progress = true
+	_enemy_phase_had_observable_activity = _has_visible_enemy_turn_participant()
+	_enemy_phase_committed_usec = Time.get_ticks_usec()
+	_end_phase_to_first_enemy_feedback_usec = 0
+	_end_phase_to_first_visible_action_usec = 0
+	_first_enemy_feedback_recorded = false
+	_first_visible_enemy_action_recorded = false
+	_end_phase_to_first_visible_movement_usec = 0
+	_frames_yielded_before_first_visible_action = 0
+	_hidden_actors_before_first_visible_action = 0
+	_first_actor_feedback_started_usec = 0
+	_first_movement_tween_started_usec = 0
 	_movement_mode = &"normal"
 	_clear_board_intent(false)
 	_set_status("Enemy Phase: AI-controlled enemy units are activating.")
-	_refresh_all_presentation()
-	await _await_presentation_cadence(PresentationCadenceEvent.PHASE_HANDOFF)
+	# The phase transaction already updated authoritative state. Publish only the
+	# compact phase/selection delta before consuming the warmed first plan.
+	_update_unit_selection_visuals()
+	_update_unit_finished_visuals()
+	_refresh_hud()
+	_handoff_full_refreshes_avoided += 1
+	if _enemy_phase_had_observable_activity:
+		await _await_presentation_cadence(PresentationCadenceEvent.PHASE_HANDOFF)
+	else:
+		_unobserved_enemy_phase_handoffs_skipped += 1
 
 	var enemy_result: OperationResult = await _resolve_enemy_phase_with_reaction_prompts()
-	_set_status(enemy_result.message)
+	_set_status("Enemy Phase completed." if enemy_result.success else enemy_result.message)
 	if not enemy_result.success:
 		_world_phase_in_progress = false
 		_refresh_all_presentation()
+		_restore_player_input_after_phase_flow()
 		return
 	# Stage 4.4e3: completed animations and real Reaction choices supply pacing.
 	# Hand off to the world phase immediately when no further event is pending.
@@ -3857,6 +5235,7 @@ func _on_end_phase_pressed() -> void:
 		_world_phase_in_progress = false
 		_set_status(world_result.message)
 		_refresh_all_presentation()
+		_restore_player_input_after_phase_flow()
 		return
 	# The current world phase has no visible authored event. Resolve it without
 	# inserting an empty presentation frame; future visible world events should
@@ -3867,6 +5246,35 @@ func _on_end_phase_pressed() -> void:
 	_set_status(complete_result.message)
 	_select_default_weapon_for_unit()
 	_refresh_all_presentation()
+	_restore_player_input_after_phase_flow()
+	if not _enemy_phase_had_observable_activity and _enemy_phase_requested_usec > 0:
+		_last_empty_enemy_phase_usec = maxi(
+			0,
+			Time.get_ticks_usec() - _enemy_phase_requested_usec
+		)
+
+
+func _restore_player_input_after_phase_flow() -> void:
+	var phase_state: TacticalPhaseState = (
+		_facade.state().phase_state
+		if _facade != null and _facade.state() != null
+		else null
+	)
+	if (
+		_board_view != null
+		and phase_state != null
+		and phase_state.is_player_phase()
+		and not _facade.mission_resolution_locked()
+	):
+		_board_view.set_input_enabled(true)
+	if _enemy_phase_input_lock_started_usec > 0:
+		_end_phase_to_player_control_restored_usec = maxi(
+			0,
+			Time.get_ticks_usec() - _enemy_phase_input_lock_started_usec
+		)
+	_enemy_phase_input_lock_started_usec = 0
+	_player_to_enemy_handoff_in_progress = false
+	_world_phase_in_progress = false
 
 
 func _refresh_extraction_button() -> void:
@@ -3978,12 +5386,12 @@ func _on_mission_resolution_confirmed(
 
 
 func _on_mission_summary_continue() -> void:
-	# The region screen is outside this tactical vertical slice. Continue closes
-	# the report but never reapplies the already committed MissionResult.
+	# Stage 4.6 returns to the authored debug mission selector without reapplying
+	# the already committed immutable MissionResult.
 	_mission_resolution_window.hide()
 	_board_view.set_input_enabled(false)
-	_set_status("Mission committed. Region-screen navigation is the next campaign-layer milestone.")
-	_refresh_all_presentation()
+	_set_status("Mission committed. Returning to the authored mission selector.")
+	mission_finished.emit()
 
 
 func _close_inventory_silently() -> void:
@@ -4069,8 +5477,14 @@ func _apply_damage_committed_presentation(event: Dictionary) -> void:
 	var target_id: StringName = StringName(event.get("target_id", &""))
 	if target_id.is_empty():
 		return
-	# The state-change signal has already refreshed the authoritative life-state
-	# badge. Start only the independent artwork reaction here.
+	# Stage 4.5e4 receives this from the first post-commit callback with no
+	# process-frame wait in front of the attack command. Measure the complete
+	# click-to-impact interval before starting the independent artwork reaction.
+	if _attack_click_started_usec > 0:
+		_last_attack_click_to_impact_usec = (
+			Time.get_ticks_usec() - _attack_click_started_usec
+		)
+	_immediate_combat_impacts_presented += 1
 	_refresh_unit_status_badge_immediately(target_id)
 	var view := _unit_views.get(target_id) as TacticalUnitView
 	if view != null:
@@ -4094,16 +5508,103 @@ func _flush_post_commit_perception() -> void:
 		push_warning(result.message)
 
 
+func _on_state_changed_with_flags(
+		reason: StringName,
+		flags: TacticalInvalidationFlags
+) -> void:
+	# state_changed is emitted first, but attack reconciliation is intentionally
+	# frame-deferred. Capture the precise flags here before that reconciliation
+	# reaches the board/fog layers.
+	if _movement_commit_in_progress or _movement_animation_active:
+		_deferred_state_change_flags[reason] = (
+			flags.duplicate_flags() if flags != null else null
+		)
+	if reason == &"attack_resolved":
+		_pending_post_attack_flags = (
+			flags.duplicate_flags() if flags != null else null
+		)
+
+
 func _on_state_changed(reason: StringName) -> void:
+	if reason == &"hidden_enemy_auto_pass_batch":
+		# The transaction changes only budgets for actors that are completely
+		# hidden and guaranteed to take no visible action. The final Player Phase
+		# handoff performs the one presentation refresh the player can observe.
+		_hidden_auto_pass_refreshes_avoided += 1
+		return
 	if _movement_commit_in_progress or _movement_animation_active:
 		_deferred_state_change_reasons[reason] = true
+		return
+	if reason == &"attack_resolved":
+		_schedule_post_attack_reconciliation(reason)
 		return
 	_process_state_change_after_commit(reason, true)
 
 
+func _schedule_post_attack_reconciliation(reason: StringName) -> void:
+	_pending_post_attack_reasons[reason] = true
+	if _post_attack_reconciliation_scheduled:
+		return
+	_post_attack_reconciliation_scheduled = true
+	_flush_post_attack_reconciliation_after_frame()
+
+
+func _flush_post_attack_reconciliation_after_frame() -> void:
+	# A deferred call can still run before the current frame is drawn. Await an
+	# actual frame boundary so the first damage-reaction frame is guaranteed to
+	# appear before broad HUD, token and initiative reconciliation.
+	await get_tree().process_frame
+
+	# A player Attack of Opportunity can resolve between two authoritative enemy
+	# movement segments. The enemy continuation may begin animating before this
+	# post-attack task resumes. Never self-schedule with call_deferred() while that
+	# animation is active: Godot drains deferred calls in the same idle cycle, so
+	# a self-deferred retry can spin forever with no script error. Yield across
+	# real frames until the movement handoff is safe instead.
+	while (
+		(_movement_commit_in_progress or _movement_animation_active)
+		and is_inside_tree()
+	):
+		await get_tree().process_frame
+
+	if not is_inside_tree():
+		_post_attack_reconciliation_scheduled = false
+		return
+	_flush_post_attack_reconciliation()
+
+
+func _flush_post_attack_reconciliation() -> void:
+	# The only caller already waits for a safe boundary. Keep this guard as a
+	# defensive no-op, but never create a same-idle-cycle deferred retry loop.
+	if _movement_commit_in_progress or _movement_animation_active:
+		return
+	_post_attack_reconciliation_scheduled = false
+	if _pending_post_attack_reasons.is_empty():
+		return
+	var started_usec: int = Time.get_ticks_usec()
+	_pending_post_attack_reasons.clear()
+	_active_state_change_flags = _pending_post_attack_flags
+	_pending_post_attack_flags = null
+	_post_attack_reconciliations += 1
+	# Explicit targeting may still need a legal-target overlay after the attack.
+	# Build the lightweight list here so the same consolidated board refresh
+	# publishes it; do not schedule a second post-attack board redraw.
+	if _attack_targeting and _legal_attack_targets_dirty:
+		_refresh_legal_attack_targets()
+	# One authoritative refresh follows all attack subevents. Contextual hover is
+	# deliberately suppressed so the struck target is not previewed again merely
+	# because the cursor has not moved.
+	_process_state_change_after_commit(&"attack_resolved", true, false)
+	_active_state_change_flags = null
+	_last_post_attack_reconciliation_usec = (
+		Time.get_ticks_usec() - started_usec
+	)
+
+
 func _process_state_change_after_commit(
 		reason: StringName,
-		notify_board: bool
+		notify_board: bool,
+		refresh_contextual_attack: bool = true
 ) -> void:
 	var selected_unit_before_change: StringName = _selected_unit_id
 	var state_cadence_event: int = PresentationCadenceEvent.NONE
@@ -4118,14 +5619,22 @@ func _process_state_change_after_commit(
 		_schedule_post_commit_perception_flush()
 	if (
 		notify_board
+		and not _player_to_enemy_handoff_in_progress
 		and _board_view != null
 		and _board_view.has_method("notify_state_changed")
 	):
-		_board_view.call("notify_state_changed", reason)
+		if _active_state_change_flags != null:
+			_board_view.call(
+				"notify_state_changed",
+				reason,
+				_active_state_change_flags
+			)
+		else:
+			_board_view.call("notify_state_changed", reason)
 	_refresh_selected_cover_summary()
 	if _facade != null and _facade.mission_resolution_locked():
 		_sync_life_state_visuals_from_state()
-		_refresh_all_presentation()
+		_refresh_all_presentation(refresh_contextual_attack)
 		return
 	_refresh_open_extraction_confirmation()
 	# Update body-state emblems before selection, initiative normalisation or any
@@ -4146,6 +5655,7 @@ func _process_state_change_after_commit(
 		and phase_state.is_initiative_combat()
 		and new_enemy_squad_alerted
 	):
+		_reset_contact_transition_metrics()
 		_play_alert_flash()
 		state_cadence_event = PresentationCadenceEvent.ALERT_TRIGGERED
 	_known_aware_enemy_squad_ids = aware_enemy_squad_ids
@@ -4164,23 +5674,61 @@ func _process_state_change_after_commit(
 		elif not _attack_targeting:
 			_sync_selected_hand_attack()
 
+	var active_after_change: TacticalUnitState = null
 	if phase_state.is_initiative_combat():
-		var active: TacticalUnitState = _facade.active_initiative_unit()
-		if active != null:
-			_selected_unit_id = active.unit_id
+		active_after_change = _facade.active_initiative_unit()
+		if (
+			active_after_change != null
+			and _unit_handoff_is_observable(active_after_change)
+		):
+			_selected_unit_id = active_after_change.unit_id
 			if (
-				active.unit_id != selected_unit_before_change
+				active_after_change.unit_id != selected_unit_before_change
 				and state_cadence_event == PresentationCadenceEvent.NONE
 			):
 				state_cadence_event = PresentationCadenceEvent.ACTIVATION_HANDOFF
-		if active == null or not active.can_take_actions():
+		if (
+			active_after_change != null
+			and active_after_change.is_ai_controlled()
+			and state_cadence_event == PresentationCadenceEvent.ALERT_TRIGGERED
+		):
+			_contact_presentation_ready_unit_id = active_after_change.unit_id
+			_play_active_unit_handoff_pulse(active_after_change.unit_id)
+		if active_after_change == null or not active_after_change.can_take_actions():
 			_schedule_initiative_normalization()
-	_refresh_all_presentation()
+	var seamless_ai_handoff: bool = (
+		_player_to_enemy_handoff_in_progress
+		and (
+			phase_state.is_enemy_phase()
+			or (
+				active_after_change != null
+				and active_after_change.is_ai_controlled()
+			)
+		)
+	)
+	if seamless_ai_handoff:
+		# The button handler owns the immediate handoff. Publish only the small
+		# phase/selection delta here; a broad board rebuild would sit directly in
+		# front of the warmed AI commitment.
+		_update_unit_selection_visuals()
+		_update_unit_finished_visuals()
+		_refresh_hud()
+		if _board_view != null:
+			_board_view.set_input_enabled(false)
+		_handoff_full_refreshes_avoided += 1
+	else:
+		_refresh_all_presentation(refresh_contextual_attack)
 	if _protagonist_is_dead():
 		call_deferred("_resolve_campaign_defeat_if_needed")
 		return
 	if not _facade.player_force_can_continue():
 		call_deferred("_resolve_tactical_defeat_if_needed")
+		return
+	if _player_to_enemy_handoff_in_progress:
+		# The explicit End Turn handler starts the warmed actor exactly once after
+		# the transaction returns. Do not queue cadence or a duplicate AI runner
+		# from inside this state-change callback.
+		_handoff_duplicate_ai_schedules_avoided += 1
 		return
 	if _initiative_ai_in_progress:
 		# The initiative-AI coroutine owns its own move/attack and actor-handoff
@@ -4292,12 +5840,26 @@ func _create_alert_flash() -> void:
 	_alert_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
+func _reset_contact_transition_metrics() -> void:
+	if _facade != null:
+		_facade.cancel_contact_ai_warmup()
+	_contact_ai_warmup_started_usec = 0
+	_contact_ai_warmup_completed_usec = 0
+	_contact_ai_warmup_processing_usec = 0
+	_contact_ai_warmup_frames = 0
+	_contact_ai_warmup_abandoned = false
+	_contact_detected_usec = Time.get_ticks_usec()
+	_contact_ai_pulse_started_usec = 0
+	_contact_first_movement_tween_started_usec = 0
+	_contact_presentation_ready_unit_id = &""
+
+
 func _play_alert_flash() -> void:
 	if _alert_flash == null:
 		return
 	_alert_flash.color.a = 0.28
 	var tween: Tween = create_tween()
-	tween.tween_property(_alert_flash, "color:a", 0.0, 0.32)
+	tween.tween_property(_alert_flash, "color:a", 0.0, ALERT_FLASH_SECONDS)
 
 
 func _schedule_initiative_ai() -> void:
@@ -4323,6 +5885,7 @@ func _run_initiative_ai() -> void:
 	if _initiative_ai_in_progress or _facade.mission_resolution_locked():
 		return
 	_initiative_ai_in_progress = true
+	var initiative_frame_budget_started_usec: int = Time.get_ticks_usec()
 	while (
 		_facade.is_initiative_combat()
 		and not _facade.mission_resolution_locked()
@@ -4345,18 +5908,54 @@ func _run_initiative_ai() -> void:
 			if not skipped_result.success:
 				_set_status(skipped_result.message)
 				break
-			await get_tree().process_frame
 			continue
 
 		var acting_unit_id: StringName = active.unit_id
-		_clear_board_intent(false)
-		_selected_unit_id = acting_unit_id
-		_refresh_all_presentation()
-		if _last_handoff_pulsed_unit_id != acting_unit_id:
-			_play_active_unit_handoff_pulse(acting_unit_id)
-			await _await_presentation_cadence(
-				PresentationCadenceEvent.ACTIVATION_HANDOFF
+		if (
+			_enemy_handoff_started_usec > 0
+			and _prepared_ai_presentation_unit_id == acting_unit_id
+		):
+			_last_enemy_to_enemy_handoff_usec = maxi(
+				0, Time.get_ticks_usec() - _enemy_handoff_started_usec
 			)
+			_enemy_handoff_started_usec = 0
+		# Validate the already-warmed plan before the enemy is highlighted. The
+		# ordinary visible path then has no mission-wide signature/perception gate
+		# between its pulse and the first movement or attack.
+		var handoff_prepare_result: OperationResult = (
+			_facade.prepare_ai_activation_handoff(acting_unit_id)
+		)
+		if handoff_prepare_result != null:
+			_pre_activation_handoff_validations += 1
+		var acting_handoff_observable: bool = _unit_handoff_is_observable(active)
+		var presentation_already_prepared: bool = (
+			_prepared_ai_presentation_unit_id == acting_unit_id
+		)
+		_clear_board_intent(false)
+		if acting_handoff_observable:
+			_selected_unit_id = acting_unit_id
+			if _contact_presentation_ready_unit_id == acting_unit_id:
+				_contact_presentation_ready_unit_id = &""
+				_duplicate_contact_refreshes_avoided += 1
+				_update_unit_selection_visuals()
+				_update_unit_finished_visuals()
+				_refresh_hud()
+			elif presentation_already_prepared:
+				_prepared_ai_presentation_unit_id = &""
+				_duplicate_enemy_refreshes_avoided += 1
+			else:
+				_refresh_all_presentation()
+		else:
+			_prepared_ai_presentation_unit_id = &""
+			_unobserved_ai_activation_handoffs_skipped += 1
+			_hidden_actor_refreshes_avoided += 1
+		if acting_handoff_observable:
+			_begin_enemy_stall_watch(acting_unit_id)
+		if (
+			acting_handoff_observable
+			and _last_handoff_pulsed_unit_id != acting_unit_id
+		):
+			_play_active_unit_handoff_pulse(acting_unit_id)
 		if _facade.mission_resolution_locked():
 			break
 
@@ -4371,7 +5970,16 @@ func _run_initiative_ai() -> void:
 		# The reaction-aware helper performs `_movement_control_owner_before_commit = acting_unit_id`
 		# immediately before each committed AI segment so movement cadence remains correct.
 		var ai_result: OperationResult = await _resolve_initiative_ai_with_reaction_prompts(acting_unit_id)
-		_set_status(ai_result.message)
+		_finish_enemy_stall_watch(acting_unit_id)
+		_facade.cancel_contact_ai_warmup()
+		if _last_ai_activation_presented_movement:
+			_presentation_wall_time_excluded_usec += _last_ai_activation_presentation_usec
+			initiative_frame_budget_started_usec = Time.get_ticks_usec()
+			_forced_inter_actor_frames_avoided += 1
+		if acting_handoff_observable:
+			_set_status(ai_result.message)
+		elif _last_ai_resolution_observable:
+			_set_status("An unseen enemy action resolves.")
 		if not ai_result.success:
 			break
 		# Stage 4.4e3 removes post-movement dead air. Reaction prompts pause only
@@ -4387,6 +5995,25 @@ func _run_initiative_ai() -> void:
 			_facade.is_initiative_combat()
 			and _facade.active_initiative_unit_id() == acting_unit_id
 		):
+			# Stationary actions have little presentation time to hide work behind.
+			# Spend any remaining CPU budget on the immediate next actor before the
+			# initiative index advances; the partial job transfers with the handoff.
+			var lookahead_remaining_usec: int = maxi(
+				250,
+				ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+				- maxi(0, Time.get_ticks_usec() - initiative_frame_budget_started_usec)
+			)
+			var lookahead_started_usec: int = Time.get_ticks_usec()
+			var lookahead_result: OperationResult = (
+				_facade.warmup_next_ai_handoff(lookahead_remaining_usec)
+			)
+			_chain_warmup_processing_usec += maxi(
+				0, Time.get_ticks_usec() - lookahead_started_usec
+			)
+			if lookahead_result != null:
+				_chain_warmup_frames += 1
+				if lookahead_result.code == &"enemy_handoff_warmup_ready":
+					_chain_warmup_ready_frames += 1
 			var advance_result: OperationResult = (
 				_facade.end_initiative_turn(acting_unit_id)
 			)
@@ -4397,23 +6024,47 @@ func _run_initiative_ai() -> void:
 		if (
 			next_after_ai != null
 			and next_after_ai.unit_id != acting_unit_id
-			and _last_handoff_pulsed_unit_id != next_after_ai.unit_id
+			and _unit_handoff_is_observable(next_after_ai)
 		):
 			_selected_unit_id = next_after_ai.unit_id
 			_update_unit_selection_visuals()
 			_update_unit_finished_visuals()
 			_refresh_hud()
 			_refresh_board_view()
-			_play_active_unit_handoff_pulse(next_after_ai.unit_id)
-			await _await_presentation_cadence(
-				PresentationCadenceEvent.ACTIVATION_HANDOFF
-			)
-		else:
+			if next_after_ai.is_ai_controlled():
+				_prepared_ai_presentation_unit_id = next_after_ai.unit_id
+				_enemy_handoff_started_usec = Time.get_ticks_usec()
+			else:
+				_prepared_ai_presentation_unit_id = &""
+				_enemy_handoff_started_usec = 0
+			if _last_handoff_pulsed_unit_id != next_after_ai.unit_id:
+				_play_active_unit_handoff_pulse(next_after_ai.unit_id)
+		elif next_after_ai != null and not _unit_handoff_is_observable(next_after_ai):
+			_prepared_ai_presentation_unit_id = &""
+			_unobserved_ai_activation_handoffs_skipped += 1
+			_hidden_actor_refreshes_avoided += 1
+
+		var adaptive_handoff_seconds: float = _adaptive_visible_handoff_seconds(
+			next_after_ai
+		)
+		if adaptive_handoff_seconds > 0.0:
+			await _await_adaptive_visible_handoff(next_after_ai)
+			# Cosmetic readability time never consumes the CPU simulation budget.
+			initiative_frame_budget_started_usec = Time.get_ticks_usec()
+
+		if (
+			next_after_ai != null
+			and next_after_ai.is_ai_controlled()
+			and Time.get_ticks_usec() - initiative_frame_budget_started_usec
+			>= ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+		):
+			_enemy_phase_frame_yields += 1
 			await get_tree().process_frame
+			initiative_frame_budget_started_usec = Time.get_ticks_usec()
 
 	_initiative_ai_in_progress = false
 	var next_active: TacticalUnitState = _facade.active_initiative_unit()
-	if next_active != null:
+	if next_active != null and _unit_handoff_is_observable(next_active):
 		_selected_unit_id = next_active.unit_id
 	_refresh_all_presentation()
 	if (
@@ -4632,62 +6283,550 @@ func _cancel_reaction_reservation_preview(message: String = "") -> void:
 
 
 func _present_pending_ai_movement_events() -> void:
+	_last_ai_activation_presented_movement = false
+	_last_ai_visible_movement_duration_seconds = 0.0
 	if not _pending_ai_movement_events.is_empty():
 		var movement_events: Array[Dictionary] = []
 		for movement_event: Dictionary in _pending_ai_movement_events:
 			movement_events.append(movement_event.duplicate(true))
 		_pending_ai_movement_events.clear()
+		if _ai_movement_batch_is_completely_unobserved(movement_events):
+			# There is no tween to hide preparation behind, so finish only the
+			# authoritative destination field before releasing the movement boundary.
+			_complete_pending_ai_destination_visibility_same_frame(
+				HIDDEN_AI_VISIBILITY_FAST_BUDGET_USEC
+			)
+			_complete_unobserved_ai_movement_batch(movement_events)
+			return
+		_last_ai_activation_presented_movement = true
 		_begin_movement_presentation_batch(movement_events)
 		await movement_presentation_finished
 	else:
+		# A plan that produced no movement must not leave an obsolete destination
+		# field alive for the next actor.
+		_facade.cancel_pending_enemy_destination_visibility()
+		_last_ai_resolution_observable = (
+			_last_ai_resolution_observable
+			or _has_player_observable_deferred_damage()
+			or _has_observable_ai_state_transition()
+		)
 		_movement_commit_in_progress = true
 		_facade.end_visibility_recalculation_deferral()
 		_movement_commit_in_progress = false
 		_flush_deferred_state_changes_without_animation()
 
 
+func _ai_movement_batch_is_completely_unobserved(
+		events: Array[Dictionary]
+) -> bool:
+	if _has_player_observable_deferred_damage() or _has_observable_ai_state_transition():
+		return false
+	for event: Dictionary in events:
+		if _ai_movement_event_visibility(event) != TacticalPresentationVisibility.UNOBSERVED:
+			return false
+	return true
+
+
+func _complete_unobserved_ai_movement_batch(
+		events: Array[Dictionary]
+) -> void:
+	var moved_unit_ids: Array[StringName] = []
+	for event: Dictionary in events:
+		var unit_id: StringName = StringName(event.get("unit_id", &""))
+		if unit_id.is_empty() or moved_unit_ids.has(unit_id):
+			continue
+		moved_unit_ids.append(unit_id)
+		_unobserved_ai_movement_events_skipped += 1
+	_unobserved_ai_movement_batches_completed_immediately += 1
+	_last_ai_resolution_observable = false
+	_movement_commit_in_progress = true
+	_facade.end_visibility_recalculation_deferral_for_units(
+		moved_unit_ids,
+		_deferred_visibility_requires_full_rebuild()
+	)
+	_movement_commit_in_progress = false
+	_flush_deferred_state_changes_without_animation()
+	_visible_enemy_unit_ids_before_movement.clear()
+	_movement_control_owner_before_commit = &""
+	_movement_interruption_pending = false
+
+
+func _has_player_observable_deferred_damage() -> bool:
+	for event: Dictionary in _deferred_damage_events:
+		var target_id: StringName = StringName(event.get("target_id", &""))
+		var target: TacticalUnitState = _facade.state().get_unit(target_id)
+		if (
+			target != null
+			and (
+				target.is_player_controlled()
+				or _facade.is_unit_visible_to_player(target.unit_id)
+			)
+		):
+			return true
+	return false
+
+
+func _has_observable_ai_state_transition() -> bool:
+	if _facade == null or _facade.state() == null:
+		return false
+	var phase_state: TacticalPhaseState = _facade.state().phase_state
+	return (
+		_last_tactical_mode == TacticalPhaseState.MODE_SIDE_BASED
+		and phase_state.is_initiative_combat()
+	)
+
+
+func _begin_side_based_enemy_activation_feedback(
+		unit_id: StringName
+) -> void:
+	if unit_id.is_empty():
+		return
+	if _prepared_ai_presentation_unit_id == unit_id:
+		_prepared_ai_presentation_unit_id = &""
+		_duplicate_enemy_refreshes_avoided += 1
+		_last_ai_resolution_observable = true
+		return
+	var unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+	if not _select_unit_for_observable_handoff(unit):
+		_unobserved_ai_activation_handoffs_skipped += 1
+		return
+	_last_ai_resolution_observable = true
+	_begin_enemy_stall_watch(unit_id)
+	if _handoff_feedback_started_usec == 0 and _handoff_requested_usec > 0:
+		_handoff_feedback_started_usec = Time.get_ticks_usec()
+	if (
+		not _first_enemy_feedback_recorded
+		and _enemy_phase_requested_usec > 0
+	):
+		_first_enemy_feedback_recorded = true
+		_first_actor_feedback_started_usec = Time.get_ticks_usec()
+		_end_phase_to_first_enemy_feedback_usec = maxi(
+			0,
+			Time.get_ticks_usec() - _enemy_phase_requested_usec
+		)
+	# Selection and pulse are enough to identify the acting visible enemy. Avoid a
+	# full HUD and board rebuild before read-only planning; the consolidated action
+	# handoff performs the complete refresh once.
+	_update_unit_selection_visuals()
+	_update_unit_finished_visuals()
+	_play_active_unit_handoff_pulse(unit_id)
+	_side_based_enemy_activation_pulses += 1
+
+
+func _begin_side_based_enemy_activation_presentation(
+		result: OperationResult
+) -> void:
+	if (
+		result == null
+		or not result.success
+		or result.code not in [
+			&"enemy_activation_completed",
+			&"reaction_pending",
+		]
+	):
+		return
+	var unit_id: StringName = &""
+	if result.data is Dictionary:
+		var result_data: Dictionary = result.data
+		unit_id = StringName(result_data.get("unit_id", &""))
+	else:
+		var pending: PendingMovementReactionState = (
+			result.data as PendingMovementReactionState
+		)
+		if pending != null:
+			unit_id = pending.mover_unit_id
+	if unit_id.is_empty():
+		return
+	_finish_enemy_stall_watch(unit_id)
+	if _last_handoff_pulsed_unit_id == unit_id:
+		return
+	var unit: TacticalUnitState = _facade.state().get_unit(unit_id)
+	if not _select_unit_for_observable_handoff(unit):
+		_unobserved_ai_activation_handoffs_skipped += 1
+		return
+	_last_ai_resolution_observable = true
+	if (
+		not _first_enemy_feedback_recorded
+		and _enemy_phase_requested_usec > 0
+	):
+		_first_enemy_feedback_recorded = true
+		_first_actor_feedback_started_usec = Time.get_ticks_usec()
+		_end_phase_to_first_enemy_feedback_usec = maxi(
+			0,
+			Time.get_ticks_usec() - _enemy_phase_requested_usec
+		)
+	_update_unit_selection_visuals()
+	_update_unit_finished_visuals()
+	_play_active_unit_handoff_pulse(unit_id)
+	_side_based_enemy_activation_pulses += 1
+
+
 func _resolve_enemy_phase_with_reaction_prompts() -> OperationResult:
 	var result: OperationResult
+	var frame_budget_started_usec: int = Time.get_ticks_usec()
+	var planning_slices_this_frame: int = 0
 	while true:
-		_pending_ai_movement_events.clear()
-		_facade.begin_visibility_recalculation_deferral()
-		_movement_commit_in_progress = true
+		var had_pending_planning: bool = _facade.has_pending_enemy_planning()
+		var plan_ready: bool = _facade.enemy_planning_ready_to_commit()
+		var resuming_reaction: bool = _facade.has_pending_ai_reaction()
+		if not had_pending_planning and not resuming_reaction:
+			_pending_ai_movement_events.clear()
+			_last_ai_resolution_observable = false
+			var next_actor_id: StringName = (
+				_facade.peek_next_enemy_activation_unit_id()
+			)
+			if not next_actor_id.is_empty():
+				_facade.prepare_ai_activation_handoff(next_actor_id)
+			_begin_side_based_enemy_activation_feedback(next_actor_id)
+
+		var frame_processing_before_call: int = maxi(
+			0, Time.get_ticks_usec() - frame_budget_started_usec
+		)
+		var remaining_budget_usec: int = maxi(
+			250,
+			ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+			- frame_processing_before_call
+		)
+		var deferral_started: bool = false
+		var activation_started_usec: int = Time.get_ticks_usec()
+		# Read-only planning does not own a visibility or perception deferral. The
+		# boundary opens once, immediately before authoritative commitment.
+		if resuming_reaction or plan_ready:
+			if (
+				plan_ready
+				and _handoff_to_authoritative_commit_usec == 0
+				and _handoff_requested_usec > 0
+			):
+				_handoff_to_authoritative_commit_usec = maxi(
+					0,
+					Time.get_ticks_usec() - _handoff_requested_usec
+				)
+			_pending_ai_movement_events.clear()
+			_facade.begin_visibility_recalculation_deferral()
+			deferral_started = true
+			_movement_commit_in_progress = true
 		result = (
 			_facade.resume_ai_after_reaction()
-			if _facade.has_pending_ai_reaction()
-			else _facade.resolve_enemy_turn()
+			if resuming_reaction
+			else (
+				_facade.commit_ready_enemy_activation()
+				if plan_ready
+				else _facade.resolve_next_enemy_activation(remaining_budget_usec)
+			)
 		)
 		_movement_commit_in_progress = false
-		await _present_pending_ai_movement_events()
+
+		if result == null:
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			return OperationResult.fail(
+				&"enemy_activation_result_missing",
+				"The Enemy Phase returned no activation result."
+			)
+
+		if result.code == &"enemy_planning_pending":
+			_record_enemy_stall_thresholds(_enemy_stall_active_unit_id)
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			_enemy_planning_slice_count += 1
+			planning_slices_this_frame += 1
+			_enemy_planning_max_slices_per_frame = maxi(
+				_enemy_planning_max_slices_per_frame,
+				planning_slices_this_frame
+			)
+			var frame_processing_usec: int = maxi(
+				0,
+				Time.get_ticks_usec() - frame_budget_started_usec
+			)
+			if frame_processing_usec < ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC:
+				continue
+			_enemy_planning_yield_count += 1
+			_enemy_phase_frame_yields += 1
+			_facade.record_enemy_planning_frame_yield(
+				planning_slices_this_frame,
+				not _last_ai_resolution_observable
+			)
+			if not _last_ai_resolution_observable:
+				_enemy_hidden_planning_frames += 1
+			if _facade.pending_enemy_planning_is_visibility():
+				_destination_visibility_yield_count += 1
+			if not _first_visible_enemy_action_recorded:
+				_frames_yielded_before_first_visible_action += 1
+			await get_tree().process_frame
+			frame_budget_started_usec = Time.get_ticks_usec()
+			planning_slices_this_frame = 0
+			continue
+
+		if result.code == &"enemy_plan_ready":
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			_enemy_planning_slice_count += 1
+			planning_slices_this_frame += 1
+			_enemy_planning_max_slices_per_frame = maxi(
+				_enemy_planning_max_slices_per_frame,
+				planning_slices_this_frame
+			)
+			# A completed plan commits immediately. Destination FOV preparation now
+			# overlaps movement, so there is no empty plan/commit render boundary.
+			continue
+
+		if (
+			_last_ai_resolution_observable
+			and not _first_visible_enemy_action_recorded
+			and _enemy_phase_requested_usec > 0
+		):
+			_first_visible_enemy_action_recorded = true
+			_end_phase_to_first_visible_action_usec = maxi(
+				0,
+				Time.get_ticks_usec() - _enemy_phase_requested_usec
+			)
+
+		_begin_side_based_enemy_activation_presentation(result)
+		_capture_last_ai_simulation_timing()
+		var presentation_started_usec: int = Time.get_ticks_usec()
+		if deferral_started:
+			await _present_pending_ai_movement_events()
+		if (
+			_last_ai_resolution_observable
+			and not _first_visible_enemy_action_recorded
+			and _enemy_phase_requested_usec > 0
+		):
+			_first_visible_enemy_action_recorded = true
+			_end_phase_to_first_visible_action_usec = maxi(
+				0,
+				Time.get_ticks_usec() - _enemy_phase_requested_usec
+			)
+		_last_ai_activation_presentation_usec = maxi(
+			0, Time.get_ticks_usec() - presentation_started_usec
+		)
+		if (
+			result.success
+			and result.code != &"enemy_turn_completed"
+		):
+			_facade.record_last_ai_presentation_timing(
+				_last_ai_activation_presentation_usec
+			)
+			_last_ai_activation_total_usec = maxi(
+				0, Time.get_ticks_usec() - activation_started_usec
+			)
+		_enemy_phase_had_observable_activity = (
+			_enemy_phase_had_observable_activity
+			or _last_ai_resolution_observable
+		)
 		if not result.success:
 			return result
-		if result.code != &"reaction_pending":
+		if result.code == &"reaction_pending":
+			var opened: OperationResult = _facade.open_pending_ai_reaction_decision()
+			if not opened.success:
+				return opened
+			var serial: int = _reaction_decision_serial
+			await _await_reaction_prompt_resolution(serial)
+			frame_budget_started_usec = Time.get_ticks_usec()
+			planning_slices_this_frame = 0
+			continue
+		if result.code == &"enemy_turn_completed":
 			return result
-		var opened: OperationResult = _facade.open_pending_ai_reaction_decision()
-		if not opened.success:
-			return opened
-		var serial: int = _reaction_decision_serial
-		await _await_reaction_prompt_resolution(serial)
+
+		# Side-based actors use the same one-actor pipeline. Moving actors are
+		# warmed during their tween by _process(); stationary actors receive any
+		# CPU budget still available in this frame.
+		var side_lookahead_remaining_usec: int = maxi(
+			250,
+			ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+			- maxi(0, Time.get_ticks_usec() - frame_budget_started_usec)
+		)
+		var side_lookahead_started_usec: int = Time.get_ticks_usec()
+		var side_lookahead: OperationResult = _facade.warmup_next_ai_handoff(
+			side_lookahead_remaining_usec
+		)
+		_chain_warmup_processing_usec += maxi(
+			0, Time.get_ticks_usec() - side_lookahead_started_usec
+		)
+		if side_lookahead != null:
+			_chain_warmup_frames += 1
+			if side_lookahead.code == &"enemy_handoff_warmup_ready":
+				_chain_warmup_ready_frames += 1
+
+		var next_side_actor_id: StringName = (
+			_facade.peek_next_enemy_activation_unit_id()
+		)
+		var next_side_actor: TacticalUnitState = _facade.state().get_unit(
+			next_side_actor_id
+		)
+		var adaptive_side_seconds: float = _adaptive_visible_handoff_seconds(
+			next_side_actor
+		)
+		if adaptive_side_seconds > 0.0:
+			_facade.prepare_ai_activation_handoff(next_side_actor_id)
+			_begin_side_based_enemy_activation_feedback(next_side_actor_id)
+			_prepared_ai_presentation_unit_id = next_side_actor_id
+			await _await_adaptive_visible_handoff(next_side_actor)
+			frame_budget_started_usec = Time.get_ticks_usec()
+			planning_slices_this_frame = 0
+
+		# Visible movement already supplied its own rendered frames. Stationary
+		# attacks, pulses, damage reactions and badge changes are non-blocking and may
+		# overlap the next actor's planning. Never add a compulsory dead frame merely
+		# because the completed activation was observable.
+		if not _last_ai_resolution_observable and not _first_visible_enemy_action_recorded:
+			_hidden_actors_before_first_visible_action += 1
+		if _last_ai_resolution_observable:
+			_visible_activation_dead_frames_avoided += 1
+			if _last_ai_activation_presented_movement:
+				# The tween elapsed in real time, so restart the CPU budget and begin the
+				# next actor immediately rather than paying another rendered frame.
+				frame_budget_started_usec = Time.get_ticks_usec()
+				planning_slices_this_frame = 0
+				continue
+		var frame_simulation_usec: int = maxi(
+			0, Time.get_ticks_usec() - frame_budget_started_usec
+		)
+		if frame_simulation_usec < ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC:
+			_enemy_phase_hidden_activations_batched += 1
+			continue
+		_enemy_phase_frame_yields += 1
+		if not _first_visible_enemy_action_recorded:
+			_frames_yielded_before_first_visible_action += 1
+		await get_tree().process_frame
+		frame_budget_started_usec = Time.get_ticks_usec()
+		planning_slices_this_frame = 0
 	return OperationResult.fail(
 		&"reaction_resolution_ended_unexpectedly",
 		"Enemy-phase Reaction resolution ended without a result."
 	)
 
 
-func _resolve_initiative_ai_with_reaction_prompts(acting_unit_id: StringName) -> OperationResult:
+func _release_ai_planning_only_deferral() -> void:
+	# Planning is read-only. Release the one precautionary boundary opened for a
+	# new actor without invoking movement presentation or inserting a frame wait.
+	_movement_commit_in_progress = true
+	_facade.end_visibility_recalculation_deferral()
+	_movement_commit_in_progress = false
+	_flush_deferred_state_changes_without_animation()
+
+
+func _capture_last_ai_simulation_timing() -> void:
+	var enemy_snapshot: Dictionary = _facade.enemy_ai_performance_snapshot()
+	var activation_timing: Dictionary = enemy_snapshot.get("activation_timing", {})
+	var last: Dictionary = activation_timing.get("last", {})
+	if bool(last.get("chain_warmup_reused", false)):
+		_chain_warmup_reused_count += 1
+	_last_ai_activation_simulation_usec = int(
+		last.get("simulation_usec", last.get("total", last.get("total_usec", 0)))
+	)
+
+
+func _resolve_initiative_ai_with_reaction_prompts(
+		acting_unit_id: StringName
+) -> OperationResult:
 	var result: OperationResult
+	var frame_budget_started_usec: int = Time.get_ticks_usec()
+	var planning_slices_this_frame: int = 0
 	while true:
-		_pending_ai_movement_events.clear()
+		var had_pending_planning: bool = _facade.has_pending_enemy_planning()
+		var plan_ready: bool = _facade.enemy_planning_ready_to_commit()
+		var resuming_reaction: bool = _facade.has_pending_ai_reaction()
+		if not had_pending_planning and not resuming_reaction:
+			_pending_ai_movement_events.clear()
+			_last_ai_resolution_observable = false
 		_movement_control_owner_before_commit = acting_unit_id
-		_facade.begin_visibility_recalculation_deferral()
-		_movement_commit_in_progress = true
+
+		var frame_processing_before_call: int = maxi(
+			0, Time.get_ticks_usec() - frame_budget_started_usec
+		)
+		var remaining_budget_usec: int = maxi(
+			250,
+			ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+			- frame_processing_before_call
+		)
+		var deferral_started: bool = false
+		if resuming_reaction or plan_ready:
+			if (
+				plan_ready
+				and _handoff_to_authoritative_commit_usec == 0
+				and _handoff_requested_usec > 0
+			):
+				_handoff_to_authoritative_commit_usec = maxi(
+					0,
+					Time.get_ticks_usec() - _handoff_requested_usec
+				)
+			_pending_ai_movement_events.clear()
+			_facade.begin_visibility_recalculation_deferral()
+			deferral_started = true
+			_movement_commit_in_progress = true
 		result = (
 			_facade.resume_ai_after_reaction()
-			if _facade.has_pending_ai_reaction()
-			else _facade.resolve_active_ai_initiative()
+			if resuming_reaction
+			else (
+				_facade.commit_ready_enemy_activation()
+				if plan_ready
+				else _facade.resolve_active_ai_initiative(remaining_budget_usec)
+			)
 		)
 		_movement_commit_in_progress = false
-		await _present_pending_ai_movement_events()
+
+		if result == null:
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			return OperationResult.fail(
+				&"initiative_ai_result_missing",
+				"The initiative AI returned no activation result."
+			)
+
+		if result.code == &"enemy_planning_pending":
+			_record_enemy_stall_thresholds(_enemy_stall_active_unit_id)
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			_enemy_planning_slice_count += 1
+			planning_slices_this_frame += 1
+			_enemy_planning_max_slices_per_frame = maxi(
+				_enemy_planning_max_slices_per_frame,
+				planning_slices_this_frame
+			)
+			if (
+				Time.get_ticks_usec() - frame_budget_started_usec
+				< ENEMY_PHASE_SIMULATION_FRAME_BUDGET_USEC
+			):
+				continue
+			_enemy_planning_yield_count += 1
+			_enemy_phase_frame_yields += 1
+			_facade.record_enemy_planning_frame_yield(
+				planning_slices_this_frame,
+				false
+			)
+			if _facade.pending_enemy_planning_is_visibility():
+				_destination_visibility_yield_count += 1
+			await get_tree().process_frame
+			frame_budget_started_usec = Time.get_ticks_usec()
+			planning_slices_this_frame = 0
+			continue
+
+		if result.code == &"enemy_plan_ready":
+			if deferral_started:
+				_release_ai_planning_only_deferral()
+			_enemy_planning_slice_count += 1
+			planning_slices_this_frame += 1
+			_enemy_planning_max_slices_per_frame = maxi(
+				_enemy_planning_max_slices_per_frame,
+				planning_slices_this_frame
+			)
+			continue
+
+		_capture_last_ai_simulation_timing()
+		var presentation_started_usec: int = Time.get_ticks_usec()
+		if deferral_started:
+			await _present_pending_ai_movement_events()
+		_last_ai_activation_presentation_usec = maxi(
+			0, Time.get_ticks_usec() - presentation_started_usec
+		)
+		if result.success:
+			_facade.record_last_ai_presentation_timing(
+				_last_ai_activation_presentation_usec
+			)
+			_last_ai_activation_total_usec = (
+				_last_ai_activation_simulation_usec
+				+ _last_ai_activation_presentation_usec
+			)
 		if not result.success:
 			return result
 		if result.code != &"reaction_pending":
@@ -4697,6 +6836,8 @@ func _resolve_initiative_ai_with_reaction_prompts(acting_unit_id: StringName) ->
 			return opened
 		var serial: int = _reaction_decision_serial
 		await _await_reaction_prompt_resolution(serial)
+		frame_budget_started_usec = Time.get_ticks_usec()
+		planning_slices_this_frame = 0
 	return OperationResult.fail(
 		&"reaction_resolution_ended_unexpectedly",
 		"Initiative AI Reaction resolution ended without a result."

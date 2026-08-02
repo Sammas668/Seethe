@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="AttackDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 6
+damage_type = &"blunt"
+damage_channel = &"nonlethal"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+range_kind = &"ranged"
+reach_feet = 0
+range_increment_feet = 60
+maximum_increments = 10
+
+[resource]
+script = ExtResource("1_attack")
+id = &"action.sanctuary.capture_bow_attack"
+display_name = "Sanctuary Capture Bow"
+description = "A padded-arrow bow attack dealing nonlethal blunt trauma."
+action_cost_type = &"half"
+provokes = true
+attack_kind = &"ranged"
+attack_ability = &"dexterity"
+damage_ability = &"none"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+critical_multiplier = 3
+attack_tags = Array[StringName]([&"weapon", &"bow", &"capture_bow", &"ranged", &"capture_weapon", &"nonlethal_only", &"overwatch_compatible"])
+implementation_profile_id = &"combat.ranged_weapon"
+supports_power_attack = false
+supports_nonlethal = true
+damage_mode_policy = &"nonlethal_only"
+ammunition_tag = &"padded_arrow"
+ammunition_per_attack = 1

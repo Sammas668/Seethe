@@ -24,6 +24,9 @@ var knowledge_state = TacticalKnowledgeState.new()
 var units_by_id: Dictionary = {}
 var squads_by_id: Dictionary = {}
 var items_by_id: Dictionary = {}
+var generated_item_provenance_by_id: Dictionary = {}
+var mission_id: StringName = &""
+var source_setup_hash: String = ""
 var unit_id_by_cell: Dictionary = {}
 var body_unit_ids_by_cell: Dictionary = {}
 var ground_item_ids_by_cell: Dictionary = {}
@@ -33,6 +36,127 @@ var resolved_mission_result_id: StringName = &""
 var revision: int = 0
 var occupancy_revision: int = 0
 var visibility_blocker_revision: int = 0
+var pending_movement_reaction: PendingMovementReactionState
+var mission_runtime_state: MissionRuntimeState
+
+
+func configure_mission_runtime(
+		definition: MissionDefinition,
+		setup_hash_value: String
+) -> bool:
+	if definition == null or setup_hash_value.length() != 64:
+		return false
+	mission_runtime_state = MissionRuntimeState.from_definition(
+		definition, setup_hash_value
+	)
+	return mission_runtime_state.validate_state().is_empty()
+
+
+func set_mission_runtime_state(value: MissionRuntimeState) -> bool:
+	if value == null or not value.validate_state().is_empty():
+		return false
+	mission_runtime_state = value.duplicate_state()
+	return true
+
+
+func bind_mission_authority(
+		mission_id_value: StringName,
+		setup_hash_value: String
+) -> bool:
+	if mission_id_value.is_empty() or setup_hash_value.length() != 64:
+		return false
+	if not mission_id.is_empty() and mission_id != mission_id_value:
+		return false
+	if not source_setup_hash.is_empty() and source_setup_hash != setup_hash_value:
+		return false
+	mission_id = mission_id_value
+	source_setup_hash = setup_hash_value
+	return true
+
+
+func register_generated_item_provenance(
+		provenance: TacticalGeneratedItemProvenance
+) -> bool:
+	if provenance == null or not provenance.validate_record().is_empty():
+		return false
+	if provenance.mission_id != mission_id or provenance.source_setup_hash != source_setup_hash:
+		return false
+	if generated_item_provenance_by_id.has(provenance.provenance_id):
+		return false
+	var existing_for_item := generated_item_provenance_for_item(provenance.generated_item_id)
+	if existing_for_item != null:
+		return false
+	var item: TacticalItemInstanceState = get_item(provenance.generated_item_id)
+	if not provenance.matches_item(item):
+		return false
+	generated_item_provenance_by_id[provenance.provenance_id] = provenance.duplicate_record()
+	return true
+
+
+func remove_generated_item_provenance(provenance_id: StringName) -> bool:
+	if not generated_item_provenance_by_id.has(provenance_id):
+		return false
+	generated_item_provenance_by_id.erase(provenance_id)
+	return true
+
+
+func generated_item_provenance(
+		provenance_id: StringName
+) -> TacticalGeneratedItemProvenance:
+	var record := generated_item_provenance_by_id.get(provenance_id) as TacticalGeneratedItemProvenance
+	return record.duplicate_record() if record != null else null
+
+
+func generated_item_provenance_for_item(
+		item_id: StringName
+) -> TacticalGeneratedItemProvenance:
+	for raw_record: Variant in generated_item_provenance_by_id.values():
+		var record := raw_record as TacticalGeneratedItemProvenance
+		if record != null and record.generated_item_id == item_id:
+			return record.duplicate_record()
+	return null
+
+
+func generated_item_provenance_records() -> Array[TacticalGeneratedItemProvenance]:
+	var result: Array[TacticalGeneratedItemProvenance] = []
+	for raw_record: Variant in generated_item_provenance_by_id.values():
+		var record := raw_record as TacticalGeneratedItemProvenance
+		if record != null:
+			result.append(record.duplicate_record())
+	result.sort_custom(
+		func(a: TacticalGeneratedItemProvenance, b: TacticalGeneratedItemProvenance) -> bool:
+			return String(a.provenance_id) < String(b.provenance_id)
+	)
+	return result
+
+
+func authoritative_occupancy_signature() -> String:
+	var entries: Array[Dictionary] = []
+	for unit: TacticalUnitState in get_units():
+		entries.append({
+			"unit_id": String(unit.unit_id),
+			"position": unit.grid_position,
+			"footprint": occupied_cells_for_unit(unit),
+			"defeated": unit.is_defeated(),
+		})
+	return CanonicalDataHasher.sha256_hex(entries)
+
+
+func authoritative_visibility_blocker_signature() -> String:
+	return authoritative_visibility_blocker_signature_from_occupancy(
+		authoritative_occupancy_signature()
+	)
+
+
+func authoritative_visibility_blocker_signature_from_occupancy(
+		occupancy_signature_value: String
+) -> String:
+	var value: Dictionary = {
+		"occupancy": occupancy_signature_value,
+		"environment_geometry_revision": geometry_revision(),
+		"visibility_blocker_revision": visibility_blocker_revision,
+	}
+	return CanonicalDataHasher.sha256_hex(value)
 
 
 func configure_knowledge_grid(grid_size: Vector2i) -> void:
@@ -130,7 +254,26 @@ func lock_mission_resolution(result_id: StringName) -> bool:
 
 
 func can_accept_tactical_commands() -> bool:
-	return not mission_resolution_locked
+	return not mission_resolution_locked and pending_movement_reaction == null
+
+
+func has_pending_tactical_decision() -> bool:
+	return (
+		pending_movement_reaction != null
+		and pending_movement_reaction.has_unresolved_decision()
+	)
+
+
+func set_pending_movement_reaction(
+		value: PendingMovementReactionState
+) -> bool:
+	pending_movement_reaction = value
+	return true
+
+
+func clear_pending_movement_reaction() -> bool:
+	pending_movement_reaction = null
+	return true
 
 
 func unlock_mission_resolution_for_failed_commit() -> void:
@@ -1067,6 +1210,8 @@ func _release_bodies_from_incapacitated_carriers(
 		for body_item: TacticalItemInstanceState in get_packed_body_items(
 			carrier.unit_id
 		):
+			if body_item.location.container_kind == TacticalInventoryState.KIND_RAIDER_SACK:
+				continue
 			var drop_cell: Vector2i = _choose_body_drop_cell(
 				body_item,
 				carrier.grid_position,
@@ -1129,6 +1274,29 @@ func _choose_body_drop_cell(
 	# The carrier's own tile was legal immediately before incapacitation and is
 	# the deterministic no-loss fallback. Bodies and standing units may share it.
 	return carrier_cell
+
+
+func body_release_cell_for_carrier(
+		body_item: TacticalItemInstanceState,
+		carrier_cell: Vector2i,
+		map_definition: TacticalMapDefinition = null
+) -> Vector2i:
+	if body_item == null or not body_item.is_body():
+		return Vector2i(-1, -1)
+	var linked_unit: TacticalUnitState = get_unit(body_item.linked_unit_id)
+	for offset_value: Vector2i in BODY_DROP_OFFSETS:
+		var candidate: Vector2i = carrier_cell + offset_value
+		if not _body_can_rest_at(body_item, candidate, map_definition):
+			continue
+		if (
+			linked_unit != null
+			and not can_place_unit(
+				linked_unit, candidate, map_definition, linked_unit.unit_id
+			)
+		):
+			continue
+		return candidate
+	return Vector2i(-1, -1)
 
 
 func _body_can_rest_at(
@@ -1255,6 +1423,8 @@ func add_item(
 		rebuild_ground_item_index()
 		return false
 
+	if item_state.location != null and not item_state.location.owner_id.is_empty():
+		refresh_unit_encumbrance(item_state.location.owner_id)
 	if increment_revision:
 		revision += 1
 	return true
@@ -1266,8 +1436,12 @@ func remove_item(
 ) -> bool:
 	if not items_by_id.has(item_id):
 		return false
+	var removed: TacticalItemInstanceState = get_item(item_id)
+	var previous_owner: StringName = removed.location.owner_id if removed != null and removed.location != null else &""
 	items_by_id.erase(item_id)
 	rebuild_ground_item_index()
+	if not previous_owner.is_empty():
+		refresh_unit_encumbrance(previous_owner)
 	if increment_revision:
 		revision += 1
 	return true
@@ -1297,8 +1471,25 @@ func move_item(
 	var item := get_item(item_id)
 	if item == null or target_location == null:
 		return false
+	if item.definition != null and item.definition.fixed_inventory_fixture:
+		return item.location.matches(target_location)
+	var previous_owner: StringName = item.location.owner_id if item.location != null else &""
 	item.location = target_location.clone()
+	if item.is_body():
+		var linked_unit: TacticalUnitState = get_unit(item.linked_unit_id)
+		if (
+			linked_unit != null
+			and target_location.location_type
+				== TacticalItemLocationState.LOCATION_TACTICAL_GROUND
+		):
+			linked_unit.grid_position = target_location.map_position
 	rebuild_ground_item_index()
+	if item.is_body():
+		rebuild_unit_occupancy()
+	if not previous_owner.is_empty():
+		refresh_unit_encumbrance(previous_owner)
+	if not target_location.owner_id.is_empty() and target_location.owner_id != previous_owner:
+		refresh_unit_encumbrance(target_location.owner_id)
 	if increment_revision:
 		revision += 1
 	return true
@@ -1482,6 +1673,87 @@ func granted_action_ids_for_unit(unit_id: StringName) -> Array[StringName]:
 	return result
 
 
+func raider_sack_item_for_unit(unit_id: StringName) -> TacticalItemInstanceState:
+	for item: TacticalItemInstanceState in get_unit_container_items(unit_id, TacticalInventoryState.KIND_BELT):
+		if item.definition != null and item.definition.has_tag(&"raiders_sack"):
+			return item
+	return null
+
+
+func raider_sack_content_for_unit(unit_id: StringName) -> TacticalItemInstanceState:
+	var items: Array[TacticalItemInstanceState] = get_unit_container_items(
+		unit_id, TacticalInventoryState.KIND_RAIDER_SACK
+	)
+	return items[0] if not items.is_empty() else null
+
+
+func raider_sack_body_for_unit(unit_id: StringName) -> TacticalItemInstanceState:
+	var content: TacticalItemInstanceState = raider_sack_content_for_unit(unit_id)
+	return content if content != null and content.is_body() else null
+
+
+func item_is_raider_sack_compatible(item: TacticalItemInstanceState) -> bool:
+	if item == null:
+		return false
+	if item.is_body():
+		return true
+	return (
+		item.definition != null
+		and item.definition.has_tag(&"bulky")
+		and item.definition.has_tag(&"raider_sack_compatible")
+		and item.footprint.x <= TacticalInventoryState.RAIDER_SACK_WIDTH
+		and item.footprint.y <= TacticalInventoryState.RAIDER_SACK_HEIGHT
+	)
+
+
+func refresh_unit_encumbrance(unit_id: StringName) -> void:
+	var unit: TacticalUnitState = get_unit(unit_id)
+	if unit == null or unit.resolved_character == null:
+		return
+	var weight: float = calculated_carried_weight(unit_id)
+	var light_max: float = float(unit.resolved_character.stat_value(&"light_load_max_lb", 0))
+	var medium_max: float = float(unit.resolved_character.stat_value(&"medium_load_max_lb", 0))
+	var maximum: float = float(unit.resolved_character.stat_value(&"maximum_weight_lb", int(unit.inventory.maximum_weight_lb)))
+	var category: StringName = TacticalUnitState.LOAD_LIGHT
+	if weight > maximum + 0.001:
+		category = TacticalUnitState.LOAD_OVER_CAPACITY
+	elif weight > medium_max + 0.001:
+		category = TacticalUnitState.LOAD_HEAVY
+	elif weight > light_max + 0.001:
+		category = TacticalUnitState.LOAD_MEDIUM
+	var armour_ok: bool = true
+	for armour_item: TacticalItemInstanceState in get_unit_container_items(unit_id, TacticalInventoryState.KIND_ARMOUR):
+		if armour_item.definition != null:
+			armour_ok = armour_item.definition.has_tag(&"light_armour") or armour_item.definition.has_tag(&"medium_armour")
+	var has_fast: bool = unit.resolved_character.has_trait(&"feature.fast_movement")
+	var fast_active: bool = has_fast and armour_ok and category in [TacticalUnitState.LOAD_LIGHT, TacticalUnitState.LOAD_MEDIUM]
+	var capacity: int = unit.resolved_character.stat_value(&"turn_capacity", 30)
+	if has_fast and not fast_active:
+		capacity = mini(
+			capacity,
+			int(unit.resolved_character.feature_parameter(
+				&"feature.fast_movement",
+				&"base_full_turn_capacity_feet",
+				60
+			))
+		)
+	match category:
+		TacticalUnitState.LOAD_MEDIUM:
+			capacity = 60 if fast_active else mini(capacity, 60)
+		TacticalUnitState.LOAD_HEAVY:
+			capacity = 40
+		TacticalUnitState.LOAD_OVER_CAPACITY:
+			capacity = 0
+	var sprint: int = 0 if category in [TacticalUnitState.LOAD_HEAVY, TacticalUnitState.LOAD_OVER_CAPACITY] or unit.is_fatigued() else int(floor(float(capacity) * 1.5 / 5.0)) * 5
+	unit.inventory.maximum_weight_lb = maximum
+	unit.apply_encumbrance(weight, category, capacity, sprint, fast_active)
+
+
+func refresh_all_encumbrance() -> void:
+	for unit: TacticalUnitState in get_units():
+		refresh_unit_encumbrance(unit.unit_id)
+
+
 func can_place_item(
 		unit: TacticalUnitState,
 		item: TacticalItemInstanceState,
@@ -1495,9 +1767,26 @@ func can_place_item(
 		return false
 	if container_kind == TacticalInventoryState.KIND_BACKPACK and not item.backpack_allowed:
 		return false
+	if container_kind == TacticalInventoryState.KIND_RAIDER_SACK:
+		if not item_is_raider_sack_compatible(item):
+			return false
+		if item.is_body():
+			var body_unit: TacticalUnitState = get_unit(item.linked_unit_id)
+			if body_unit == null or not body_unit.restrained:
+				return false
+			if body_unit.footprint.x > 1 or body_unit.footprint.y > 1:
+				return false
+		if raider_sack_item_for_unit(unit.unit_id) == null:
+			return false
+		var existing_content: TacticalItemInstanceState = raider_sack_content_for_unit(
+			unit.unit_id
+		)
+		if existing_content != null and existing_content.item_id != ignore_item_id:
+			return false
 	if container_kind not in [
 		TacticalInventoryState.KIND_BELT,
 		TacticalInventoryState.KIND_BACKPACK,
+		TacticalInventoryState.KIND_RAIDER_SACK,
 	]:
 		return false
 
@@ -1666,6 +1955,8 @@ func validate_item_invariants(
 		TacticalInventoryState.KIND_SECONDARY_HAND,
 		TacticalInventoryState.KIND_BELT,
 		TacticalInventoryState.KIND_BACKPACK,
+		TacticalInventoryState.KIND_ARMOUR,
+		TacticalInventoryState.KIND_WORN_UTILITY,
 		TacticalItemLocationState.CONTAINER_GROUND,
 		TacticalItemLocationState.CONTAINER_RESTRAINT,
 	]
@@ -1735,14 +2026,27 @@ func validate_item_invariants(
 				if location.container_kind not in [
 					TacticalInventoryState.KIND_PRIMARY_HAND,
 					TacticalInventoryState.KIND_SECONDARY_HAND,
+					TacticalInventoryState.KIND_ARMOUR,
+					TacticalInventoryState.KIND_WORN_UTILITY,
 				]:
 					errors.append("Item %s uses an invalid equipment container." % item_id)
+				var is_hand_slot: bool = location.container_kind in [
+					TacticalInventoryState.KIND_PRIMARY_HAND,
+					TacticalInventoryState.KIND_SECONDARY_HAND,
+				]
 				if (
-					item.definition != null
+					is_hand_slot
+					and item.definition != null
 					and not item.definition.can_equip_in_hand()
 					and not item.is_body()
 				):
 					errors.append("Item %s cannot legally be equipped in a hand." % item_id)
+				if (
+					not is_hand_slot
+					and item.definition != null
+					and not item.definition.can_equip_in_slot(location.container_kind)
+				):
+					errors.append("Item %s cannot legally use equipment slot %s." % [item_id, location.container_kind])
 				if item.is_body() and item.location.transport_mode != &"dragging":
 					errors.append("Body item %s in a Hand is not marked as dragging." % item_id)
 				if item.quantity != 1:
@@ -1850,6 +2154,16 @@ func validate_item_invariants(
 			errors.append("%s has more than one Primary Hand item." % unit.display_name)
 		if secondary_items.size() > 1:
 			errors.append("%s has more than one Secondary Hand item." % unit.display_name)
+		var armour_items := get_unit_container_items(
+			unit.unit_id, TacticalInventoryState.KIND_ARMOUR
+		)
+		var worn_utility_items := get_unit_container_items(
+			unit.unit_id, TacticalInventoryState.KIND_WORN_UTILITY
+		)
+		if armour_items.size() > 1:
+			errors.append("%s has more than one Armour item." % unit.display_name)
+		if worn_utility_items.size() > 1:
+			errors.append("%s has more than one Worn Utility item." % unit.display_name)
 		var primary := primary_items[0] if not primary_items.is_empty() else null
 		var secondary := secondary_items[0] if not secondary_items.is_empty() else null
 		if primary != null and primary.two_handed and secondary != null:
@@ -1926,6 +2240,64 @@ func validate_phase_invariants() -> Array[String]:
 	return errors
 
 
+func validate_pending_reaction_invariants() -> Array[String]:
+	var errors: Array[String] = []
+	var pending: PendingMovementReactionState = pending_movement_reaction
+	if pending == null:
+		return errors
+	if pending.movement_action_id.is_empty():
+		errors.append("Pending movement Reaction has no movement action ID.")
+	if pending.mover_unit_id.is_empty() or get_unit(pending.mover_unit_id) == null:
+		errors.append("Pending movement Reaction references a missing mover.")
+	if pending.candidate == null:
+		errors.append("Pending movement Reaction has no candidate.")
+	else:
+		if pending.candidate.target_unit_id != pending.mover_unit_id:
+			errors.append("Pending movement Reaction candidate targets another mover.")
+		if get_unit(pending.candidate.source_unit_id) == null:
+			errors.append("Pending movement Reaction references a missing reactor.")
+	if pending.request != null:
+		if pending.request.request_id.is_empty():
+			errors.append("Pending movement Reaction request has no ID.")
+		if pending.request.candidate != pending.candidate:
+			errors.append("Pending movement Reaction request and candidate disagree.")
+	if pending.continuation_kind.is_empty():
+		errors.append("Pending movement Reaction has no continuation kind.")
+	if pending.source_revision > revision:
+		errors.append("Pending movement Reaction originates from a future revision.")
+	if pending.trigger_path_index < -1 or pending.next_step_index < -1:
+		errors.append("Pending movement Reaction has an invalid path index.")
+	if not pending.full_path.is_empty():
+		if pending.trigger_path_index <= 0 or pending.trigger_path_index >= pending.full_path.size():
+			errors.append("Pending movement Reaction trigger index is outside its path.")
+		if pending.committed_prefix.is_empty():
+			errors.append("Pending movement Reaction has no authoritative committed prefix.")
+		elif pending.current_position != pending.committed_prefix[-1]:
+			errors.append("Pending movement Reaction position disagrees with its committed prefix.")
+		if pending.next_step_index > pending.full_path.size():
+			errors.append("Pending movement Reaction continuation index exceeds its path.")
+	if pending.decision_resolved and pending.resolved_choice.is_empty():
+		errors.append("Resolved pending movement Reaction has no recorded choice.")
+	return errors
+
+
+func validate_generated_item_provenance_invariants() -> Array[String]:
+	var errors: Array[String] = []
+	var item_ids_seen: Dictionary = {}
+	for provenance: TacticalGeneratedItemProvenance in generated_item_provenance_records():
+		errors.append_array(provenance.validate_record())
+		if provenance.mission_id != mission_id:
+			errors.append("Generated-item provenance belongs to another mission.")
+		if provenance.source_setup_hash != source_setup_hash:
+			errors.append("Generated-item provenance uses another setup hash.")
+		if item_ids_seen.has(provenance.generated_item_id):
+			errors.append("Generated item %s has duplicate authority." % provenance.generated_item_id)
+		item_ids_seen[provenance.generated_item_id] = true
+		if not provenance.matches_item(get_item(provenance.generated_item_id)):
+			errors.append("Generated-item provenance no longer matches item %s." % provenance.generated_item_id)
+	return errors
+
+
 func shallow_copy_for_assembly_validation() -> TacticalState:
 	# This copy shares existing unit/item records and is safe only while mission
 	# assembly validation adds new records without mutating existing ones.
@@ -1936,9 +2308,19 @@ func shallow_copy_for_assembly_validation() -> TacticalState:
 	result.units_by_id = units_by_id.duplicate()
 	result.squads_by_id = squads_by_id.duplicate()
 	result.items_by_id = items_by_id.duplicate()
+	result.generated_item_provenance_by_id.clear()
+	for provenance: TacticalGeneratedItemProvenance in generated_item_provenance_records():
+		result.generated_item_provenance_by_id[provenance.provenance_id] = provenance
+	result.mission_id = mission_id
+	result.source_setup_hash = source_setup_hash
 	result.extraction_zone_states_by_id = extraction_zone_states_by_id.duplicate()
 	result.mission_resolution_locked = mission_resolution_locked
 	result.resolved_mission_result_id = resolved_mission_result_id
+	result.pending_movement_reaction = (
+		pending_movement_reaction.duplicate_state()
+		if pending_movement_reaction != null
+		else null
+	)
 	result.revision = revision
 	result.rebuild_unit_occupancy()
 	result.rebuild_ground_item_index()
@@ -1956,8 +2338,10 @@ func validate_all(
 	var errors: Array[String] = []
 	errors.append_array(validate_unit_invariants(map_definition))
 	errors.append_array(validate_item_invariants(map_definition))
+	errors.append_array(validate_generated_item_provenance_invariants())
 	errors.append_array(validate_squad_invariants())
 	errors.append_array(validate_phase_invariants())
+	errors.append_array(validate_pending_reaction_invariants())
 	if map_definition != null:
 		for zone_id: StringName in map_definition.extraction_zone_ids():
 			if extraction_zone_state(zone_id) == null:
@@ -1969,6 +2353,10 @@ func validate_all(
 			errors.append("Tactical extraction-zone registry contains an invalid entry.")
 	if mission_resolution_locked and resolved_mission_result_id.is_empty():
 		errors.append("Tactical mission is locked without a result ID.")
+	if mission_runtime_state != null:
+		errors.append_array(mission_runtime_state.validate_state())
+		if not source_setup_hash.is_empty() and mission_runtime_state.source_setup_hash != source_setup_hash:
+			errors.append("Mission runtime state setup hash does not match tactical authority.")
 	if environment_state == null:
 		errors.append("Tactical state has no environment state.")
 	else:

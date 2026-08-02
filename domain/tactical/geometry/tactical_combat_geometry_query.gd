@@ -166,11 +166,11 @@ static func cheap_has_line_of_sight(
 
 
 static func _evaluate_sample(
-		state: TacticalState,
+		_state: TacticalState,
 		map_definition: TacticalMapDefinition,
 		environment: TacticalEnvironmentState,
-		attacker: TacticalUnitState,
-		target: TacticalUnitState,
+		_attacker: TacticalUnitState,
+		_target: TacticalUnitState,
 		origin: Vector2,
 		sample_point: Vector2,
 		sample_height: int

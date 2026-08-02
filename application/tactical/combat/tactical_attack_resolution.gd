@@ -29,9 +29,22 @@ var capacity_before: int = 0
 var capacity_after: int = 0
 var cover_source_damage: Dictionary = {}
 var cover_salvage_item_id: StringName = &""
+# Stage 4.7 Hotfix 1 character-sheet fidelity effects.
+var sanctuary_checked: bool = false
+var sanctuary_save_roll: int = 0
+var sanctuary_save_bonus: int = 0
+var sanctuary_save_total: int = 0
+var sanctuary_save_dc: int = 0
+var sanctuary_blocked: bool = false
+var mercy_intercession_used: bool = false
+var mercy_intercessor_id: StringName = &""
+var mercy_intercession_roll: int = 0
+var mercy_intercession_reduction: int = 0
 
 
 func outcome_label() -> String:
+	if sanctuary_blocked:
+		return "BLOCKED BY SANCTUARY"
 	if not hit:
 		return "COVER HIT" if missed_due_to_cover else "MISS"
 	if critical_confirmed:

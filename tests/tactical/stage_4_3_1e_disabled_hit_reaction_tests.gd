@@ -123,7 +123,7 @@ static func _test_disabled_attack_and_post_commit_damage_event(
 				"latest_event",
 				&"combat"
 			)
-			observations["log_event"] = (
+			observations["log_event_at_impact"] = (
 				latest_value.duplicate(true)
 				if latest_value is Dictionary
 				else {}
@@ -167,10 +167,27 @@ static func _test_disabled_attack_and_post_commit_damage_event(
 		"The damage event must observe the final committed HP value.",
 		failures
 	)
-	var log_event: Dictionary = observations.get("log_event", {})
+	var log_event_at_impact: Dictionary = observations.get(
+		"log_event_at_impact",
+		{}
+	)
 	_expect(
-		StringName(log_event.get("event_type", &"")) == &"attack_resolved",
-		"The combat log must already contain the attack when the damage presentation event fires.",
+		StringName(log_event_at_impact.get("event_type", &"")) != &"attack_resolved",
+		"The damage presentation event must fire before the attack journal record is published.",
+		failures
+	)
+	var committed_log_value: Variant = session.event_journal.call(
+		"latest_event",
+		&"combat"
+	)
+	var committed_log: Dictionary = (
+		committed_log_value.duplicate(true)
+		if committed_log_value is Dictionary
+		else {}
+	)
+	_expect(
+		StringName(committed_log.get("event_type", &"")) == &"attack_resolved",
+		"The combat log must contain the attack after the commit finishes.",
 		failures
 	)
 

@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.life.mercy_bearer"
+display_name = "Mercy-Bearer"
+species_name = "Human"
+class_name_text = "Cleric 3"
+archetype_name = "Mercy-Bearer"
+troop_type = "Mercy-Bearer"
+base_level = 3
+base_ability_scores = {"CHA": 14, "CON": 14, "DEX": 10, "INT": 10, "STR": 12, "WIS": 16}
+base_attack_bonus = 2
+base_save_bonuses = {"fortitude": 3, "reflex": 1, "will": 3}
+base_hp_before_constitution = 18
+hp_constitution_levels = 3
+base_turn_capacity_feet = 80
+sprint_multiplier = 1.5
+passive_perception_base = 10
+perception_skill_bonus = 3
+maximum_weight_lb = 60.0
+default_defence_profile_id = &"defence.mercy_bearer_breastplate"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike", &"action.mercy.mercy_intercession", &"action.mercy.cure_light_wounds", &"action.mercy.cure_moderate_wounds", &"action.mercy.command_kneel", &"action.mercy.sanctuary", &"action.mercy.hold_person", &"action.mercy.mercys_rebuke", &"action.mercy.guidance", &"action.mercy.resistance", &"action.mercy.detect_poison", &"action.mercy.light"])
+trait_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting", &"feat.combat_casting", &"feat.augmented_healing", &"feat.spell_focus.compulsion", &"feature.mercy_intercession"])
+feature_parameters = {&"feat.combat_casting": {"concentration_bonus": 4}, &"feat.augmented_healing": {"rank_1_bonus": 2, "rank_2_bonus": 4}, &"feat.spell_focus.compulsion": {"save_dc_bonus": 1}, &"feature.mercy_intercession": {"range_feet": 30, "dice_count": 1, "die_size": 8, "flat_bonus": 3, "uses_per_encounter": 1}}
+ability_resource_maximums = {"resource.mercy.cure_light_wounds": 2, "resource.mercy.cure_moderate_wounds": 1, "resource.mercy.command_kneel": 1, "resource.mercy.sanctuary": 1, "resource.mercy.hold_person": 1, "resource.mercy.mercys_rebuke": 1, "resource.mercy.intercession": 1}
+ability_entries = Array[String](["Combat Casting — Concentration +10 when casting defensively or while threatened (+6 normal, +4 feat).", "Augmented Healing — approved healing totals are Cure Light 1d8+5 and Cure Moderate 2d8+7.", "Spell Focus — Compulsion — Command: Kneel DC 15 and Hold Person DC 16 only.", "Mercy Intercession — Reaction, once per encounter, 30 feet: reduce incoming lethal damage to any biological living creature by 1d8+3 before HP state.", "Prepared rank 0: Guidance, Resistance, Detect Poison, Light.", "Prepared rank 1: Cure Light Wounds x2, Command: Kneel, Sanctuary.", "Prepared rank 2: Cure Moderate Wounds, Hold Person, Mercy's Rebuke."])
+skill_bonuses = {"Concentration": 6, "Medicine": 6}
+default_loadout_entries = Array[Dictionary]([{ "definition_id": &"item.sanctuary.blackjack", "container_kind": &"main_hand", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.mercy.cradling_shield", "container_kind": &"off_hand", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.mercy.field_kit", "container_kind": &"belt", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.manacles", "container_kind": &"backpack", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.mercy.divine_focus", "container_kind": &"backpack", "grid_position": Vector2i(2, 0), "quantity": 1, "condition": 1.0 }])
+tactical_visual_id = &"tactical.life.novice_mercy_bearer"
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"support", &"mercy_bearer", &"biological", &"humanoid"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.shields", &"proficiency.medium_armour", &"proficiency.divine_spellcasting", &"proficiency.medicine"])
+ai_profile_id = &"ai.life.mercy_bearer"
+combatant_classification = &"support"
+capture_eligible = true
+surrender_eligible = true
+loot_profile_id = &"loot_profile.life.mercy_bearer"

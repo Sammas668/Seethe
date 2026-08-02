@@ -173,6 +173,19 @@ func configure(
 	_fog_layer.show_behind_parent = true
 	add_child(_fog_layer)
 	_fog_layer.configure(_map_definition, _facade, _camera_zoom)
+	if _facade != null and _facade.has_signal("visibility_delta_changed"):
+		var visibility_delta_callback := Callable(
+			self,
+			"_on_visibility_delta_changed"
+		)
+		if not _facade.is_connected(
+			"visibility_delta_changed",
+			visibility_delta_callback
+		):
+			_facade.connect(
+				"visibility_delta_changed",
+				visibility_delta_callback
+			)
 	set_process(true)
 	_clamp_camera()
 	queue_redraw()
@@ -251,30 +264,52 @@ func refresh_board() -> void:
 	queue_redraw()
 
 
-func notify_state_changed(reason: StringName) -> void:
-	if _static_layer != null and reason in [
-		&"opening_state_changed",
-		&"structure_state_changed",
-		&"structure_attacked",
-		&"environment_geometry_changed",
-		&"extraction_zone_changed",
-	]:
+func notify_state_changed(
+		reason: StringName,
+		flags: TacticalInvalidationFlags = null
+) -> void:
+	var refresh_environment: bool = (
+		flags.geometry_changed or flags.environment_visuals_changed
+		if flags != null
+		else reason in [
+			&"opening_state_changed",
+			&"structure_state_changed",
+			&"structure_attacked",
+			&"environment_geometry_changed",
+			&"extraction_zone_changed",
+		]
+	)
+	if _static_layer != null and refresh_environment:
 		_static_layer.refresh_environment()
-	if _fog_layer != null and reason in [
-		&"runtime_spawn",
-		&"unit_moved",
-		&"unit_sprinted",
-		&"enemy_unit_moved",
-		&"attack_resolved",
-		&"character_resolved",
-		&"vision_blocker_changed",
-		&"environment_geometry_changed",
-		&"opening_state_changed",
-		&"structure_state_changed",
-		&"structure_attacked",
-		&"unit_removed",
-	]:
+
+	var refresh_fog: bool = (
+		flags.visibility_changed or flags.exploration_changed
+		if flags != null
+		else reason in [
+			&"runtime_spawn",
+			&"unit_moved",
+			&"unit_sprinted",
+			&"enemy_unit_moved",
+			&"character_resolved",
+			&"vision_blocker_changed",
+			&"environment_geometry_changed",
+			&"opening_state_changed",
+			&"structure_state_changed",
+			&"structure_attacked",
+			&"unit_removed",
+		]
+	)
+	if _fog_layer != null and refresh_fog:
 		_fog_layer.refresh_fog()
+
+
+func _on_visibility_delta_changed(
+		team_id: StringName,
+		delta: Dictionary
+) -> void:
+	if team_id != &"player" or _fog_layer == null:
+		return
+	_fog_layer.apply_visibility_delta(delta)
 
 
 func performance_snapshot() -> Dictionary:

@@ -253,7 +253,7 @@ func _build_loadout_item(
 
 	var container_kind: StringName = campaign_item.location.container_id
 	var tactical_location: TacticalItemLocationState = (
-		TacticalItemLocationState.unit_hand(unit.unit_id, container_kind)
+		TacticalItemLocationState.unit_slot(unit.unit_id, container_kind)
 	)
 	if container_kind in [
 		TacticalInventoryState.KIND_BELT,

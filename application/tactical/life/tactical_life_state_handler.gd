@@ -78,7 +78,10 @@ func resolve_dying_check(unit_id: StringName) -> OperationResult:
 
 	var changes := TacticalChangeSet.new(
 		&"dying_check_resolved",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.life_state(
+			[unit.unit_id], true, true, [unit.team_id]
+		)
 	)
 	changes.stage(
 		Callable(self, "_apply_dying_check").bind(
@@ -210,9 +213,16 @@ func first_aid(
 		medical_item.location.clone() if medical_item != null else null
 	)
 
+	var first_aid_item_ids: Array[StringName] = []
+	if medical_item != null:
+		first_aid_item_ids.append(medical_item.item_id)
+	var first_aid_contract := TacticalInvalidationContract.body_action(
+		actor.unit_id, target.unit_id, first_aid_item_ids, medical_item != null, true, true, target.team_id
+	)
 	var changes := TacticalChangeSet.new(
 		&"first_aid_resolved",
-		_state_store.state.revision
+		_state_store.state.revision,
+		first_aid_contract
 	)
 	changes.stage(
 		Callable(self, "_spend_first_aid").bind(actor, actor_was_disabled),
@@ -314,7 +324,11 @@ func administer_healing_item(
 	var quantity_before: int = item.quantity
 	var location_before: TacticalItemLocationState = item.location.clone()
 	var changes := TacticalChangeSet.new(
-		&"healing_item_administered", _state_store.state.revision
+		&"healing_item_administered",
+		_state_store.state.revision,
+		TacticalInvalidationContract.body_action(
+			actor.unit_id, target.unit_id, [item.item_id], true, true, true, target.team_id
+		)
 	)
 	changes.stage(
 		Callable(self, "_spend_first_aid").bind(actor, actor.is_disabled()),
@@ -368,7 +382,10 @@ func apply_healing(
 	var before: Dictionary = target.life_state_snapshot()
 	var changes := TacticalChangeSet.new(
 		&"healing_applied",
-		_state_store.state.revision
+		_state_store.state.revision,
+		TacticalInvalidationContract.life_state(
+			[target.unit_id], true, true, [target.team_id]
+		)
 	)
 	changes.stage(
 		Callable(self, "_apply_healing_amount").bind(target, amount),

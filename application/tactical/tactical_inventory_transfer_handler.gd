@@ -6,9 +6,11 @@ const KIND_SECONDARY_HAND: StringName = TacticalInventoryState.KIND_SECONDARY_HA
 const KIND_BELT: StringName = TacticalInventoryState.KIND_BELT
 const KIND_BACKPACK: StringName = TacticalInventoryState.KIND_BACKPACK
 const KIND_GROUND: StringName = TacticalItemLocationState.CONTAINER_GROUND
+const KIND_RAIDER_SACK: StringName = TacticalInventoryState.KIND_RAIDER_SACK
 
 const BELT_WIDTH: int = TacticalInventoryState.BELT_WIDTH
 const BACKPACK_WIDTH: int = TacticalInventoryState.BACKPACK_WIDTH
+const RAIDER_SACK_WIDTH: int = TacticalInventoryState.RAIDER_SACK_WIDTH
 
 var _state_store: TacticalStateStore
 var _map_definition: TacticalMapDefinition
@@ -121,7 +123,10 @@ func execute_plan(
 
 	var changes: TacticalChangeSet = TacticalChangeSet.new(
 		&"inventory_transfer",
-		plan.expected_state_revision
+		plan.expected_state_revision,
+		TacticalInvalidationContract.inventory_and_budget(
+			[item.item_id], [unit.unit_id]
+		)
 	)
 	changes.stage(
 		Callable(self, "_apply_inventory_cost").bind(
@@ -323,7 +328,11 @@ func first_fit_for_item(
 	if position.x < 0:
 		return -1
 
-	var width := BELT_WIDTH if target_kind == KIND_BELT else BACKPACK_WIDTH
+	var width := (
+		BELT_WIDTH if target_kind == KIND_BELT
+		else RAIDER_SACK_WIDTH if target_kind == KIND_RAIDER_SACK
+		else BACKPACK_WIDTH
+	)
 	return position.y * width + position.x
 
 
@@ -354,6 +363,8 @@ func _build_plan(command: TacticalInventoryTransferCommand) -> OperationResult:
 			&"inventory_source_missing",
 			"The selected source item no longer exists."
 		)
+	if item.definition != null and item.definition.fixed_inventory_fixture:
+		return OperationResult.fail(&"fixed_inventory_fixture", "Raider's Sack is permanently fixed to the Belt.")
 
 	if command.source_kind == command.target_kind:
 		if command.source_kind in [KIND_PRIMARY_HAND, KIND_SECONDARY_HAND]:
@@ -394,7 +405,7 @@ func _build_plan(command: TacticalInventoryTransferCommand) -> OperationResult:
 	elif source_is_carried and not target_is_carried:
 		resulting_weight -= state.effective_item_weight(item)
 
-	if resulting_weight > unit.inventory.maximum_weight_lb + 0.001:
+	if resulting_weight > unit.inventory.maximum_weight_lb + 0.001 and command.target_kind != KIND_RAIDER_SACK:
 		return OperationResult.fail(
 			&"carrying_limit",
 			"Packing this item would exceed the carrying limit."
@@ -508,8 +519,8 @@ func _target_location(
 				else TacticalItemLocationState.unit_hand(unit.unit_id, KIND_SECONDARY_HAND)
 			)
 			return OperationResult.ok(secondary_location)
-		KIND_BELT, KIND_BACKPACK:
-			# Body items use the ordinary spatial fit rule. A Medium body cannot
+		KIND_BELT, KIND_BACKPACK, KIND_RAIDER_SACK:
+			# Body items use the ordinary spatial fit rule. A 4×3 Medium body cannot
 			# fit the current Belt, while a future Tiny body may legally fit and
 			# then counts as packed just as it does in the Backpack.
 			if command.target_kind == KIND_BELT and not item.belt_allowed:
@@ -522,6 +533,27 @@ func _target_location(
 					&"backpack_forbidden",
 					"That bulky item cannot be packed into a backpack."
 				)
+			if command.target_kind == KIND_RAIDER_SACK:
+				if not state.item_is_raider_sack_compatible(item):
+					return OperationResult.fail(
+						&"raider_sack_body_only",
+						"Raider's Sack accepts one restrained captive or explicitly compatible bulky object, not ordinary loot."
+					)
+				if item.is_body():
+					var captive: TacticalUnitState = state.get_unit(item.linked_unit_id)
+					if captive == null or not captive.restrained:
+						return OperationResult.fail(
+							&"raider_sack_requires_restraint",
+							"The captive must be restrained before being secured in Raider's Sack."
+						)
+				var existing_content: TacticalItemInstanceState = state.raider_sack_content_for_unit(
+					unit.unit_id
+				)
+				if existing_content != null and existing_content.item_id != item.item_id:
+					return OperationResult.fail(
+						&"raider_sack_occupied",
+						"Raider's Sack already contains a captive or burden."
+					)
 			var position := _cell_to_position(
 				command.target_kind,
 				command.target_cell_index
@@ -560,10 +592,20 @@ func _target_location(
 					&"already_grounded",
 					"The item is already on the ground."
 				)
+			var drop_cell: Vector2i = unit.grid_position
+			if item.is_body() and command.source_kind == KIND_RAIDER_SACK:
+				drop_cell = state.body_release_cell_for_carrier(
+					item, unit.grid_position, _map_definition
+				)
+				if drop_cell.x < 0:
+					return OperationResult.fail(
+						&"raider_sack_release_blocked",
+						"No adjacent legal tile is available for that captive."
+					)
 			return OperationResult.ok(
 				TacticalItemLocationState.ground(
-					unit.grid_position,
-					"Current tile"
+					drop_cell,
+					"Released from Raider's Sack"
 				)
 			)
 		_:
@@ -587,7 +629,7 @@ func _cell_to_position(
 ) -> Vector2i:
 	if cell_index < 0:
 		return Vector2i(-1, -1)
-	var width := BELT_WIDTH if container_kind == KIND_BELT else BACKPACK_WIDTH
+	var width := BELT_WIDTH if container_kind == KIND_BELT else (RAIDER_SACK_WIDTH if container_kind == KIND_RAIDER_SACK else BACKPACK_WIDTH)
 	return Vector2i(cell_index % width, int(cell_index / width))
 
 
@@ -596,7 +638,9 @@ func _normal_cost(
 		item: TacticalItemInstanceState
 ) -> ActionCost:
 	if command.target_kind == KIND_GROUND:
-		return ActionCost.fixed_capacity(0)
+		return ActionCost.minor_interaction() if command.source_kind == KIND_RAIDER_SACK else ActionCost.fixed_capacity(0)
+	if command.target_kind == KIND_RAIDER_SACK:
+		return ActionCost.half_action()
 
 	if command.source_kind == KIND_GROUND:
 		if command.target_kind == KIND_BACKPACK:
@@ -622,8 +666,8 @@ func _normal_cost(
 		return ActionCost.quick_action()
 
 	if (
-		command.source_kind == KIND_BACKPACK
-		or command.target_kind == KIND_BACKPACK
+		command.source_kind in [KIND_BACKPACK, KIND_RAIDER_SACK]
+		or command.target_kind in [KIND_BACKPACK, KIND_RAIDER_SACK]
 	):
 		return ActionCost.half_action()
 
@@ -643,8 +687,8 @@ func _provokes(command: TacticalInventoryTransferCommand) -> bool:
 	if command.source_kind == command.target_kind:
 		return false
 	return (
-		command.source_kind == KIND_BACKPACK
-		or command.target_kind == KIND_BACKPACK
+		command.source_kind in [KIND_BACKPACK, KIND_RAIDER_SACK]
+		or command.target_kind in [KIND_BACKPACK, KIND_RAIDER_SACK]
 	)
 
 
@@ -656,6 +700,8 @@ func _action_name(
 		command.source_item_id
 	)
 	if body_item != null and body_item.is_body():
+		if command.target_kind == KIND_RAIDER_SACK:
+			return "Secure %s in Raider's Sack" % item_name
 		if command.target_kind == KIND_BACKPACK:
 			return "Carry %s" % item_name
 		if command.target_kind in [KIND_PRIMARY_HAND, KIND_SECONDARY_HAND]:
@@ -676,6 +722,8 @@ func _action_name(
 		return "Move %s to Secondary Hand" % item_name
 	if command.target_kind == KIND_BELT:
 		return "Move %s to the Belt" % item_name
+	if command.target_kind == KIND_RAIDER_SACK:
+		return "Secure %s in Raider's Sack" % item_name
 	if command.target_kind == KIND_BACKPACK:
 		return "Move %s to the Backpack" % item_name
 	return "Move %s" % item_name

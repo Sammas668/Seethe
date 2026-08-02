@@ -16,6 +16,9 @@ const HANDEDNESS_NONE: StringName = &"not_equippable"
 @export var stackable: bool = false
 @export var maximum_stack_size: int = 1
 @export var equipment_tags: Array[StringName] = []
+# Fixed equipment containers such as Armour and Worn Utility are separate from
+# hands and spatial Belt/Backpack storage.
+@export var equipment_slot_ids: Array[StringName] = []
 @export var granted_action_ids: Array[StringName] = []
 @export var defence_profile_id: StringName = &""
 @export var stat_modifiers: Dictionary = {}
@@ -28,6 +31,16 @@ const HANDEDNESS_NONE: StringName = &"not_equippable"
 @export var permits_administered_healing: bool = false
 @export var healing_amount: int = 0
 @export var is_restraint: bool = false
+# Stage 4.7 Hotfix 5: fixed Belt fixtures and narrow internal containers.
+@export var fixed_inventory_fixture: bool = false
+@export var internal_container_kind: StringName = &""
+@export var internal_container_size: Vector2i = Vector2i.ZERO
+@export var internal_allowed_instance_kinds: Array[StringName] = []
+@export var internal_single_entity_only: bool = false
+# Generic equipment-rule metadata used by resolved defence and proficiency.
+@export var maximum_dexterity_bonus: int = 99
+@export var armour_check_penalty: int = 0
+@export var required_proficiency_id: StringName = &""
 
 
 func is_two_handed() -> bool:
@@ -40,6 +53,10 @@ func can_equip_in_hand() -> bool:
 
 func has_tag(tag: StringName) -> bool:
 	return equipment_tags.has(tag)
+
+
+func can_equip_in_slot(slot_id: StringName) -> bool:
+	return equipment_slot_ids.has(slot_id)
 
 
 func stat_modifier(stat_id: StringName) -> int:
@@ -67,6 +84,15 @@ func validate_definition() -> Array[String]:
 		errors.append("Item %s consumes fewer than one First Aid use." % id)
 	if healing_amount < 0:
 		errors.append("Item %s has negative administered healing." % id)
+	if fixed_inventory_fixture and not belt_allowed:
+		errors.append("Fixed inventory fixture %s must be Belt-legal." % id)
+	if not internal_container_kind.is_empty():
+		if internal_container_size.x <= 0 or internal_container_size.y <= 0:
+			errors.append("Internal container %s has an invalid size." % id)
+	if maximum_dexterity_bonus < 0:
+		errors.append("Item %s has a negative maximum Dexterity bonus." % id)
+	if armour_check_penalty > 0:
+		errors.append("Item %s has a positive armour-check penalty." % id)
 	if maximum_stack_size < 1:
 		errors.append("Item %s has a maximum stack size below 1." % id)
 	if not stackable and maximum_stack_size != 1:
@@ -82,6 +108,15 @@ func validate_definition() -> Array[String]:
 		var stat_id: String = String(raw_stat_id).strip_edges()
 		if stat_id.is_empty():
 			errors.append("Item %s has an empty stat modifier ID." % id)
+
+	var seen_slots: Dictionary = {}
+	for slot_id: StringName in equipment_slot_ids:
+		if slot_id.is_empty():
+			errors.append("Item %s has an empty equipment-slot ID." % id)
+		elif seen_slots.has(slot_id):
+			errors.append("Item %s repeats equipment slot %s." % [id, slot_id])
+		else:
+			seen_slots[slot_id] = true
 
 	var seen_actions: Dictionary = {}
 	for action_id: StringName in granted_action_ids:

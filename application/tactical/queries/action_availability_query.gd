@@ -33,6 +33,26 @@ func unavailable_reason(
 		if _catalogue != null
 		else null
 	)
+	if definition != null and unit.is_raging():
+		var requires_calm: bool = false
+		for blocked_tag: StringName in [
+			&"requires_calm", &"requires_concentration", &"requires_patience",
+		]:
+			if definition.action_tags.has(blocked_tag):
+				requires_calm = true
+		if definition is TacticalAbilityDefinition:
+			requires_calm = requires_calm or (definition as TacticalAbilityDefinition).concentration
+		if requires_calm:
+			return "Unavailable while Raging: requires calm concentration."
+	if action_id == &"rage_toggle" and not unit.rage_available():
+		return "Rage has no remaining use or the character is Fatigued."
+	if action_id == &"sprint":
+		if unit.is_fatigued():
+			return "Sprint unavailable: Fatigued."
+		if unit.load_category == TacticalUnitState.LOAD_HEAVY:
+			return "Sprint unavailable: Heavy load."
+		if unit.load_category == TacticalUnitState.LOAD_OVER_CAPACITY:
+			return "Sprint unavailable: Over Capacity."
 	if definition is AttackDefinition:
 		return ActionEconomyRules.attack_unavailable_reason(
 			unit,

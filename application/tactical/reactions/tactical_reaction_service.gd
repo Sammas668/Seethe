@@ -19,12 +19,9 @@ var _attack_preview_query: RefCounted
 var _attack_handler: RefCounted
 var _visibility_service: RefCounted
 
-var _pending_decision: ReactionDecisionRequest
-var _pending_candidate: ReactionCandidate
 var _request_sequence: int = 0
 var _movement_sequence: int = 0
 var _action_sequence: int = 0
-var _declined_candidate_keys: Dictionary = {}
 var _reaction_index_revision: int = -1
 var _threat_source_ids_by_tile: Dictionary = {}
 var _reserved_source_ids_by_tile: Dictionary = {}
@@ -68,25 +65,34 @@ func performance_snapshot() -> Dictionary:
 
 
 func pending_decision() -> ReactionDecisionRequest:
-	return _pending_decision
+	var pending: PendingMovementReactionState = _pending_state()
+	if pending == null or not pending.has_unresolved_decision():
+		return null
+	return pending.request
 
 
 func has_pending_decision() -> bool:
-	return _pending_decision != null and not _pending_decision.resolved
+	return pending_decision() != null
 
 
 func begin_movement_action_id(mover_id: StringName) -> StringName:
 	_movement_sequence += 1
-	return StringName("movement.%s.%d" % [mover_id, _movement_sequence])
+	var revision: int = (
+		_state_store.state.revision
+		if _state_store != null and _state_store.state != null
+		else 0
+	)
+	return StringName(
+		"movement.%s.r%d.%d" % [mover_id, revision, _movement_sequence]
+	)
 
 
 func clear_movement_suppression(movement_action_id: StringName) -> void:
+	# Suppression belongs to PendingMovementReactionState and disappears when the
+	# authoritative interrupted movement is cleared. Retained as a compatibility
+	# entry point for older callers.
 	if movement_action_id.is_empty():
 		return
-	var prefix: String = "%s|" % movement_action_id
-	for key_value: Variant in _declined_candidate_keys.keys():
-		if String(key_value).begins_with(prefix):
-			_declined_candidate_keys.erase(key_value)
 
 
 func preview_path_reactions(
@@ -270,14 +276,26 @@ func preview_reservation_tiles(
 	return _reservation_tiles(unit, reaction_kind, direction, action_id)
 
 
-func cancel_reservation_for_voluntary_move(unit_id: StringName) -> void:
+func cancel_reservation_for_voluntary_move(unit_id: StringName) -> OperationResult:
 	if _state_store == null:
-		return
+		return OperationResult.fail(
+			&"reaction_service_missing",
+			"Reaction services are unavailable."
+		)
 	var unit: TacticalUnitState = _state_store.state.get_unit(unit_id)
-	if unit == null or unit.action_budget.reaction_state != ReactionResourceState.RESERVED:
-		return
+	if unit == null:
+		return OperationResult.fail(&"unknown_unit", "The selected unit does not exist.")
+	if unit.action_budget.reaction_state != ReactionResourceState.RESERVED:
+		return OperationResult.no_change(
+			unit_id,
+			"No prepared Reaction reservation needed cancelling."
+		)
 	var snapshot: Dictionary = unit.action_budget.reaction_snapshot()
-	var changes := TacticalChangeSet.new(&"reaction_reservation_cancelled", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"reaction_reservation_cancelled",
+		_state_store.state.revision,
+		TacticalInvalidationContract.action_budget([unit.unit_id])
+	)
 	changes.stage(
 		func() -> bool:
 			return unit.action_budget.cancel_reaction_reservation(),
@@ -287,13 +305,19 @@ func cancel_reservation_for_voluntary_move(unit_id: StringName) -> void:
 		&"reaction_reservation_cancel_failed"
 	)
 	var committed: OperationResult = _state_store.commit(changes, _map_definition)
-	if committed.success:
-		_record_simple_event(
-			&"reaction_reservation_cancelled",
-			"%s cancelled the prepared Reaction by moving." % unit.display_name,
-			unit,
-			["Reaction returned to Ready; the Half Action remains spent."]
-		)
+	if not committed.success:
+		return committed
+	_record_simple_event(
+		&"reaction_reservation_cancelled",
+		"%s cancelled the prepared Reaction by moving." % unit.display_name,
+		unit,
+		["Reaction returned to Ready; the Half Action remains spent."]
+	)
+	return OperationResult.committed(
+		unit_id,
+		"%s cancelled the prepared Reaction reservation." % unit.display_name,
+		_state_store.state.revision
+	)
 
 
 func use_disengage(unit_id: StringName) -> OperationResult:
@@ -309,7 +333,11 @@ func use_disengage(unit_id: StringName) -> OperationResult:
 		return OperationResult.fail(&"disengage_unavailable", reason)
 	var remaining_before: int = unit.action_budget.remaining_turn_capacity_feet
 	var disengage_before: bool = unit.disengage_active
-	var changes := TacticalChangeSet.new(&"disengage_activated", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"disengage_activated",
+		_state_store.state.revision,
+		TacticalInvalidationContract.action_budget([unit.unit_id])
+	)
 	changes.stage(
 		func() -> bool:
 			if ActionEconomyRules.spend(unit, ActionCost.half_action()) < 0:
@@ -346,76 +374,22 @@ func resolve_ai_reactions_along_path(
 		movement_kind: StringName,
 		detection_resolution: TacticalDetectionResolution = null
 ) -> Dictionary:
-	var result: Dictionary = {
+	# Stage 4.5f deliberately retires this speculative API. It used to commit
+	# reaction attacks against future path cells before the movement transaction
+	# had committed. Movement handlers must now use first_*_reaction_for_path(),
+	# candidates_for_movement_step(), and authoritative segment commits.
+	push_error(
+		"resolve_ai_reactions_along_path() is retired; use the authoritative movement coordinator."
+	)
+	return {
 		"committed_path": planned_path.duplicate(),
 		"reaction_resolutions": [],
 		"stopped": false,
-		"stop_reason": &"",
+		"stop_reason": &"retired_speculative_reaction_api",
+		"mover_id": mover_id,
+		"movement_kind": movement_kind,
+		"detection_resolution": detection_resolution,
 	}
-	if planned_path.size() <= 1 or _state_store == null:
-		return result
-	var mover: TacticalUnitState = _state_store.state.get_unit(mover_id)
-	if mover == null:
-		return result
-	var movement_action_id: StringName = begin_movement_action_id(mover_id)
-	var committed_path: Array[Vector2i] = [planned_path[0]]
-	var virtual_revealed_squad_ids: Dictionary = {}
-	for squad_id: StringName in mover.revealed_to_squad_ids:
-		virtual_revealed_squad_ids[squad_id] = true
-	for path_index: int in range(1, planned_path.size()):
-		var origin: Vector2i = planned_path[path_index - 1]
-		var destination: Vector2i = planned_path[path_index]
-		var candidates: Array[ReactionCandidate] = _candidates_for_step(
-			mover,
-			origin,
-			destination,
-			path_index,
-			movement_kind,
-			movement_action_id,
-			false,
-			virtual_revealed_squad_ids
-		)
-		for candidate: ReactionCandidate in candidates:
-			var reactor: TacticalUnitState = _state_store.state.get_unit(candidate.source_unit_id)
-			if reactor == null or not reactor.is_ai_controlled():
-				continue
-			var attack_result: OperationResult = _execute_candidate(candidate)
-			(result["reaction_resolutions"] as Array).append({
-				"candidate": candidate,
-				"result": attack_result,
-				"path_index": candidate.path_index,
-				"timing_kind": candidate.timing_kind,
-				"reaction_kind": candidate.reaction_kind,
-				"source_unit_id": candidate.source_unit_id,
-				"target_unit_id": candidate.target_unit_id,
-				"hit_chance_percent": candidate.predicted_hit_chance,
-			})
-			if not attack_result.success:
-				continue
-			if _movement_stopped_by_state(mover):
-				if candidate.timing_kind == ReactionCandidate.TIMING_AFTER_ENTRY:
-					committed_path.append(destination)
-				result["stopped"] = true
-				result["stop_reason"] = &"reaction_incapacitated"
-				result["committed_path"] = committed_path
-				clear_movement_suppression(movement_action_id)
-				return result
-		if committed_path.back() != destination:
-			committed_path.append(destination)
-		_apply_virtual_detection_for_index(
-			detection_resolution,
-			path_index,
-			virtual_revealed_squad_ids
-		)
-		if (
-			detection_resolution != null
-			and detection_resolution.movement_interrupted()
-			and detection_resolution.movement_stop_index == path_index
-		):
-			break
-	result["committed_path"] = committed_path
-	clear_movement_suppression(movement_action_id)
-	return result
 
 
 func preview_provoking_action_reactions(
@@ -494,6 +468,83 @@ func first_player_reaction_for_provoking_action(
 	return null
 
 
+func candidates_for_movement_step(
+		mover_id: StringName,
+		origin: Vector2i,
+		destination: Vector2i,
+		path_index: int,
+		movement_kind: StringName,
+		movement_action_id: StringName
+) -> Array[ReactionCandidate]:
+	if _state_store == null:
+		return []
+	var mover: TacticalUnitState = _state_store.state.get_unit(mover_id)
+	if mover == null:
+		return []
+	return _candidates_for_step(
+		mover,
+		origin,
+		destination,
+		path_index,
+		movement_kind,
+		movement_action_id,
+		false
+	)
+
+
+func first_ai_reaction_for_path(
+		mover_id: StringName,
+		planned_path: Array[Vector2i],
+		movement_kind: StringName = &"normal",
+		movement_action_id_value: StringName = &""
+) -> Dictionary:
+	var result: Dictionary = {
+		"candidate": null,
+		"prefix_path": planned_path.duplicate(),
+		"movement_action_id": &"",
+	}
+	if planned_path.size() <= 1 or _state_store == null:
+		return result
+	var mover: TacticalUnitState = _state_store.state.get_unit(mover_id)
+	if mover == null:
+		return result
+	var movement_action_id: StringName = (
+		movement_action_id_value
+		if not movement_action_id_value.is_empty()
+		else begin_movement_action_id(mover_id)
+	)
+	result["movement_action_id"] = movement_action_id
+	for path_index: int in range(1, planned_path.size()):
+		var origin: Vector2i = planned_path[path_index - 1]
+		var destination: Vector2i = planned_path[path_index]
+		for candidate: ReactionCandidate in _candidates_for_step(
+			mover,
+			origin,
+			destination,
+			path_index,
+			movement_kind,
+			movement_action_id,
+			false
+		):
+			var reactor: TacticalUnitState = _state_store.state.get_unit(
+				candidate.source_unit_id
+			)
+			if reactor == null or not reactor.is_ai_controlled():
+				continue
+			var prefix_end: int = (
+				path_index
+				if candidate.timing_kind == ReactionCandidate.TIMING_AFTER_ENTRY
+				else path_index - 1
+			)
+			var prefix: Array[Vector2i] = []
+			for index: int in range(0, prefix_end + 1):
+				prefix.append(planned_path[index])
+			result["candidate"] = candidate
+			result["prefix_path"] = prefix
+			return result
+	return result
+
+
 func first_player_reaction_for_path(
 		mover_id: StringName,
 		planned_path: Array[Vector2i],
@@ -554,10 +605,33 @@ func open_player_decision(candidate: ReactionCandidate) -> OperationResult:
 	var reactor: TacticalUnitState = _state_store.state.get_unit(candidate.source_unit_id)
 	var target: TacticalUnitState = _state_store.state.get_unit(candidate.target_unit_id)
 	if reactor == null or target == null or not reactor.is_player_controlled():
-		return OperationResult.fail(&"reaction_controller_invalid", "The Reaction does not belong to a player-controlled unit.")
+		return OperationResult.fail(
+			&"reaction_controller_invalid",
+			"The Reaction does not belong to a player-controlled unit."
+		)
+	var pending: PendingMovementReactionState = _pending_state()
+	if pending != null and pending.candidate != null:
+		if _candidate_suppression_key(pending.candidate) != _candidate_suppression_key(candidate):
+			return OperationResult.fail(
+				&"reaction_decision_stale",
+				"The authoritative interrupted movement now references another Reaction."
+			)
+	if pending == null:
+		pending = PendingMovementReactionState.new()
+		pending.movement_action_id = candidate.movement_action_id
+		pending.mover_unit_id = candidate.target_unit_id
+		pending.candidate = candidate
+		pending.continuation_kind = PendingMovementReactionState.CONTINUATION_STANDALONE_REACTION
+		pending.source_revision = _state_store.state.revision
+	else:
+		pending = pending.duplicate_state()
+
 	_request_sequence += 1
 	var request := ReactionDecisionRequest.new()
-	request.request_id = StringName("reaction.request.%d" % _request_sequence)
+	request.request_id = StringName(
+		"reaction.request.r%d.%d"
+		% [_state_store.state.revision, _request_sequence]
+	)
 	request.candidate = candidate
 	request.controller_id = reactor.controller_type
 	request.reacting_unit_id = reactor.unit_id
@@ -575,7 +649,18 @@ func open_player_decision(candidate: ReactionCandidate) -> OperationResult:
 			request.use_choice = ReactionDecisionRequest.CHOICE_FIRE
 			request.decline_choice = ReactionDecisionRequest.CHOICE_HOLD
 			request.decline_keeps_reservation = true
-			request.modifier_lines.append("Overwatch attack modifier: −2")
+			var reserved_attack: AttackDefinition = _catalogue.attack_definition(
+				candidate.attack_action_id
+			)
+			var overwatch_modifier: int = _patient_overwatch_modifier(
+				reactor, reserved_attack
+			)
+			var modifier_text: String = (
+				"Patient Overwatch modifier: %+d" % overwatch_modifier
+				if overwatch_modifier != -2
+				else "Overwatch attack modifier: −2"
+			)
+			request.modifier_lines.append(modifier_text)
 		ReactionCandidate.KIND_BRACE:
 			request.use_label = "Use Brace"
 			request.decline_label = "Hold Brace"
@@ -587,19 +672,27 @@ func open_player_decision(candidate: ReactionCandidate) -> OperationResult:
 			request.decline_label = "Decline"
 			request.use_choice = ReactionDecisionRequest.CHOICE_USE
 			request.decline_choice = ReactionDecisionRequest.CHOICE_DECLINE
-	_pending_decision = request
-	_pending_candidate = candidate
+	pending.candidate = candidate
+	pending.request = request
+	pending.decision_resolved = false
+	pending.resolved_choice = &""
+	pending.source_revision = _state_store.state.revision
+	var committed: OperationResult = commit_pending_movement_reaction(
+		pending,
+		&"movement_reaction_decision_opened"
+	)
+	if not committed.success:
+		return committed
 	_performance["player_reaction_prompts_opened"] = int(
 		_performance["player_reaction_prompts_opened"]
 	) + 1
 	_record_decision_event(request, "Offered")
 	reaction_decision_requested.emit(request)
-	return OperationResult.new(
-		true,
+	return OperationResult.pending(
 		&"reaction_decision_pending",
-		"%s may use %s." % [reactor.display_name, request.reaction_display_name],
 		request,
-		OperationResult.STATUS_COMMITTED
+		"%s may use %s." % [reactor.display_name, request.reaction_display_name],
+		_state_store.state.revision
 	)
 
 
@@ -607,39 +700,60 @@ func resolve_pending_decision(
 		request_id: StringName,
 		choice: StringName
 ) -> OperationResult:
-	if not has_pending_decision() or _pending_candidate == null:
+	var pending: PendingMovementReactionState = _pending_state()
+	var request: ReactionDecisionRequest = pending.request if pending != null else null
+	var candidate: ReactionCandidate = pending.candidate if pending != null else null
+	if pending == null or request == null or candidate == null or not pending.has_unresolved_decision():
 		_performance["stale_reaction_decisions_rejected"] = int(
 			_performance["stale_reaction_decisions_rejected"]
 		) + 1
 		return OperationResult.fail(&"reaction_decision_missing", "There is no active Reaction decision.")
-	if request_id != _pending_decision.request_id or not _pending_decision.is_valid_choice(choice):
+	if request_id != request.request_id or not request.is_valid_choice(choice):
 		_performance["stale_reaction_decisions_rejected"] = int(
 			_performance["stale_reaction_decisions_rejected"]
 		) + 1
 		return OperationResult.fail(&"reaction_decision_stale", "That Reaction decision is stale or invalid.")
-	var request: ReactionDecisionRequest = _pending_decision
-	var candidate: ReactionCandidate = _pending_candidate
 	var use_reaction: bool = choice == request.use_choice
 	var attack_result: OperationResult = null
 	if use_reaction:
-		attack_result = _execute_candidate(candidate)
+		attack_result = execute_candidate(candidate)
 		if not attack_result.success:
-			_clear_pending_decision()
 			return attack_result
 		_performance["player_reactions_used"] = int(
 			_performance["player_reactions_used"]
 		) + 1
-		_record_decision_event(request, "Used")
 	else:
-		_declined_candidate_keys[_candidate_suppression_key(candidate)] = true
 		_performance["player_reactions_declined_or_held"] = int(
 			_performance["player_reactions_declined_or_held"]
 		) + 1
-		_record_decision_event(
-			request,
-			"Held" if request.decline_keeps_reservation else "Declined"
+
+	# The attack may have advanced the tactical revision. Read the authoritative
+	# pending state again and commit the decision outcome separately.
+	pending = _pending_state()
+	if pending == null or pending.request == null or pending.request.request_id != request_id:
+		return OperationResult.fail(
+			&"reaction_decision_stale",
+			"The interrupted movement changed while the Reaction resolved."
 		)
-	request.resolved = true
+	var updated: PendingMovementReactionState = pending.duplicate_state()
+	var resolved_request: ReactionDecisionRequest = _duplicate_request(request)
+	resolved_request.resolved = true
+	updated.request = resolved_request
+	updated.decision_resolved = true
+	updated.resolved_choice = choice
+	updated.source_revision = _state_store.state.revision
+	if not use_reaction:
+		updated.suppressed_candidate_keys[_candidate_suppression_key(candidate)] = true
+	var committed: OperationResult = commit_pending_movement_reaction(
+		updated,
+		&"movement_reaction_decision_resolved"
+	)
+	if not committed.success:
+		return committed
+	_record_decision_event(
+		request,
+		"Used" if use_reaction else "Held" if request.decline_keeps_reservation else "Declined"
+	)
 	var resolution := ReactionDecisionResolution.new()
 	resolution.request_id = request.request_id
 	resolution.choice = choice
@@ -647,18 +761,118 @@ func resolve_pending_decision(
 	resolution.candidate_selected = use_reaction
 	resolution.reaction_state_changed = use_reaction
 	resolution.attack_result = attack_result
-	_clear_pending_decision()
-	return OperationResult.ok(resolution, "Reaction decision resolved.")
-
-
-func _clear_pending_decision() -> void:
-	var request_id: StringName = (
-		_pending_decision.request_id if _pending_decision != null else &""
+	reaction_decision_cleared.emit(request.request_id)
+	return OperationResult.committed(
+		resolution,
+		"Reaction decision resolved.",
+		_state_store.state.revision
 	)
-	_pending_decision = null
-	_pending_candidate = null
-	if not request_id.is_empty():
+
+
+func commit_pending_movement_reaction(
+		pending: PendingMovementReactionState,
+		reason: StringName = &"movement_reaction_pending"
+) -> OperationResult:
+	if _state_store == null or _state_store.state == null or pending == null:
+		return OperationResult.fail(
+			&"pending_reaction_state_missing",
+			"An authoritative pending movement Reaction is required."
+		)
+	var previous: PendingMovementReactionState = _state_store.state.pending_movement_reaction
+	var affected_units: Array[StringName] = [pending.mover_unit_id]
+	if pending.candidate != null:
+		affected_units.append(pending.candidate.source_unit_id)
+	var changes := TacticalChangeSet.new(
+		reason,
+		_state_store.state.revision,
+		TacticalInvalidationContract.pending_decision(affected_units)
+	)
+	changes.set_allow_while_pending(true)
+	changes.set_commit_validation_policy(false, false)
+	changes.stage(
+		Callable(self, "_set_pending_state").bind(pending),
+		Callable(self, "_set_pending_state").bind(previous),
+		"The interrupted movement Reaction could not become authoritative.",
+		&"pending_reaction_commit_failed"
+	)
+	changes.require(
+		func() -> bool:
+			return _state_store.state.validate_pending_reaction_invariants().is_empty(),
+		"The interrupted movement Reaction violates tactical-state invariants.",
+		&"pending_reaction_invariant_failed"
+	)
+	return _state_store.commit(changes, _map_definition)
+
+
+func clear_pending_movement_reaction(
+		movement_action_id: StringName = &""
+) -> OperationResult:
+	var pending: PendingMovementReactionState = _pending_state()
+	if pending == null:
+		return OperationResult.no_change(null, "No interrupted movement Reaction remains.")
+	if not movement_action_id.is_empty() and pending.movement_action_id != movement_action_id:
+		return OperationResult.fail(
+			&"pending_reaction_stale",
+			"Another interrupted movement has replaced this continuation."
+		)
+	var request_id: StringName = pending.request.request_id if pending.request != null else &""
+	var changes := TacticalChangeSet.new(
+		&"movement_reaction_cleared",
+		_state_store.state.revision,
+		TacticalInvalidationContract.pending_decision([pending.mover_unit_id])
+	)
+	changes.set_allow_while_pending(true)
+	changes.set_commit_validation_policy(false, false)
+	changes.stage(
+		Callable(self, "_set_pending_state").bind(null),
+		Callable(self, "_set_pending_state").bind(pending),
+		"The interrupted movement Reaction could not be cleared.",
+		&"pending_reaction_clear_failed"
+	)
+	var committed: OperationResult = _state_store.commit(changes, _map_definition)
+	if committed.success and not request_id.is_empty():
 		reaction_decision_cleared.emit(request_id)
+	return committed
+
+
+func execute_candidate(candidate: ReactionCandidate) -> OperationResult:
+	return _execute_candidate(candidate)
+
+
+func _pending_state() -> PendingMovementReactionState:
+	if _state_store == null or _state_store.state == null:
+		return null
+	return _state_store.state.pending_movement_reaction
+
+
+func _set_pending_state(value: PendingMovementReactionState) -> bool:
+	if _state_store == null or _state_store.state == null:
+		return false
+	_state_store.state.pending_movement_reaction = value
+	return true
+
+
+func _duplicate_request(request: ReactionDecisionRequest) -> ReactionDecisionRequest:
+	var result := ReactionDecisionRequest.new()
+	result.request_id = request.request_id
+	result.candidate = request.candidate
+	result.controller_id = request.controller_id
+	result.reacting_unit_id = request.reacting_unit_id
+	result.triggering_unit_id = request.triggering_unit_id
+	result.triggering_action_name = request.triggering_action_name
+	result.reaction_display_name = request.reaction_display_name
+	result.weapon_display_name = request.weapon_display_name
+	result.predicted_hit_chance = request.predicted_hit_chance
+	result.predicted_damage_text = request.predicted_damage_text
+	result.modifier_lines = request.modifier_lines.duplicate()
+	result.use_label = request.use_label
+	result.decline_label = request.decline_label
+	result.use_choice = request.use_choice
+	result.decline_choice = request.decline_choice
+	result.decline_keeps_reservation = request.decline_keeps_reservation
+	result.created_event_id = request.created_event_id
+	result.resolved = request.resolved
+	return result
 
 
 func _prepare_reservation(
@@ -697,7 +911,11 @@ func _prepare_reservation(
 	var remaining_before: int = unit.action_budget.remaining_turn_capacity_feet
 	var spent_before: int = unit.action_budget.normal_capacity_spent_feet
 	var facing_before: Vector2i = unit.facing_direction
-	var changes := TacticalChangeSet.new(&"reaction_reserved", _state_store.state.revision)
+	var changes := TacticalChangeSet.new(
+		&"reaction_reserved",
+		_state_store.state.revision,
+		TacticalInvalidationContract.action_budget([unit.unit_id])
+	)
 	changes.stage(
 		func() -> bool:
 			if ActionEconomyRules.spend(unit, ActionCost.half_action()) < 0:
@@ -862,7 +1080,10 @@ func _candidates_for_step(
 			var modifier: int = 0
 			if reservation.reaction_kind == ReactionReservationState.KIND_OVERWATCH:
 				kind = ReactionCandidate.KIND_OVERWATCH
-				modifier = -2
+				var reserved_attack: AttackDefinition = _catalogue.attack_definition(
+					reservation.reserved_attack_action_id
+				)
+				modifier = _patient_overwatch_modifier(reactor, reserved_attack)
 				_performance["overwatch_area_intersections"] = int(
 					_performance["overwatch_area_intersections"]
 				) + 1
@@ -891,6 +1112,25 @@ func _candidates_for_step(
 				result.append(reserved_candidate)
 	result.sort_custom(_candidate_precedes)
 	return result
+
+
+func _patient_overwatch_modifier(
+		reactor: TacticalUnitState,
+		attack: AttackDefinition
+) -> int:
+	if (
+		reactor == null
+		or reactor.resolved_character == null
+		or attack == null
+		or not attack.attack_tags.has(&"capture_bow")
+		or not reactor.resolved_character.has_trait(&"feat.patient_overwatch")
+	):
+		return -2
+	return int(reactor.resolved_character.feature_parameter(
+		&"feat.patient_overwatch",
+		&"reaction_attack_modifier",
+		-1
+	))
 
 
 func _build_candidate(
@@ -925,7 +1165,7 @@ func _build_candidate(
 		"%s.step.%d.%s" % [movement_action_id, path_index, reaction_kind]
 	)
 	candidate.player_decision_required = reactor.is_player_controlled()
-	if _declined_candidate_keys.has(_candidate_suppression_key(candidate)):
+	if _candidate_is_suppressed(candidate):
 		return null
 	var preview = _attack_preview_query.call(
 		"execute_reaction",
@@ -1000,6 +1240,15 @@ func _candidate_suppression_key(candidate: ReactionCandidate) -> String:
 		candidate.target_unit_id,
 		candidate.reaction_kind,
 	]
+
+
+func _candidate_is_suppressed(candidate: ReactionCandidate) -> bool:
+	var pending: PendingMovementReactionState = _pending_state()
+	return (
+		pending != null
+		and pending.movement_action_id == candidate.movement_action_id
+		and pending.candidate_is_suppressed(_candidate_suppression_key(candidate))
+	)
 
 
 func _candidate_summary(candidate: ReactionCandidate) -> Dictionary:

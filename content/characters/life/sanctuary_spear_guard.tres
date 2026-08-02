@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.life.sanctuary_spear_guard"
+display_name = "Sanctuary Spear Guard"
+species_name = "Human"
+class_name_text = "Warrior 1"
+archetype_name = "Ilyran Watch"
+troop_type = "Sanctuary Spear Guard"
+base_level = 1
+base_ability_scores = {"CHA": 9, "CON": 14, "DEX": 10, "INT": 10, "STR": 14, "WIS": 10}
+base_attack_bonus = 1
+base_save_bonuses = {"fortitude": 2, "reflex": 0, "will": 0}
+base_hp_before_constitution = 8
+hp_constitution_levels = 1
+base_turn_capacity_feet = 80
+sprint_multiplier = 1.5
+passive_perception_base = 10
+perception_skill_bonus = 0
+maximum_weight_lb = 70.0
+default_defence_profile_id = &"defence.sanctuary_guard_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike", &"action.grapple", &"action.trip", &"action.shove", &"action.restrain", &"action.first_aid"])
+trait_ids = Array[StringName]([&"feat.weapon_focus.sanctuary_blackjack", &"feat.subdual_takedown"])
+feature_parameters = {&"feat.weapon_focus.sanctuary_blackjack": {"attack_bonus": 1}, &"feat.subdual_takedown": {"manoeuvre_bonus": 2, "valid_manoeuvres": Array[StringName]([&"grapple", &"trip", &"shove"])}}
+ability_entries = Array[String](["Weapon Focus — Sanctuary Blackjack: +1 attack with the approved Blackjack only.", "Subdual Takedown — after a successful Blackjack hit, +2 on the next Grapple, Trip or Shove against that creature before the end of this activation; no free manoeuvre or extra attack.", "Brace, Grapple, Trip, Shove, Restrain and First Aid use the shared tactical rules."])
+default_loadout_entries = Array[Dictionary]([{ "definition_id": &"item.sanctuary.capture_spear", "container_kind": &"main_hand", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.guard_shield", "container_kind": &"off_hand", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.sanctuary.blackjack", "container_kind": &"belt", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.manacles", "container_kind": &"backpack", "grid_position": Vector2i(0, 0), "quantity": 1, "condition": 1.0 }, { "definition_id": &"item.bandage", "container_kind": &"backpack", "grid_position": Vector2i(2, 0), "quantity": 1, "condition": 1.0 }])
+tactical_visual_id = &"tactical.life.settlement_guard"
+role_tags = Array[StringName]([&"settlement_guard", &"sanctuary_guard", &"capture_eligible", &"combatant", &"melee_defender", &"biological", &"humanoid"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.shields", &"proficiency.light_armour"])
+ai_profile_id = &"ai.life.sanctuary_spear_guard"
+combatant_classification = &"combatant"
+capture_eligible = true
+surrender_eligible = true
+loot_profile_id = &"loot_profile.life.sanctuary_spear_guard"

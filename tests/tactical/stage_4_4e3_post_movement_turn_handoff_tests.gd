@@ -116,7 +116,7 @@ static func _test_perception_commit_does_not_rebuild_tile_visibility(
 	visibility.call(
 		"_on_tactical_state_changed_with_flags",
 		&"current_perception_resolved",
-		TacticalInvalidationFlags.for_reason(&"current_perception_resolved")
+		TacticalInvalidationContract.no_visual_change()
 	)
 	var after: int = int(
 		visibility.performance_snapshot().get("full_recalculation_count", 0)

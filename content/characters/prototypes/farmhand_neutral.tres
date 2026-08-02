@@ -20,3 +20,5 @@ base_turn_capacity_feet = 30
 maximum_weight_lb = 50.0
 default_defence_profile_id = &"defence.hide_armour"
 innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+
+provisional_content = true

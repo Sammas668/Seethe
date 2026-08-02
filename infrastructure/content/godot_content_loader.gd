@@ -8,7 +8,8 @@ static func populate_catalogue(
 		action_resources: Array,
 		defence_resources: Array,
 		character_resources: Array,
-		modifier_resources: Array
+		modifier_resources: Array,
+		ai_profile_resources: Array = []
 ) -> Array[String]:
 	var errors: Array[String] = []
 	if catalogue == null:
@@ -43,5 +44,10 @@ static func populate_catalogue(
 		)
 		if modifier == null or not catalogue.register_character_modifier(modifier):
 			errors.append("Duplicate or invalid character modifier resource.")
+
+	for resource: Resource in ai_profile_resources:
+		var profile: TacticalAIProfileDefinition = resource as TacticalAIProfileDefinition
+		if profile == null or not catalogue.register_ai_profile(profile):
+			errors.append("Duplicate or invalid tactical AI profile resource.")
 
 	return errors

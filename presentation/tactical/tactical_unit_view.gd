@@ -25,6 +25,8 @@ const DAMAGE_REACTION_SHAKE_PIXELS: float = 2.2
 const DAMAGE_REACTION_CYCLES: float = 7.0
 const ACTIVE_HANDOFF_PULSE_DURATION: float = 0.35
 const ACTIVE_HANDOFF_PULSE_RADIUS: float = 4.0
+const ATTACK_COMMAND_PULSE_DURATION: float = 0.18
+const ATTACK_COMMAND_PULSE_RADIUS: float = 3.0
 
 # Every token-state badge uses the same footprint so no condition visually
 # overwhelms awareness or Stealth. The colourful inked artwork is scaled
@@ -54,6 +56,8 @@ var _hidden_badge: bool = false
 var _aware_badge: bool = false
 var _life_state: StringName = TacticalUnitState.LIFE_STATE_NORMAL
 var _restrained: bool = false
+var _condition_badge_kind: StringName = TacticalStatusBadgeProvider.CONDITION_KIND_NONE
+var _rage_rounds_remaining: int = 0
 var _stable: bool = false
 var _dying_successes: int = 0
 var _dying_failures: int = 0
@@ -68,9 +72,14 @@ var _movement_tween: Tween
 var _facing_tween: Tween
 var _damage_reaction_tween: Tween
 var _active_handoff_pulse_tween: Tween
+var _attack_command_pulse_tween: Tween
 var _active_handoff_pulse_progress: float = 1.0:
 	set(value):
 		_active_handoff_pulse_progress = clampf(value, 0.0, 1.0)
+		queue_redraw()
+var _attack_command_pulse_progress: float = 1.0:
+	set(value):
+		_attack_command_pulse_progress = clampf(value, 0.0, 1.0)
 		queue_redraw()
 var _damage_reaction_progress: float = 1.0:
 	set(value):
@@ -148,6 +157,10 @@ func set_status_badges(snapshot: Dictionary) -> void:
 	_dying_failures = clampi(int(snapshot.get("dying_failures", 0)), 0, 3)
 	_stable = bool(snapshot.get("stable", false))
 	_restrained = bool(snapshot.get("restrained", false))
+	_condition_badge_kind = StringName(snapshot.get(
+		"condition_kind", TacticalStatusBadgeProvider.CONDITION_KIND_NONE
+	))
+	_rage_rounds_remaining = int(snapshot.get("rage_rounds_remaining", 0))
 	queue_redraw()
 
 
@@ -181,6 +194,32 @@ func _active_handoff_pulse_strength() -> float:
 	return sin(_active_handoff_pulse_progress * PI) * (
 		1.0 - 0.25 * _active_handoff_pulse_progress
 	)
+
+
+func play_attack_command_pulse() -> void:
+	# Immediate input acknowledgement only. It confirms that the attack command
+	# was accepted but does not imply a hit and never blocks combat resolution.
+	if _attack_command_pulse_tween != null and _attack_command_pulse_tween.is_valid():
+		_attack_command_pulse_tween.kill()
+	_attack_command_pulse_progress = 0.0
+	_attack_command_pulse_tween = create_tween()
+	_attack_command_pulse_tween.set_trans(Tween.TRANS_SINE)
+	_attack_command_pulse_tween.set_ease(Tween.EASE_OUT)
+	_attack_command_pulse_tween.tween_property(
+		self,
+		"_attack_command_pulse_progress",
+		1.0,
+		ATTACK_COMMAND_PULSE_DURATION
+	)
+
+
+func _attack_command_pulse_strength() -> float:
+	if _attack_command_pulse_progress >= 1.0:
+		return 0.0
+	return sin(_attack_command_pulse_progress * PI) * (
+		1.0 - 0.35 * _attack_command_pulse_progress
+	)
+
 
 func set_cover_category(category: StringName) -> void:
 	if _cover_category == category:
@@ -248,7 +287,8 @@ func is_movement_animating() -> bool:
 
 func animate_path(
 	path: Array[Vector2i],
-	reaction_events: Array[Dictionary] = []
+	reaction_events: Array[Dictionary] = [],
+	total_movement_duration: float = -1.0
 ) -> bool:
 	if path.size() <= 1:
 		return false
@@ -261,8 +301,10 @@ func animate_path(
 	# backwards through the route.
 	position = _tile_to_world(path[0])
 	_movement_tween = create_tween()
-	_movement_tween.set_trans(Tween.TRANS_SINE)
-	_movement_tween.set_ease(Tween.EASE_IN_OUT)
+	var movement_steps: int = maxi(1, path.size() - 1)
+	var step_duration: float = 0.08
+	if total_movement_duration >= 0.0:
+		step_duration = total_movement_duration / float(movement_steps)
 
 	for index: int in range(1, path.size()):
 		for reaction_event: Dictionary in reaction_events:
@@ -275,12 +317,20 @@ func animate_path(
 					_emit_movement_reaction_presentation.bind(reaction_event)
 				)
 				_movement_tween.tween_interval(0.10)
-		_movement_tween.tween_property(
+		var movement_step: PropertyTweener = _movement_tween.tween_property(
 			self,
 			"position",
 			_tile_to_world(path[index]),
-			0.08
+			step_duration
 		)
+		if index == path.size() - 1:
+			# A slight final settle keeps the destination readable without making the
+			# counter accelerate and decelerate at every tile boundary.
+			movement_step.set_trans(Tween.TRANS_SINE)
+			movement_step.set_ease(Tween.EASE_OUT)
+		else:
+			movement_step.set_trans(Tween.TRANS_LINEAR)
+			movement_step.set_ease(Tween.EASE_IN_OUT)
 		for reaction_event: Dictionary in reaction_events:
 			if (
 				int(reaction_event.get("path_index", -1)) == index
@@ -453,6 +503,19 @@ func _draw() -> void:
 
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
+	var attack_command_strength: float = _attack_command_pulse_strength()
+	if attack_command_strength > 0.0:
+		draw_arc(
+			Vector2.ZERO,
+			unit_radius + 4.0 + ATTACK_COMMAND_PULSE_RADIUS * attack_command_strength,
+			0.0,
+			TAU,
+			40,
+			Color(1.0, 0.86, 0.34, 0.9 - 0.35 * attack_command_strength),
+			2.0 + 1.4 * attack_command_strength,
+			true
+		)
+
 	if _active_initiative:
 		var handoff_strength: float = _active_handoff_pulse_strength()
 		draw_arc(
@@ -496,6 +559,8 @@ func _draw() -> void:
 			_draw_eye_badge()
 	if _restrained:
 		_draw_restrained_badge()
+	if displayed_badge_kind() not in [BADGE_KIND_DEAD, BADGE_KIND_DYING, BADGE_KIND_UNCONSCIOUS]:
+		_draw_condition_badge()
 	if _stable:
 		_draw_stable_marker()
 
@@ -721,6 +786,30 @@ func _draw_dead_badge() -> void:
 		),
 		false
 	)
+
+
+func _condition_badge_centre() -> Vector2:
+	return Vector2(-unit_radius + 1.0, -unit_radius + 1.0)
+
+
+func _draw_condition_badge() -> void:
+	if _condition_badge_kind == TacticalStatusBadgeProvider.CONDITION_KIND_NONE:
+		return
+	var centre: Vector2 = _condition_badge_centre()
+	if _condition_badge_kind == TacticalStatusBadgeProvider.CONDITION_KIND_RAGE:
+		_draw_token_badge_backplate(centre, Color(0.22, 0.025, 0.015, 0.98), Color(1.0, 0.34, 0.08, 1.0))
+		var flame := PackedVector2Array([
+			centre + Vector2(0.0, -4.8), centre + Vector2(3.2, -0.8),
+			centre + Vector2(1.4, 4.5), centre + Vector2(-2.8, 2.3),
+			centre + Vector2(-3.7, -1.2),
+		])
+		draw_colored_polygon(flame, Color(1.0, 0.38, 0.06, 1.0))
+		draw_circle(centre + Vector2(0.2, 1.0), 1.7, Color(1.0, 0.86, 0.18, 1.0))
+	else:
+		_draw_token_badge_backplate(centre, Color(0.08, 0.09, 0.10, 0.98), Color(0.62, 0.68, 0.72, 1.0))
+		draw_line(centre + Vector2(-3.5, -1.8), centre + Vector2(3.5, -1.8), Color(0.78, 0.82, 0.84, 1.0), 1.3, true)
+		draw_line(centre + Vector2(-2.8, 1.2), centre + Vector2(2.8, 1.2), Color(0.58, 0.64, 0.68, 1.0), 1.3, true)
+		draw_line(centre + Vector2(-1.8, 4.0), centre + Vector2(1.8, 4.0), Color(0.42, 0.48, 0.52, 1.0), 1.3, true)
 
 
 func _draw_restrained_badge() -> void:
