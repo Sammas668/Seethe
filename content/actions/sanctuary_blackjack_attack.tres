@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://dfsqx0lhprdkv"]
+
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 6
+damage_type = &"blunt"
+damage_channel = &"nonlethal"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+
+[resource]
+script = ExtResource("1_attack")
+attack_ability = &"strength"
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+attack_tags = Array[StringName]([&"weapon", &"blackjack", &"sanctuary_blackjack", &"melee", &"capture_weapon", &"nonlethal_only"])
+implementation_profile_id = &"combat.melee_weapon"
+supports_power_attack = false
+damage_mode_policy = &"nonlethal_only"
+id = &"action.sanctuary.blackjack_attack"
+display_name = "Sanctuary Blackjack"
+description = "A weighted capture blackjack dealing nonlethal blunt trauma."

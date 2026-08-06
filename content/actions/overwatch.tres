@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ActionDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/action_definition.gd" id="1_action"]
+
+[resource]
+script = ExtResource("1_action")
+id = &"action.overwatch"
+display_name = "Overwatch"
+description = "Prepare a ranged Reaction against movement through a selected area."
+action_cost_type = &"half"
+provokes = false
+action_tags = Array[StringName]([&"tactics", &"reaction_reservation", &"ranged"])

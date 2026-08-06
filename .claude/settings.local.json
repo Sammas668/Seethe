@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc -l)",
+      "Bash(where.exe godot *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(where.exe Godot_v4.7.1-stable)",
+      "Bash(where.exe python *)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem -Path 'C:\\\\' -Filter 'Godot*.exe' -Recurse -ErrorAction SilentlyContinue -Depth 3 | Select-Object -First 10 FullName\")",
+      "Read(//c/Users/Admin/AppData/Local/**)",
+      "Read(//c/Users/Admin/**)",
+      "Read(//c//**)",
+      "Bash(sort -k6,7)",
+      "Bash(unzip -p \"Seethe_Stage_5_4_Stabilisation_Type_Inference_Fix_Full.zip\" \"seethe/PROJECT_TREE.txt\")"
+    ]
+  }
+}

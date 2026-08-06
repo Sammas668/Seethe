@@ -1,0 +1,1078 @@
+{
+  "id": "stronghold.fifth_god.starting_ruin",
+  "display_name": "The Fifth-God Ruin",
+  "layout_version": 3,
+  "width": 7,
+  "height": 7,
+  "primary_heart_coord": [
+    3,
+    3
+  ],
+  "primary_access_coord": [
+    2,
+    5
+  ],
+  "available_plot_art_paths": [
+    "res://assets/strategic/stronghold/plots/available_ruin_01.svg",
+    "res://assets/strategic/stronghold/plots/available_ruin_02.svg",
+    "res://assets/strategic/stronghold/plots/available_ruin_03.svg",
+    "res://assets/strategic/stronghold/plots/available_ruin_04.svg"
+  ],
+  "facility_presentations": [
+    {
+      "id": "facility.fifth_god_heart",
+      "display_name": "The Fifth-God Heart",
+      "description": "The immovable divine core of the ruin, concentrated within the true centre chamber.",
+      "art_path": "res://assets/strategic/stronghold/facilities/fifth_god_heart.svg",
+      "fallback_symbol": "H",
+      "accent_color": "c5a35b",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.stables",
+      "display_name": "Stables",
+      "description": "The stronghold\u2019s expedition yard for squad muster, transport assignment and deployment.",
+      "art_path": "res://assets/strategic/stronghold/facilities/stables.svg",
+      "fallback_symbol": "STB",
+      "accent_color": "9a7650",
+      "expected_footprint": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "facility.muster_hall",
+      "display_name": "Muster Hall",
+      "description": "A preparation and training chamber for the stronghold roster.",
+      "art_path": "res://assets/strategic/stronghold/facilities/muster_hall.svg",
+      "fallback_symbol": "M",
+      "accent_color": "9e6e55",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.prison",
+      "display_name": "Prison",
+      "description": "A guarded chamber for restrained and extracted captives.",
+      "art_path": "res://assets/strategic/stronghold/facilities/prison.svg",
+      "fallback_symbol": "P",
+      "accent_color": "8c7770",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.recovery_chamber",
+      "display_name": "Recovery Chamber",
+      "description": "A treatment chamber for wounded persistent followers.",
+      "art_path": "res://assets/strategic/stronghold/facilities/recovery_chamber.svg",
+      "fallback_symbol": "+",
+      "accent_color": "7f9f88",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.storehouse",
+      "display_name": "Storehouse",
+      "description": "Shelving, stolen provisions, recovered furniture and protected strategic stores.",
+      "art_path": "res://assets/strategic/stronghold/facilities/storehouse.svg",
+      "fallback_symbol": "ST",
+      "accent_color": "a98b57",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.reaver_warcamp",
+      "display_name": "Warcamp Foundation",
+      "description": "A broad raider district of longhouses, fires, trophies and captured equipment.",
+      "art_path": "res://assets/strategic/stronghold/facilities/reaver_warcamp.svg",
+      "fallback_symbol": "WC",
+      "accent_color": "9b5542",
+      "expected_footprint": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "facility.workshop",
+      "display_name": "Workshop",
+      "description": "A salvage, dismantling and repair chamber built into the old masonry.",
+      "art_path": "res://assets/strategic/stronghold/facilities/workshop.svg",
+      "fallback_symbol": "W",
+      "accent_color": "b0794c",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": "facility.living_quarters",
+      "display_name": "Living Quarters",
+      "description": "Aggregate accommodation for combat personnel, Manufacturing workers and future Research workers.",
+      "art_path": "res://assets/strategic/stronghold/facilities/living_quarters.svg",
+      "fallback_symbol": "LQ",
+      "accent_color": "7f806c",
+      "expected_footprint": [
+        1,
+        1
+      ]
+    }
+  ],
+  "facilities": [
+    {
+      "id": "facility.fifth_god_heart",
+      "display_name": "The Fifth-God Heart",
+      "description": "The immovable central divine core.",
+      "presentation_id": "facility.fifth_god_heart",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": false,
+      "unique": true,
+      "max_level": 5,
+      "demolishable": false,
+      "starting_facility": true,
+      "category": "fixed",
+      "construction_duration_minutes": 1,
+      "upgrade_duration_minutes": [
+        1440,
+        2880,
+        4320,
+        5760
+      ],
+      "benefits": [
+        "Anchors the stronghold and its future shared progression.",
+        "Cannot be moved or demolished.",
+        "Provides the first Research workspaces and project direction."
+      ],
+      "storage_capacity_by_level": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "research_project_slots_by_level": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "research_worker_positions_by_level": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "research_max_workers_per_project_by_level": [
+        2,
+        3,
+        3,
+        4,
+        4
+      ]
+    },
+    {
+      "id": "facility.stables",
+      "display_name": "Stables",
+      "description": "Each constructed Stable houses one exact transport and one assigned squad expedition.",
+      "presentation_id": "facility.stables",
+      "footprint": [
+        2,
+        2
+      ],
+      "buildable": false,
+      "unique": false,
+      "max_level": 1,
+      "demolishable": false,
+      "starting_facility": true,
+      "category": "support",
+      "construction_duration_minutes": 1,
+      "upgrade_duration_minutes": [],
+      "benefits": [
+        "Each constructed Stable houses one exact transport.",
+        "One squad may be assigned to each Stable.",
+        "A Stable without a vehicle prepares a six-person walking expedition.",
+        "Research unlocks transport methods; acquiring one requires an empty Stable.",
+        "Transport assets do not take damage."
+      ],
+      "storage_capacity_by_level": [
+        0
+      ],
+      "stable_space_by_level": [
+        1
+      ],
+      "benefit_lines": [
+        "Each constructed Stable houses one exact transport.",
+        "One squad may be assigned to each Stable.",
+        "A Stable without a vehicle prepares a six-person walking expedition.",
+        "Research unlocks transport methods; acquiring one requires an empty Stable.",
+        "Transport assets do not take damage."
+      ]
+    },
+    {
+      "id": "facility.storehouse",
+      "display_name": "Storehouse",
+      "description": "Stores recovered equipment, furniture and loot.",
+      "presentation_id": "facility.storehouse",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 720,
+      "upgrade_duration_minutes": [
+        720,
+        1440
+      ],
+      "benefits": [
+        "Stores recovered equipment, furniture, supplies and structural salvage."
+      ],
+      "storage_capacity_by_level": [
+        80,
+        140,
+        220
+      ]
+    },
+    {
+      "id": "facility.muster_hall",
+      "display_name": "Muster Hall",
+      "description": "Prepares the roster for recruitment and deployment.",
+      "presentation_id": "facility.muster_hall",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 1080,
+      "upgrade_duration_minutes": [
+        1080,
+        2160
+      ],
+      "benefits": [
+        "Supports recruitment, roster preparation and future deployment capacity.",
+        "Provides the organisational base for permanent troops."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "facility.recovery_chamber",
+      "display_name": "Recovery Chamber",
+      "description": "Treats wounded persistent followers.",
+      "presentation_id": "facility.recovery_chamber",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 1440,
+      "upgrade_duration_minutes": [
+        1440,
+        2880
+      ],
+      "benefits": [
+        "Treats wounded and gravely wounded persistent characters.",
+        "Adds +2 lethal HP recovery per day at Level I, +4 at Level II and +6 at Level III.",
+        "Nonlethal damage always heals at twice the final lethal recovery rate."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ],
+      "recovery_rate_bonus_by_level": [
+        2,
+        4,
+        6
+      ]
+    },
+    {
+      "id": "facility.prison",
+      "display_name": "Prison",
+      "description": "Contains extracted captives and supports custody actions.",
+      "presentation_id": "facility.prison",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 1080,
+      "upgrade_duration_minutes": [
+        1080,
+        2160
+      ],
+      "benefits": [
+        "Contains exact extracted captives safely between missions.",
+        "Level I provides 6 cells; Level II 12; Level III 20.",
+        "Enables inspection, ransom and release. Interrogation and recruitment remain deferred."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ],
+      "prison_capacity_by_level": [
+        6,
+        12,
+        20
+      ]
+    },
+    {
+      "id": "facility.workshop",
+      "display_name": "Workshop",
+      "description": "Manufactures equipment and repairs recovered destroyed items.",
+      "presentation_id": "facility.workshop",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 1440,
+      "upgrade_duration_minutes": [
+        1440,
+        2880
+      ],
+      "benefits": [
+        "Provides Workshop project slots and Manufacturing worker positions.",
+        "Manufactures approved ordinary equipment and restores recovered destroyed items.",
+        "Ordinary dismantling remains an immediate Storage action."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ],
+      "production_project_slots_by_level": [
+        3,
+        6,
+        10
+      ],
+      "production_worker_positions_by_level": [
+        3,
+        6,
+        10
+      ],
+      "production_max_workers_per_project_by_level": [
+        3,
+        4,
+        6
+      ]
+    },
+    {
+      "id": "facility.reaver_warcamp",
+      "display_name": "Warcamp Foundation",
+      "description": "A Reaver district for recruitment, training and operations.",
+      "presentation_id": "facility.reaver_warcamp",
+      "footprint": [
+        2,
+        2
+      ],
+      "buildable": true,
+      "unique": true,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "signature",
+      "construction_duration_minutes": 2160,
+      "upgrade_duration_minutes": [
+        2880,
+        5760
+      ],
+      "benefits": [
+        "Establishes the Reaver recruitment and training district.",
+        "Unlocks stronger Reaver organisation as its tier improves."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "facility.living_quarters",
+      "display_name": "Living Quarters",
+      "description": "Provides aggregate personnel accommodation without assigning individual beds.",
+      "presentation_id": "facility.living_quarters",
+      "footprint": [
+        1,
+        1
+      ],
+      "buildable": true,
+      "unique": false,
+      "max_level": 3,
+      "demolishable": true,
+      "starting_facility": false,
+      "category": "support",
+      "construction_duration_minutes": 1080,
+      "upgrade_duration_minutes": [
+        1440,
+        2880
+      ],
+      "benefits": [
+        "Increases shared personnel capacity for troops and strategic workers.",
+        "Provides aggregate accommodation only; no individual beds or schedules are simulated."
+      ],
+      "storage_capacity_by_level": [
+        0,
+        0,
+        0
+      ],
+      "personnel_capacity_by_level": [
+        8,
+        14,
+        22
+      ]
+    }
+  ],
+  "plots": [
+    {
+      "coord": [
+        0,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 3-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        3,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 4-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        4,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        0
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-1",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 3-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        3,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 4-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        4,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        1
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-2",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 3-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        3,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 4-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        4,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        2
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-3",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 3-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        3,
+        3
+      ],
+      "state": "fixed_heart",
+      "display_name": "The Fifth-God Heart",
+      "description": "The immovable divine core at the true centre of the stronghold.",
+      "tags": [
+        "heart",
+        "fixed",
+        "critical_defence_objective"
+      ],
+      "fixed_facility_id": "facility.fifth_god_heart"
+    },
+    {
+      "coord": [
+        4,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        3
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-4",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 3-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        3,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 4-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        4,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        4
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-5",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        5
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-6",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        5
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-6",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        5
+      ],
+      "state": "occupied",
+      "display_name": "Stables",
+      "description": "Part of the completed 2 \u00d7 2 starting Stables and logistics yard.",
+      "tags": [
+        "stables",
+        "starting_facility",
+        "surface_access",
+        "fixed"
+      ],
+      "fixed_facility_id": "facility.stables"
+    },
+    {
+      "coord": [
+        3,
+        5
+      ],
+      "state": "occupied",
+      "display_name": "Stables",
+      "description": "Part of the completed 2 \u00d7 2 starting Stables and logistics yard.",
+      "tags": [
+        "stables",
+        "starting_facility",
+        "surface_access",
+        "fixed"
+      ],
+      "fixed_facility_id": "facility.stables"
+    },
+    {
+      "coord": [
+        4,
+        5
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-6",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        5
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-6",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        5
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-6",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        0,
+        6
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 1-7",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        1,
+        6
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 2-7",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        2,
+        6
+      ],
+      "state": "occupied",
+      "display_name": "Stables",
+      "description": "Part of the completed 2 \u00d7 2 starting Stables and logistics yard.",
+      "tags": [
+        "stables",
+        "starting_facility",
+        "surface_access",
+        "fixed"
+      ],
+      "fixed_facility_id": "facility.stables"
+    },
+    {
+      "coord": [
+        3,
+        6
+      ],
+      "state": "occupied",
+      "display_name": "Stables",
+      "description": "Part of the completed 2 \u00d7 2 starting Stables and logistics yard.",
+      "tags": [
+        "stables",
+        "starting_facility",
+        "surface_access",
+        "fixed"
+      ],
+      "fixed_facility_id": "facility.stables"
+    },
+    {
+      "coord": [
+        4,
+        6
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 5-7",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        5,
+        6
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 6-7",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    },
+    {
+      "coord": [
+        6,
+        6
+      ],
+      "state": "available",
+      "display_name": "Cleared Ruin Chamber 7-7",
+      "description": "A cleared room-scale chamber ready for immediate prototype construction.",
+      "tags": [
+        "constructible_now"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.life.patrol_leader"
+display_name = "Settlement Patrol Leader"
+species_name = "Human"
+class_name_text = "Warrior 3"
+archetype_name = "Ilyran Watch"
+troop_type = "Patrol Leader"
+base_level = 3
+base_ability_scores = {"CHA": 13, "CON": 13, "DEX": 12, "INT": 11, "STR": 15, "WIS": 14}
+base_attack_bonus = 3
+base_save_bonuses = {"fortitude": 3, "reflex": 1, "will": 1}
+base_hp_before_constitution = 23
+hp_constitution_levels = 3
+base_turn_capacity_feet = 30
+passive_perception_base = 10
+perception_skill_bonus = 5
+initiative_flat_bonus = 1
+maximum_weight_lb = 80.0
+default_defence_profile_id = &"defence.light_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+trait_ids = Array[StringName]([&"trait.watch_leader"])
+ability_entries = Array[String](["Watch Leader — better Perception and initiative; anchors the storehouse defence and communicates confirmed alerts."])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.patrol_sword", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"off_hand", "definition_id": &"item.guard_shield", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"belt", "definition_id": &"item.bandage", "grid_position": Vector2i(0, 0), "quantity": 1}])
+tactical_visual_id = &"tactical.life.patrol_leader"
+role_tags = Array[StringName]([&"settlement_guard", &"capture_eligible", &"combatant", &"leader"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.martial_weapons", &"proficiency.shields", &"proficiency.light_armour"])
+ai_profile_id = &"ai.life.patrol_leader"
+combatant_classification = &"combatant"
+capture_eligible = true
+surrender_eligible = false
+loot_profile_id = &"loot_profile.life.patrol_leader"

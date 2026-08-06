@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dhocdmqx1u7v7"
+
+[deps]
+
+files=["res://content/regions/life_starter/life_starter_region_hexes.offset.translation", "res://content/regions/life_starter/life_starter_region_hexes.playable.translation", "res://content/regions/life_starter/life_starter_region_hexes.terrain.translation", "res://content/regions/life_starter/life_starter_region_hexes.subregion.translation", "res://content/regions/life_starter/life_starter_region_hexes.site.translation", "res://content/regions/life_starter/life_starter_region_hexes.visual.translation"]
+
+source_file="res://content/regions/life_starter/life_starter_region_hexes.csv"
+dest_files=["res://content/regions/life_starter/life_starter_region_hexes.offset.translation", "res://content/regions/life_starter/life_starter_region_hexes.playable.translation", "res://content/regions/life_starter/life_starter_region_hexes.terrain.translation", "res://content/regions/life_starter/life_starter_region_hexes.subregion.translation", "res://content/regions/life_starter/life_starter_region_hexes.site.translation", "res://content/regions/life_starter/life_starter_region_hexes.visual.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

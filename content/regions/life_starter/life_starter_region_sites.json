@@ -1,0 +1,1092 @@
+{
+  "sites": [
+    {
+      "id": "site.settlement.telluria",
+      "display_name": "Telluria",
+      "site_type": "settlement",
+      "coord": [
+        9,
+        7
+      ],
+      "footprint": [
+        [
+          9,
+          6
+        ],
+        [
+          8,
+          6
+        ],
+        [
+          10,
+          6
+        ],
+        [
+          9,
+          7
+        ],
+        [
+          8,
+          7
+        ],
+        [
+          10,
+          7
+        ],
+        [
+          9,
+          8
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "The region’s main settlement: a wealthy Ilyran centre of grain, craft, pilgrimage and controlled prosperity.",
+      "tags": [
+        "SETTLEMENT",
+        "MAIN_SETTLEMENT",
+        "LIFE_REALM_CENTRE",
+        "HOLY_SITE",
+        "FOOD_EXPORTER",
+        "ARTISAN_CENTRE",
+        "WAREHOUSE_CLUSTER",
+        "HIGH_GUARD_PRESENCE"
+      ],
+      "icon_id": "settlement_large",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 100,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.oakstead",
+      "display_name": "Oakstead",
+      "site_type": "settlement",
+      "coord": [
+        12,
+        12
+      ],
+      "footprint": [
+        [
+          12,
+          11
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          12,
+          12
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "A large, dangerous settlement controlled by a hidden syndicate and known for gathering restricted artefacts.",
+      "tags": [
+        "SETTLEMENT",
+        "SECRET_SYNDICATE",
+        "ARTEFACT_GATHERER",
+        "CRIMINAL_MARKET",
+        "WATCHFUL"
+      ],
+      "icon_id": "settlement_medium",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 85,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.laencaster",
+      "display_name": "Laencaster",
+      "site_type": "settlement",
+      "coord": [
+        15,
+        7
+      ],
+      "footprint": [
+        [
+          15,
+          7
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A holy settlement at the forest threshold, dominated by the monument and temple of the Hero of Mercy.",
+      "tags": [
+        "SETTLEMENT",
+        "HOLY_SITE",
+        "DIVINE_CASTERS",
+        "FOREST_GATEWAY"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 80,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.solis",
+      "display_name": "Solis",
+      "site_type": "settlement",
+      "coord": [
+        16,
+        4
+      ],
+      "footprint": [
+        [
+          16,
+          4
+        ],
+        [
+          16,
+          3
+        ],
+        [
+          17,
+          4
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A magically attuned and highly pious town where weapons and magical implements are peacebound or surrendered.",
+      "tags": [
+        "SETTLEMENT",
+        "MAGICALLY_ATTUNED",
+        "PIOUS",
+        "PEACEBONDING",
+        "WEAPON_CONTROL"
+      ],
+      "icon_id": "settlement_medium",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 80,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.westmarch",
+      "display_name": "Westmarch",
+      "site_type": "settlement",
+      "coord": [
+        3,
+        5
+      ],
+      "footprint": [
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "A supposed utopian council where political voice is effectively limited to landowning Ilyran faithful.",
+      "tags": [
+        "SETTLEMENT",
+        "COUNCIL",
+        "UTOPIAN_EXPERIMENT",
+        "INSULAR",
+        "LANDOWNER_RULE"
+      ],
+      "icon_id": "settlement_medium",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 80,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.ascot",
+      "display_name": "Ascot",
+      "site_type": "settlement",
+      "coord": [
+        14,
+        12
+      ],
+      "footprint": [
+        [
+          14,
+          12
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "A tiny forest-edge habitation on the old adventuring trail leading toward the buried Fifth-God ruin.",
+      "tags": [
+        "SETTLEMENT",
+        "HAMLET",
+        "ADVENTURING_TRAIL"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 75,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.dornwich",
+      "display_name": "Dornwich",
+      "site_type": "settlement",
+      "coord": [
+        13,
+        4
+      ],
+      "footprint": [
+        [
+          13,
+          4
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A therapeutic village of hospitals, retreats, healing herbs and a renowned necropolis.",
+      "tags": [
+        "SETTLEMENT",
+        "THERAPEUTIC",
+        "NECROPOLIS",
+        "HEALING_INSTITUTIONS"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 75,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.balerno",
+      "display_name": "Balerno",
+      "site_type": "settlement",
+      "coord": [
+        8,
+        11
+      ],
+      "footprint": [
+        [
+          8,
+          11
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "A pious but lawless village whose Ilyran devotion has not produced stable civil authority.",
+      "tags": [
+        "SETTLEMENT",
+        "PIOUS",
+        "LAWLESS",
+        "DANGEROUS"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.barnemouth",
+      "display_name": "Barnemouth",
+      "site_type": "settlement",
+      "coord": [
+        4,
+        2
+      ],
+      "footprint": [
+        [
+          4,
+          2
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "A tightly secured noble settlement whose moral laws prohibit common vices while luxury trade serves a resident dynasty.",
+      "tags": [
+        "SETTLEMENT",
+        "NOBLE_HOUSING",
+        "ROYAL_ACCOMMODATIONS",
+        "ABSTINENT",
+        "HIGH_SECURITY"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.bellmare",
+      "display_name": "Bellmare",
+      "site_type": "settlement",
+      "coord": [
+        2,
+        6
+      ],
+      "footprint": [
+        [
+          2,
+          6
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "A pious and superstitious lakeside village surrounded by fields, fisheries and wetland holdings.",
+      "tags": [
+        "SETTLEMENT",
+        "LAKESIDE",
+        "PIOUS",
+        "SUPERSTITIOUS"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.crullfeld",
+      "display_name": "Crullfeld",
+      "site_type": "settlement",
+      "coord": [
+        1,
+        3
+      ],
+      "footprint": [
+        [
+          1,
+          3
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "An impoverished and isolated village centred on an Ilyran monastic order.",
+      "tags": [
+        "SETTLEMENT",
+        "MONASTIC_ORDER",
+        "INSULAR",
+        "IMPOVERISHED"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.dalry",
+      "display_name": "Dalry",
+      "site_type": "settlement",
+      "coord": [
+        9,
+        14
+      ],
+      "footprint": [
+        [
+          9,
+          14
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "A livestock and mount-breeding village known for excellent animals and hostility toward non-humans.",
+      "tags": [
+        "SETTLEMENT",
+        "FAMED_BREEDERS",
+        "MOUNTS",
+        "RACIALLY_INTOLERANT"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.lullin",
+      "display_name": "Lullin",
+      "site_type": "settlement",
+      "coord": [
+        18,
+        6
+      ],
+      "footprint": [
+        [
+          18,
+          6
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A tiny magically attuned hamlet embedded within the forest near converging old powers.",
+      "tags": [
+        "SETTLEMENT",
+        "HAMLET",
+        "MAGICALLY_ATTUNED",
+        "FOREST"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.torrine",
+      "display_name": "Torrine",
+      "site_type": "settlement",
+      "coord": [
+        18,
+        2
+      ],
+      "footprint": [
+        [
+          18,
+          2
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "An isolated village fiercely loyal to its own people and known for a regional carnival.",
+      "tags": [
+        "SETTLEMENT",
+        "INSULAR",
+        "TOURIST_ATTRACTION",
+        "CARNIVAL"
+      ],
+      "icon_id": "settlement_small",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 70,
+      "aliases": []
+    },
+    {
+      "id": "site.religious.hero_of_mercy_monument",
+      "display_name": "Monument of the Hero of Mercy",
+      "site_type": "religious",
+      "coord": [
+        14,
+        7
+      ],
+      "footprint": [
+        [
+          14,
+          7
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.laencaster",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A major Ilyran monument and temple marking the birthplace of the Hero of Mercy.",
+      "tags": [
+        "RELIGIOUS_SITE",
+        "HOLY_SITE",
+        "ILYRA",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "religious_site",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 55,
+      "aliases": []
+    },
+    {
+      "id": "site.wilderness.northern_marsh",
+      "display_name": "Northern Healing Marsh",
+      "site_type": "wilderness",
+      "coord": [
+        14,
+        1
+      ],
+      "footprint": [
+        [
+          14,
+          1
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.dornwich",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A difficult wetland harvested for rare medicinal plants and watched by Dornwich custodians.",
+      "tags": [
+        "WILDERNESS",
+        "MARSHLAND",
+        "HEALING_HERBS",
+        "DIFFICULT_TRAVEL",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "wilderness_marsh",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 25,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.craftsman_district",
+      "display_name": "Telluria Craftsman’s District",
+      "site_type": "district",
+      "coord": [
+        10,
+        6
+      ],
+      "footprint": [
+        [
+          10,
+          6
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "Workshops and studios supporting Telluria’s renowned makers, artists and repair trades.",
+      "tags": [
+        "DISTRICT",
+        "CRAFTS",
+        "WORKSHOPS",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_craftsmans_district",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.guild_house",
+      "display_name": "Telluria Guild House",
+      "site_type": "district",
+      "coord": [
+        9,
+        7
+      ],
+      "footprint": [
+        [
+          9,
+          7
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "The administrative and ceremonial centre of Telluria’s sanctioned trades.",
+      "tags": [
+        "DISTRICT",
+        "GUILD",
+        "ADMINISTRATION",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_guild_house",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.lumbermill",
+      "display_name": "Telluria Lumbermill",
+      "site_type": "district",
+      "coord": [
+        8,
+        6
+      ],
+      "footprint": [
+        [
+          8,
+          6
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "A managed timber yard processing wood drawn from the region’s controlled forests.",
+      "tags": [
+        "DISTRICT",
+        "LUMBER",
+        "WOOD",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_lumbermill",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.noble_housing",
+      "display_name": "Telluria Noble Housing",
+      "site_type": "district",
+      "coord": [
+        9,
+        8
+      ],
+      "footprint": [
+        [
+          9,
+          8
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "Protected residences of wealthy landowners, clerical patrons and regional officials.",
+      "tags": [
+        "DISTRICT",
+        "NOBLE_HOUSING",
+        "WEALTH",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_noble_housing",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.textiles_warehouse",
+      "display_name": "Telluria Textiles Warehouse",
+      "site_type": "district",
+      "coord": [
+        9,
+        6
+      ],
+      "footprint": [
+        [
+          9,
+          6
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "A warehouse of wool, linen, dyed cloth and other valuable finished textiles.",
+      "tags": [
+        "DISTRICT",
+        "WAREHOUSE",
+        "TEXTILES",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_textiles_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.wheat_warehouse",
+      "display_name": "Telluria Wheat Warehouse",
+      "site_type": "district",
+      "coord": [
+        8,
+        7
+      ],
+      "footprint": [
+        [
+          8,
+          7
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "A major store of the grain surplus that sustains Telluria’s population and exports.",
+      "tags": [
+        "DISTRICT",
+        "WAREHOUSE",
+        "FOOD",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "district_wheat_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 20,
+      "aliases": []
+    },
+    {
+      "id": "site.telluria.east_merchant_quarter",
+      "display_name": "East Merchant Quarter",
+      "site_type": "district",
+      "coord": [
+        10,
+        7
+      ],
+      "footprint": [
+        [
+          10,
+          7
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.telluria_proper",
+      "description": "A second dense commercial quarter within Telluria’s seven-hex urban footprint.",
+      "tags": [
+        "DISTRICT",
+        "MERCHANTS",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_market",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 18,
+      "aliases": []
+    },
+    {
+      "id": "site.oakstead.artifact_hall",
+      "display_name": "Artifact Hall",
+      "site_type": "district",
+      "coord": [
+        12,
+        11
+      ],
+      "footprint": [
+        [
+          12,
+          11
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.oakstead",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "An authored occupied hex within Oakstead.",
+      "tags": [
+        "DISTRICT",
+        "ARTIFACTS",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_craftsmans_district",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.oakstead.syndicate_house",
+      "display_name": "Syndicate House",
+      "site_type": "district",
+      "coord": [
+        12,
+        12
+      ],
+      "footprint": [
+        [
+          12,
+          12
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.oakstead",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "An authored occupied hex within Oakstead.",
+      "tags": [
+        "DISTRICT",
+        "SYNDICATE",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_textiles_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.oakstead.warehouse",
+      "display_name": "Syndicate Warehouse",
+      "site_type": "district",
+      "coord": [
+        11,
+        12
+      ],
+      "footprint": [
+        [
+          11,
+          12
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.oakstead",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "An authored occupied hex within Oakstead.",
+      "tags": [
+        "DISTRICT",
+        "WAREHOUSE",
+        "SYNDICATE",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_wheat_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.westmarch.craftsman_yard",
+      "display_name": "Council Workshops",
+      "site_type": "district",
+      "coord": [
+        4,
+        4
+      ],
+      "footprint": [
+        [
+          4,
+          4
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.westmarch",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "An authored occupied hex within Westmarch.",
+      "tags": [
+        "DISTRICT",
+        "CRAFTS",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_craftsmans_district",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.westmarch.south_granary",
+      "display_name": "South Granary",
+      "site_type": "district",
+      "coord": [
+        3,
+        4
+      ],
+      "footprint": [
+        [
+          3,
+          4
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.westmarch",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "An authored occupied hex within Westmarch.",
+      "tags": [
+        "DISTRICT",
+        "GRAIN_STORAGE",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_wheat_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.westmarch.textile_store",
+      "display_name": "Textile Storehouses",
+      "site_type": "district",
+      "coord": [
+        3,
+        5
+      ],
+      "footprint": [
+        [
+          3,
+          5
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.westmarch",
+      "subregion_id": "subregion.life.north_west_telluria",
+      "description": "An authored occupied hex within Westmarch.",
+      "tags": [
+        "DISTRICT",
+        "TEXTILES",
+        "SETTLEMENT_FOOTPRINT"
+      ],
+      "icon_id": "district_textiles_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 16,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.solis.district.16_3",
+      "display_name": "Wheat Warehouse",
+      "site_type": "district",
+      "coord": [
+        16,
+        3
+      ],
+      "footprint": [
+        [
+          16,
+          3
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.solis",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "Wheat Warehouse district of Solis.",
+      "tags": [],
+      "icon_id": "district_wheat_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 0,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.solis.district.16_4",
+      "display_name": "Guild House",
+      "site_type": "district",
+      "coord": [
+        16,
+        4
+      ],
+      "footprint": [
+        [
+          16,
+          4
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.solis",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "Guild House district of Solis.",
+      "tags": [],
+      "icon_id": "district_guild_house",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 0,
+      "aliases": []
+    },
+    {
+      "id": "site.settlement.solis.district.17_4",
+      "display_name": "Textiles Warehouse",
+      "site_type": "district",
+      "coord": [
+        17,
+        4
+      ],
+      "footprint": [
+        [
+          17,
+          4
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.solis",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "Textiles Warehouse district of Solis.",
+      "tags": [],
+      "icon_id": "district_textiles_warehouse",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 0,
+      "aliases": []
+    },
+    {
+      "id": "site.fifth_god_ruin",
+      "display_name": "Fifth-God Ruin",
+      "site_type": "stronghold",
+      "coord": [
+        18,
+        13
+      ],
+      "footprint": [
+        [
+          18,
+          13
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "The concealed Fifth-God stronghold lies beyond the public road network in the deepest forest. Its approaches are unmarked campaign routes rather than visible roads.",
+      "tags": [
+        "DEEP_FOREST",
+        "FIFTH_GOD_RUIN",
+        "FIXED_SITE",
+        "HIDDEN_OFF_ROAD",
+        "PLAYER_OWNED",
+        "STRONGHOLD"
+      ],
+      "icon_id": "fifth_god_ruin",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 120,
+      "aliases": [
+        "site.fifth_god.ruin"
+      ]
+    },
+    {
+      "id": "site.farm.starter_storehouse",
+      "display_name": "Southroad Farm Storehouse",
+      "site_type": "farm",
+      "coord": [
+        10,
+        10
+      ],
+      "footprint": [
+        [
+          10,
+          10
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.telluria",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "An Ilyran farm and storehouse holding grain, portable supplies and intact furniture for the regional road network.",
+      "tags": [
+        "FARM",
+        "STOREHOUSE",
+        "AUTHORED_MISSION_SITE",
+        "FOOD",
+        "FURNITURE"
+      ],
+      "icon_id": "farm_storehouse",
+      "mission_definition_ids": [
+        "mission_definition.life.farm_storehouse_raid_01"
+      ],
+      "inspectable": true,
+      "label_priority": 65,
+      "aliases": [
+        "site.life.southroad_farm"
+      ]
+    },
+    {
+      "id": "site.military.forest_gate_garrison",
+      "display_name": "Forest Gate Garrison",
+      "site_type": "military",
+      "coord": [
+        14,
+        8
+      ],
+      "footprint": [
+        [
+          14,
+          8
+        ]
+      ],
+      "parent_settlement_id": "site.settlement.laencaster",
+      "subregion_id": "subregion.life.north_east_telluria",
+      "description": "A regional garrison and road checkpoint controlling organised movement into the south-eastern forest.",
+      "tags": [
+        "MILITARY_SITE",
+        "REGIONAL_GARRISON",
+        "FOREST_WATCH",
+        "ROAD_CHECKPOINT",
+        "MISSION_SOURCE"
+      ],
+      "icon_id": "military_site",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 55
+    },
+    {
+      "id": "site.wilderness.deep_forest_ruins",
+      "display_name": "Ancient Forest Ruin",
+      "site_type": "ruin",
+      "coord": [
+        17,
+        12
+      ],
+      "footprint": [
+        [
+          17,
+          12
+        ]
+      ],
+      "parent_settlement_id": "",
+      "subregion_id": "subregion.life.south_telluria",
+      "description": "A separate abandoned ruin marked on old adventurers’ charts. It is not the Fifth-God stronghold and may support independent exploration missions.",
+      "tags": [
+        "RUIN",
+        "ANCIENT_SITE",
+        "ADVENTURING_SITE",
+        "MISSION_SOURCE",
+        "DEEP_FOREST"
+      ],
+      "icon_id": "ancient_forest_ruin",
+      "mission_definition_ids": [],
+      "inspectable": true,
+      "label_priority": 58
+    }
+  ]
+}

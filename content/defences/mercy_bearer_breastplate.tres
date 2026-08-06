@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DefenceProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/defence_profile.gd" id="1_defence"]
+
+[resource]
+script = ExtResource("1_defence")
+id = &"defence.mercy_bearer_breastplate"
+display_name = "Mercy-Bearer Breastplate"
+armour_class_bonus = 5
+defence_tags = Array[StringName]([&"armour"])
+notes = "Approved breastplate for the level-3 Mercy-Bearer."

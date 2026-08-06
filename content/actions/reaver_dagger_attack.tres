@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://d0b6wtm61t5f8"]
+
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+damage_type = &"piercing_slashing"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+
+[resource]
+script = ExtResource("1_attack")
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+critical_threat_minimum = 19
+attack_tags = Array[StringName]([&"weapon", &"dagger", &"melee"])
+implementation_profile_id = &"combat.melee_weapon"
+id = &"action.reaver_dagger_attack"
+display_name = "Dagger"
+description = "A close melee attack with a raider's dagger."
+action_tags = Array[StringName]([&"attack", &"weapon_attack"])

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.light"
+display_name = "Light"
+description = "Quick Action, touch. One held or worn object emits Bright 20 feet and Dim 20 feet for the encounter; one active Light per Mercy-Bearer."
+action_cost_type = &"quick"
+implementation_profile_id = &"ability.light"
+targeting_rule_id = &"target.touch_creature"
+range_feet = 5
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &""
+resource_cost = 0
+spell_rank = 0
+caster_level = 3
+school_tags = Array[StringName]([&"light"])
+dice_count = 0
+die_size = 0
+flat_bonus = 0
+damage_channel = &""
+save_type = &""
+save_dc = 0
+half_on_save = false
+condition_id = &"effect.light"
+duration_rounds = 99
+concentration = false
+bonus_value = 20
+effect_tags = Array[StringName]([&"light"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"item.reaver_dagger"
+display_name = "Raider's Dagger"
+description = "A belt knife balanced for close fighting or throwing."
+weight_lb = 1.0
+inventory_footprint = Vector2i(1, 2)
+handedness = &"one_handed"
+belt_allowed = true
+backpack_allowed = true
+maximum_stack_size = 1
+storage_space = 1
+storage_units_per_bundle = 1
+storage_space_per_bundle = 1
+equipment_tags = Array[StringName]([&"weapon", &"melee", &"ranged", &"dagger", &"thrown"])
+granted_action_ids = Array[StringName]([&"action.reaver_dagger_attack", &"action.reaver_thrown_dagger_attack"])
+tactical_visual_category = &"weapon"
+
+required_proficiency_id = &"proficiency.simple_weapons"
+shop_category_id = &"weapons"
+shop_buy_price_gold = 4
+shop_sell_price_gold = 2
+shop_starting_available = false

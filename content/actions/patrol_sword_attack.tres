@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AttackDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 8
+damage_type = &"slashing"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+reach_feet = 5
+
+[resource]
+script = ExtResource("1_attack")
+id = &"action.patrol_sword_attack"
+display_name = "Patrol Sword"
+description = "A controlled military sword attack."
+action_cost_type = &"half"
+attack_kind = &"melee"
+attack_ability = &"strength"
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+critical_threat_minimum = 19
+attack_tags = Array[StringName]([&"weapon", &"sword", &"melee", &"leader"])
+implementation_profile_id = &"combat.melee_weapon"

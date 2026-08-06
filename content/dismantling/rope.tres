@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DismantlingRecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/dismantling_recipe_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"dismantle.rope.basic"
+input_item_definition_id = &"item.rope"
+resource_yields = {"textiles": 1}
+description = "Unpick the rope into reusable fibre and cordage."

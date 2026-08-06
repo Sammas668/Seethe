@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.reaver.marauder_tier_1"
+display_name = "Tier I Marauder"
+species_name = "Human"
+class_name_text = "Barbarian 3"
+archetype_name = "Reaver"
+troop_type = "Marauder"
+troop_tier = 1
+base_level = 3
+base_xp = 3000
+base_ability_scores = {"CHA": 8, "CON": 14, "DEX": 13, "INT": 10, "STR": 15, "WIS": 12}
+base_attack_bonus = 3
+base_save_bonuses = {"fortitude": 3, "reflex": 1, "will": 1}
+base_hp_before_constitution = 26
+hp_constitution_levels = 3
+base_armour_class = 10
+base_turn_capacity_feet = 80
+sprint_multiplier = 1.5
+passive_perception_base = 10
+perception_skill_bonus = 6
+initiative_flat_bonus = 0
+maximum_weight_lb = 350.0
+carrying_strength_bonus = 4
+carrying_capacity_bonus_per_strength_point_lb = 0.0
+footprint = Vector2i(1, 1)
+default_defence_profile_id = &"defence.patchwork_raider_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike", &"action.grapple", &"action.restrain"])
+trait_ids = Array[StringName]([&"feature.rage", &"feature.fast_movement", &"feature.uncanny_dodge", &"feature.trap_sense_1", &"feat.power_attack", &"trait.take_them_alive", &"trait.raiders_burden"])
+tier_starting_feat_ids = Array[StringName]([&"trait.take_them_alive", &"trait.raiders_burden"])
+feature_parameters = {&"feature.rage": {"activation_cost": &"quick", "duration_rounds": 7, "uses_per_mission": 1, "calm_actions_forbidden": true}, &"feature.fast_movement": {"movement_reference_feet": 40, "base_full_turn_capacity_feet": 60, "requires_not_heavy_load": true, "permitted_armour_categories": Array[StringName]([&"light", &"medium"])}, &"feature.uncanny_dodge": {"retains_dexterity_when_unseen": true, "retains_dexterity_when_unaware": true}, &"feature.trap_sense_1": {"trap_reflex_bonus": 1, "trap_armour_class_bonus": 1}, &"feat.power_attack": {"maximum_value_source": &"bab"}, &"trait.take_them_alive": {"nonlethal_penalty_offset": 4, "restrain_cost": &"quick", "requires_blunt_melee": true}, &"trait.raiders_burden": {"carrying_strength_bonus": 4, "secured_burden_limit": 1, "maximum_secured_size": &"medium"}}
+ability_resource_maximums = {"resource.rage": 1}
+skill_bonuses = {"Climb": 7, "Intimidate": 5, "Jump": 7, "Perception": 7, "Stealth": 0, "Survival": 7}
+ability_entries = Array[String](["Rage — Quick Action; 1 use per mission; 7 rounds. Strength +4, Constitution +4, Will +2, Armour Class -2 and +6 current/maximum HP from Constitution. Calm-concentration abilities are unavailable. Fatigued after Rage ends.", "Fast Movement — 40-foot movement reference while wearing light or medium armour and not carrying a Heavy load; 80-foot turn capacity and 120-foot Sprint while Lightly loaded.", "Uncanny Dodge — retains Dexterity contribution to Armour Class against unseen attackers, while caught unaware and before a perceived attacker acts; helplessness, immobilisation and explicit counters still remove it.", "Trap Sense +1 — +1 Reflex against traps and +1 Armour Class against trap attacks.", "Power Attack — choose a penalty up to current BAB before a supported melee attack; each point gives -1 attack and +1 damage with a one-handed weapon.", "Take Them Alive — blunt melee attacks may become Nonlethal without the normal -4 penalty; after this Marauder causes Nonlethal Unconsciousness, dragging rope or manacles onto the adjacent target uses a Quick Action.", "Raider's Burden — +4 effective Strength for carrying capacity only; one restrained Medium-or-smaller captive or compatible bulky object may be secured in the fixed Raider's Sack without occupying a hand. Weight and Bulk still apply."])
+level_progression_entries = Array[Dictionary]([{ "level": 4, "xp_required": 6000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 6, "fortitude": 1}, "granted_ability_ids": Array[StringName]([&"ability.brutal_momentum"]), "summary": "Improved attack progression, endurance and Brutal Momentum." }, { "level": 5, "xp_required": 10000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 6, "reflex": 1, "will": 1}, "talent_choices": Array[Dictionary]([{ "id": &"talent.heavy_blows", "display_name": "Heavy Blows", "description": "Melee critical hits deal additional damage." }, { "id": &"talent.relentless_advance", "display_name": "Relentless Advance", "description": "Gain movement after incapacitating an enemy." }, { "id": &"talent.iron_stomach", "display_name": "Iron Stomach", "description": "Improved resistance to poison and fatigue." }]), "summary": "Improved attack progression and one Marauder talent." }, { "level": 6, "xp_required": 15000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 6, "fortitude": 1}, "granted_ability_ids": Array[StringName]([&"ability.reaver_follow_through"]), "summary": "Improved attack progression, endurance and Reaver Follow-Through." }, {"level": 7, "xp_required": 21000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9}, "summary": "Barbarian Level 7."}, {"level": 8, "xp_required": 28000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1}, "summary": "Barbarian Level 8."}, {"level": 9, "xp_required": 36000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "reflex": 1, "will": 1}, "summary": "Barbarian Level 9; Shieldbreaker Prestige may become eligible."}, {"level": 10, "xp_required": 45000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1}, "summary": "Barbarian Level 10."}, {"level": 11, "xp_required": 55000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9}, "summary": "Barbarian Level 11."}, {"level": 12, "xp_required": 66000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1, "reflex": 1, "will": 1}, "summary": "Barbarian Level 12; Bloodsworn Prestige may become eligible."}, {"level": 13, "xp_required": 78000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9}, "summary": "Barbarian Level 13."}, {"level": 14, "xp_required": 91000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1}, "summary": "Barbarian Level 14."}, {"level": 15, "xp_required": 105000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "reflex": 1, "will": 1}, "summary": "Barbarian Level 15; Bear Rider Prestige may become eligible."}, {"level": 16, "xp_required": 120000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1}, "summary": "Barbarian Level 16."}, {"level": 17, "xp_required": 136000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9}, "summary": "Barbarian Level 17."}, {"level": 18, "xp_required": 153000, "stat_adjustments": {"base_attack_bonus": 1, "maximum_hp": 9, "fortitude": 1, "reflex": 1, "will": 1}, "summary": "Barbarian Level 18; Wyvern Reaver Prestige may become eligible."}])
+default_loadout_entries = Array[Dictionary]([{ "condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.raiders_axe", "grid_position": Vector2i(0, 0), "quantity": 1 }, { "condition": 1.0, "container_kind": &"armour", "definition_id": &"item.patchwork_raider_armour", "grid_position": Vector2i(0, 0), "quantity": 1 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.mace", "grid_position": Vector2i(0, 0), "quantity": 1 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.reaver_dagger", "grid_position": Vector2i(2, 0), "quantity": 1 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.manacles", "grid_position": Vector2i(3, 0), "quantity": 2 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.marauder_keys", "grid_position": Vector2i(3, 1), "quantity": 1 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.bandage", "grid_position": Vector2i(4, 1), "quantity": 1 }, { "condition": 1.0, "container_kind": &"belt", "definition_id": &"item.raiders_sack", "grid_position": Vector2i(5, 0), "quantity": 1 }, { "condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.rope", "grid_position": Vector2i(0, 0), "quantity": 1 }])
+portrait_id = &"portrait.reaver.marauder"
+tactical_visual_id = &"tactical.reaver.marauder"
+role_tags = Array[StringName]([&"player", &"reaver", &"marauder", &"capture_specialist", &"loot_extractor"])
+proficiency_ids = Array[StringName]([&"proficiency.simple_weapons", &"proficiency.martial_weapons", &"proficiency.light_armour", &"proficiency.medium_armour", &"proficiency.shields_except_tower"])
+ai_profile_id = &"ai.reaver.marauder.aggressive"
+combatant_classification = &"combatant"
+capture_eligible = true
+surrender_eligible = true
+loot_profile_id = &"loot_profile.reaver.marauder"

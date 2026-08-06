@@ -1,0 +1,30 @@
+# Godot generated/imported files
+.godot/
+
+# Local builds and exports
+build/
+export/
+exports/
+
+# Python validation artefacts
+__pycache__/
+*.py[cod]
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*~
+
+# Logs and local state dumps
+logs/
+state_dumps/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local save data should never be placed inside the project
+user_data/

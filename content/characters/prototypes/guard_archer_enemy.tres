@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.prototype.enemy_archer"
+display_name = "Settlement Archer"
+species_name = "Human"
+class_name_text = "Warrior 1"
+archetype_name = "None"
+troop_type = "Enemy Individual"
+base_level = 1
+base_ability_scores = {"CHA": 10, "CON": 11, "DEX": 14, "INT": 10, "STR": 11, "WIS": 12}
+base_attack_bonus = 1
+base_save_bonuses = {"fortitude": 2, "reflex": 0, "will": 0}
+base_hp_before_constitution = 8
+hp_constitution_levels = 1
+base_turn_capacity_feet = 30
+maximum_weight_lb = 60.0
+default_defence_profile_id = &"defence.light_armour"
+innate_action_ids = Array[StringName]([&"action.unarmed_strike"])
+default_loadout_entries = Array[Dictionary]([{"condition": 1.0, "container_kind": &"main_hand", "definition_id": &"item.training_shortbow", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.dagger", "grid_position": Vector2i(0, 0), "quantity": 1}, {"condition": 1.0, "container_kind": &"backpack", "definition_id": &"item.spare_arrows", "grid_position": Vector2i(1, 0), "quantity": 1}])
+
+provisional_content = true

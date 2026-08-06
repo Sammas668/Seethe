@@ -1,0 +1,8693 @@
+{
+	"format_version": 3,
+	"source_runtime_id": "region.life.starter",
+	"region": {
+		"id": "region.life.starter",
+		"display_name": "Telluria",
+		"width": 20,
+		"height": 15,
+		"hex_orientation": "flat_top_even_q",
+		"hexes": [
+			{
+				"coord": [
+					0,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					0
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					0
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					0
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					0
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					0
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					1
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					1
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					1
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					1
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.wilderness.northern_marsh",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					1
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					1
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					1
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.settlement.barnemouth",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					2
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					2
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					2
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					2
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					2
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					2
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					2
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.torrine",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					2
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.settlement.crullfeld",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					3
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					3
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					3
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					3
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					3
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					3
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.solis",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					3
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					4
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.westmarch.south_granary",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.westmarch.craftsman_yard",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					4
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.dornwich",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.solis",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.solis",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					4
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.westmarch.textile_store",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					5
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "site.settlement.bellmare",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.lumbermill",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.textiles_warehouse",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.craftsman_district",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.lullin",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					6
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					7
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.wheat_warehouse",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.guild_house",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.east_merchant_quarter",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.religious.hero_of_mercy_monument",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "site.settlement.laencaster",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					7
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					7
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					7
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					8
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					8
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					8
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					8
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "site.telluria.noble_housing",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					8
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					8
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					9
+				],
+				"playable": true,
+				"terrain_type": "lake",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					9
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					9
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					9
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					9
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					9
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.telluria_proper",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					9
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					9
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					9
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					9
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					9
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					9
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					9
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					10
+				],
+				"playable": true,
+				"terrain_type": "marsh",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					10
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					10
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					10
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					10
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					10
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					10
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					10
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					10
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					10
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					10
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					11
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					11
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.settlement.balerno",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					11
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					11
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.oakstead.artifact_hall",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					11
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					11
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					11
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					11
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					11
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					11
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					11
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					12
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.oakstead.warehouse",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.oakstead.syndicate_house",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					12
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.settlement.ascot",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					12
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					12
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					12
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					12
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					12
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					13
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					13
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					13
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					13
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					13
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					13
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					13
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					0,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					1,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					2,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					3,
+					14
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					4,
+					14
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					5,
+					14
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					6,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					7,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					8,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					9,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "site.settlement.dalry",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					10,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					11,
+					14
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					12,
+					14
+				],
+				"playable": true,
+				"terrain_type": "farmland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					13,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					14,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					15,
+					14
+				],
+				"playable": true,
+				"terrain_type": "grassland",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					16,
+					14
+				],
+				"playable": true,
+				"terrain_type": "forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					17,
+					14
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					18,
+					14
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			},
+			{
+				"coord": [
+					19,
+					14
+				],
+				"playable": true,
+				"terrain_type": "deep_forest",
+				"subregion_id": "subregion.life.south_telluria",
+				"site_id": "",
+				"visual_variant": 0
+			}
+		],
+		"sites": [
+			{
+				"id": "site.settlement.telluria",
+				"display_name": "Telluria",
+				"site_type": "settlement",
+				"coord": [
+					9,
+					7
+				],
+				"footprint": [
+					[
+						9,
+						6
+					],
+					[
+						8,
+						6
+					],
+					[
+						10,
+						6
+					],
+					[
+						9,
+						7
+					],
+					[
+						8,
+						7
+					],
+					[
+						10,
+						7
+					],
+					[
+						9,
+						8
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "The region’s main settlement: a wealthy Ilyran centre of grain, craft, pilgrimage and controlled prosperity.",
+				"tags": [
+					"SETTLEMENT",
+					"MAIN_SETTLEMENT",
+					"LIFE_REALM_CENTRE",
+					"HOLY_SITE",
+					"FOOD_EXPORTER",
+					"ARTISAN_CENTRE",
+					"WAREHOUSE_CLUSTER",
+					"HIGH_GUARD_PRESENCE"
+				],
+				"icon_id": "settlement_large",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 100,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.oakstead",
+				"display_name": "Oakstead",
+				"site_type": "settlement",
+				"coord": [
+					12,
+					12
+				],
+				"footprint": [
+					[
+						12,
+						11
+					],
+					[
+						11,
+						12
+					],
+					[
+						12,
+						12
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "A large, dangerous settlement controlled by a hidden syndicate and known for gathering restricted artefacts.",
+				"tags": [
+					"SETTLEMENT",
+					"SECRET_SYNDICATE",
+					"ARTEFACT_GATHERER",
+					"CRIMINAL_MARKET",
+					"WATCHFUL"
+				],
+				"icon_id": "settlement_medium",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 85,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.laencaster",
+				"display_name": "Laencaster",
+				"site_type": "settlement",
+				"coord": [
+					15,
+					7
+				],
+				"footprint": [
+					[
+						15,
+						7
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A holy settlement at the forest threshold, dominated by the monument and temple of the Hero of Mercy.",
+				"tags": [
+					"SETTLEMENT",
+					"HOLY_SITE",
+					"DIVINE_CASTERS",
+					"FOREST_GATEWAY"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 80,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.solis",
+				"display_name": "Solis",
+				"site_type": "settlement",
+				"coord": [
+					16,
+					4
+				],
+				"footprint": [
+					[
+						16,
+						4
+					],
+					[
+						16,
+						3
+					],
+					[
+						17,
+						4
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A magically attuned and highly pious town where weapons and magical implements are peacebound or surrendered.",
+				"tags": [
+					"SETTLEMENT",
+					"MAGICALLY_ATTUNED",
+					"PIOUS",
+					"PEACEBONDING",
+					"WEAPON_CONTROL"
+				],
+				"icon_id": "settlement_medium",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 80,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.westmarch",
+				"display_name": "Westmarch",
+				"site_type": "settlement",
+				"coord": [
+					3,
+					5
+				],
+				"footprint": [
+					[
+						3,
+						4
+					],
+					[
+						4,
+						4
+					],
+					[
+						3,
+						5
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "A supposed utopian council where political voice is effectively limited to landowning Ilyran faithful.",
+				"tags": [
+					"SETTLEMENT",
+					"COUNCIL",
+					"UTOPIAN_EXPERIMENT",
+					"INSULAR",
+					"LANDOWNER_RULE"
+				],
+				"icon_id": "settlement_medium",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 80,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.ascot",
+				"display_name": "Ascot",
+				"site_type": "settlement",
+				"coord": [
+					14,
+					12
+				],
+				"footprint": [
+					[
+						14,
+						12
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "A tiny forest-edge habitation on the old adventuring trail leading toward the buried Fifth-God ruin.",
+				"tags": [
+					"SETTLEMENT",
+					"HAMLET",
+					"ADVENTURING_TRAIL"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 75,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.dornwich",
+				"display_name": "Dornwich",
+				"site_type": "settlement",
+				"coord": [
+					13,
+					4
+				],
+				"footprint": [
+					[
+						13,
+						4
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A therapeutic village of hospitals, retreats, healing herbs and a renowned necropolis.",
+				"tags": [
+					"SETTLEMENT",
+					"THERAPEUTIC",
+					"NECROPOLIS",
+					"HEALING_INSTITUTIONS"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 75,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.balerno",
+				"display_name": "Balerno",
+				"site_type": "settlement",
+				"coord": [
+					8,
+					11
+				],
+				"footprint": [
+					[
+						8,
+						11
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "A pious but lawless village whose Ilyran devotion has not produced stable civil authority.",
+				"tags": [
+					"SETTLEMENT",
+					"PIOUS",
+					"LAWLESS",
+					"DANGEROUS"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.barnemouth",
+				"display_name": "Barnemouth",
+				"site_type": "settlement",
+				"coord": [
+					4,
+					2
+				],
+				"footprint": [
+					[
+						4,
+						2
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "A tightly secured noble settlement whose moral laws prohibit common vices while luxury trade serves a resident dynasty.",
+				"tags": [
+					"SETTLEMENT",
+					"NOBLE_HOUSING",
+					"ROYAL_ACCOMMODATIONS",
+					"ABSTINENT",
+					"HIGH_SECURITY"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.bellmare",
+				"display_name": "Bellmare",
+				"site_type": "settlement",
+				"coord": [
+					2,
+					6
+				],
+				"footprint": [
+					[
+						2,
+						6
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "A pious and superstitious lakeside village surrounded by fields, fisheries and wetland holdings.",
+				"tags": [
+					"SETTLEMENT",
+					"LAKESIDE",
+					"PIOUS",
+					"SUPERSTITIOUS"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.crullfeld",
+				"display_name": "Crullfeld",
+				"site_type": "settlement",
+				"coord": [
+					1,
+					3
+				],
+				"footprint": [
+					[
+						1,
+						3
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "An impoverished and isolated village centred on an Ilyran monastic order.",
+				"tags": [
+					"SETTLEMENT",
+					"MONASTIC_ORDER",
+					"INSULAR",
+					"IMPOVERISHED"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.dalry",
+				"display_name": "Dalry",
+				"site_type": "settlement",
+				"coord": [
+					9,
+					14
+				],
+				"footprint": [
+					[
+						9,
+						14
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "A livestock and mount-breeding village known for excellent animals and hostility toward non-humans.",
+				"tags": [
+					"SETTLEMENT",
+					"FAMED_BREEDERS",
+					"MOUNTS",
+					"RACIALLY_INTOLERANT"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.lullin",
+				"display_name": "Lullin",
+				"site_type": "settlement",
+				"coord": [
+					18,
+					6
+				],
+				"footprint": [
+					[
+						18,
+						6
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A tiny magically attuned hamlet embedded within the forest near converging old powers.",
+				"tags": [
+					"SETTLEMENT",
+					"HAMLET",
+					"MAGICALLY_ATTUNED",
+					"FOREST"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.torrine",
+				"display_name": "Torrine",
+				"site_type": "settlement",
+				"coord": [
+					18,
+					2
+				],
+				"footprint": [
+					[
+						18,
+						2
+					]
+				],
+				"parent_settlement_id": "",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "An isolated village fiercely loyal to its own people and known for a regional carnival.",
+				"tags": [
+					"SETTLEMENT",
+					"INSULAR",
+					"TOURIST_ATTRACTION",
+					"CARNIVAL"
+				],
+				"icon_id": "settlement_small",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 70,
+				"aliases": []
+			},
+			{
+				"id": "site.religious.hero_of_mercy_monument",
+				"display_name": "Monument of the Hero of Mercy",
+				"site_type": "religious",
+				"coord": [
+					14,
+					7
+				],
+				"footprint": [
+					[
+						14,
+						7
+					]
+				],
+				"parent_settlement_id": "site.settlement.laencaster",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A major Ilyran monument and temple marking the birthplace of the Hero of Mercy.",
+				"tags": [
+					"RELIGIOUS_SITE",
+					"HOLY_SITE",
+					"ILYRA",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "religious_site",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 55,
+				"aliases": []
+			},
+			{
+				"id": "site.wilderness.northern_marsh",
+				"display_name": "Northern Healing Marsh",
+				"site_type": "wilderness",
+				"coord": [
+					14,
+					1
+				],
+				"footprint": [
+					[
+						14,
+						1
+					]
+				],
+				"parent_settlement_id": "site.settlement.dornwich",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "A difficult wetland harvested for rare medicinal plants and watched by Dornwich custodians.",
+				"tags": [
+					"WILDERNESS",
+					"MARSHLAND",
+					"HEALING_HERBS",
+					"DIFFICULT_TRAVEL",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "wilderness_marsh",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 25,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.craftsman_district",
+				"display_name": "Telluria Craftsman’s District",
+				"site_type": "district",
+				"coord": [
+					10,
+					6
+				],
+				"footprint": [
+					[
+						10,
+						6
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "Workshops and studios supporting Telluria’s renowned makers, artists and repair trades.",
+				"tags": [
+					"DISTRICT",
+					"CRAFTS",
+					"WORKSHOPS",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_craftsmans_district",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.guild_house",
+				"display_name": "Telluria Guild House",
+				"site_type": "district",
+				"coord": [
+					9,
+					7
+				],
+				"footprint": [
+					[
+						9,
+						7
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "The administrative and ceremonial centre of Telluria’s sanctioned trades.",
+				"tags": [
+					"DISTRICT",
+					"GUILD",
+					"ADMINISTRATION",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_guild_house",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.lumbermill",
+				"display_name": "Telluria Lumbermill",
+				"site_type": "district",
+				"coord": [
+					8,
+					6
+				],
+				"footprint": [
+					[
+						8,
+						6
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "A managed timber yard processing wood drawn from the region’s controlled forests.",
+				"tags": [
+					"DISTRICT",
+					"LUMBER",
+					"WOOD",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_lumbermill",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.noble_housing",
+				"display_name": "Telluria Noble Housing",
+				"site_type": "district",
+				"coord": [
+					9,
+					8
+				],
+				"footprint": [
+					[
+						9,
+						8
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "Protected residences of wealthy landowners, clerical patrons and regional officials.",
+				"tags": [
+					"DISTRICT",
+					"NOBLE_HOUSING",
+					"WEALTH",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_noble_housing",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.textiles_warehouse",
+				"display_name": "Telluria Textiles Warehouse",
+				"site_type": "district",
+				"coord": [
+					9,
+					6
+				],
+				"footprint": [
+					[
+						9,
+						6
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "A warehouse of wool, linen, dyed cloth and other valuable finished textiles.",
+				"tags": [
+					"DISTRICT",
+					"WAREHOUSE",
+					"TEXTILES",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_textiles_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.wheat_warehouse",
+				"display_name": "Telluria Wheat Warehouse",
+				"site_type": "district",
+				"coord": [
+					8,
+					7
+				],
+				"footprint": [
+					[
+						8,
+						7
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "A major store of the grain surplus that sustains Telluria’s population and exports.",
+				"tags": [
+					"DISTRICT",
+					"WAREHOUSE",
+					"FOOD",
+					"MISSION_SOURCE"
+				],
+				"icon_id": "district_wheat_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 20,
+				"aliases": []
+			},
+			{
+				"id": "site.telluria.east_merchant_quarter",
+				"display_name": "East Merchant Quarter",
+				"site_type": "district",
+				"coord": [
+					10,
+					7
+				],
+				"footprint": [
+					[
+						10,
+						7
+					]
+				],
+				"parent_settlement_id": "site.settlement.telluria",
+				"subregion_id": "subregion.life.telluria_proper",
+				"description": "A second dense commercial quarter within Telluria’s seven-hex urban footprint.",
+				"tags": [
+					"DISTRICT",
+					"MERCHANTS",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_market",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 18,
+				"aliases": []
+			},
+			{
+				"id": "site.oakstead.artifact_hall",
+				"display_name": "Artifact Hall",
+				"site_type": "district",
+				"coord": [
+					12,
+					11
+				],
+				"footprint": [
+					[
+						12,
+						11
+					]
+				],
+				"parent_settlement_id": "site.settlement.oakstead",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "An authored occupied hex within Oakstead.",
+				"tags": [
+					"DISTRICT",
+					"ARTIFACTS",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_craftsmans_district",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.oakstead.syndicate_house",
+				"display_name": "Syndicate House",
+				"site_type": "district",
+				"coord": [
+					12,
+					12
+				],
+				"footprint": [
+					[
+						12,
+						12
+					]
+				],
+				"parent_settlement_id": "site.settlement.oakstead",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "An authored occupied hex within Oakstead.",
+				"tags": [
+					"DISTRICT",
+					"SYNDICATE",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_textiles_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.oakstead.warehouse",
+				"display_name": "Syndicate Warehouse",
+				"site_type": "district",
+				"coord": [
+					11,
+					12
+				],
+				"footprint": [
+					[
+						11,
+						12
+					]
+				],
+				"parent_settlement_id": "site.settlement.oakstead",
+				"subregion_id": "subregion.life.south_telluria",
+				"description": "An authored occupied hex within Oakstead.",
+				"tags": [
+					"DISTRICT",
+					"WAREHOUSE",
+					"SYNDICATE",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_wheat_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.westmarch.craftsman_yard",
+				"display_name": "Council Workshops",
+				"site_type": "district",
+				"coord": [
+					4,
+					4
+				],
+				"footprint": [
+					[
+						4,
+						4
+					]
+				],
+				"parent_settlement_id": "site.settlement.westmarch",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "An authored occupied hex within Westmarch.",
+				"tags": [
+					"DISTRICT",
+					"CRAFTS",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_craftsmans_district",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.westmarch.south_granary",
+				"display_name": "South Granary",
+				"site_type": "district",
+				"coord": [
+					3,
+					4
+				],
+				"footprint": [
+					[
+						3,
+						4
+					]
+				],
+				"parent_settlement_id": "site.settlement.westmarch",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "An authored occupied hex within Westmarch.",
+				"tags": [
+					"DISTRICT",
+					"GRAIN_STORAGE",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_wheat_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.westmarch.textile_store",
+				"display_name": "Textile Storehouses",
+				"site_type": "district",
+				"coord": [
+					3,
+					5
+				],
+				"footprint": [
+					[
+						3,
+						5
+					]
+				],
+				"parent_settlement_id": "site.settlement.westmarch",
+				"subregion_id": "subregion.life.north_west_telluria",
+				"description": "An authored occupied hex within Westmarch.",
+				"tags": [
+					"DISTRICT",
+					"TEXTILES",
+					"SETTLEMENT_FOOTPRINT"
+				],
+				"icon_id": "district_textiles_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 16,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.solis.district.16_3",
+				"display_name": "Wheat Warehouse",
+				"site_type": "district",
+				"coord": [
+					16,
+					3
+				],
+				"footprint": [
+					[
+						16,
+						3
+					]
+				],
+				"parent_settlement_id": "site.settlement.solis",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "Wheat Warehouse district of Solis.",
+				"tags": [],
+				"icon_id": "district_wheat_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 0,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.solis.district.16_4",
+				"display_name": "Guild House",
+				"site_type": "district",
+				"coord": [
+					16,
+					4
+				],
+				"footprint": [
+					[
+						16,
+						4
+					]
+				],
+				"parent_settlement_id": "site.settlement.solis",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "Guild House district of Solis.",
+				"tags": [],
+				"icon_id": "district_guild_house",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 0,
+				"aliases": []
+			},
+			{
+				"id": "site.settlement.solis.district.17_4",
+				"display_name": "Textiles Warehouse",
+				"site_type": "district",
+				"coord": [
+					17,
+					4
+				],
+				"footprint": [
+					[
+						17,
+						4
+					]
+				],
+				"parent_settlement_id": "site.settlement.solis",
+				"subregion_id": "subregion.life.north_east_telluria",
+				"description": "Textiles Warehouse district of Solis.",
+				"tags": [],
+				"icon_id": "district_textiles_warehouse",
+				"mission_definition_ids": [],
+				"inspectable": true,
+				"label_priority": 0,
+				"aliases": []
+			}
+		],
+		"road_edges": [
+			{
+				"id": "road.0_10__0_11",
+				"coord": [
+					0,
+					10
+				],
+				"neighbour_coord": [
+					0,
+					11
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.0_10__1_11",
+				"coord": [
+					1,
+					11
+				],
+				"neighbour_coord": [
+					0,
+					10
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.0_1__0_2",
+				"coord": [
+					0,
+					2
+				],
+				"neighbour_coord": [
+					0,
+					1
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.0_2__1_2",
+				"coord": [
+					0,
+					2
+				],
+				"neighbour_coord": [
+					1,
+					2
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.0_2__1_3",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					0,
+					2
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.0_3__0_4",
+				"coord": [
+					0,
+					4
+				],
+				"neighbour_coord": [
+					0,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.0_3__1_3",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					0,
+					3
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.0_3__1_4",
+				"coord": [
+					1,
+					4
+				],
+				"neighbour_coord": [
+					0,
+					3
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.0_4__1_4",
+				"coord": [
+					0,
+					4
+				],
+				"neighbour_coord": [
+					1,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_0__10_1",
+				"coord": [
+					10,
+					0
+				],
+				"neighbour_coord": [
+					10,
+					1
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_0__11_0",
+				"coord": [
+					11,
+					0
+				],
+				"neighbour_coord": [
+					10,
+					0
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_0__11_1",
+				"coord": [
+					11,
+					1
+				],
+				"neighbour_coord": [
+					10,
+					0
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_10__11_10",
+				"coord": [
+					11,
+					10
+				],
+				"neighbour_coord": [
+					10,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_11__10_12",
+				"coord": [
+					10,
+					11
+				],
+				"neighbour_coord": [
+					10,
+					12
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_11__11_12",
+				"coord": [
+					11,
+					12
+				],
+				"neighbour_coord": [
+					10,
+					11
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_11__9_12",
+				"coord": [
+					9,
+					12
+				],
+				"neighbour_coord": [
+					10,
+					11
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_12__11_12",
+				"coord": [
+					11,
+					12
+				],
+				"neighbour_coord": [
+					10,
+					12
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_13__10_14",
+				"coord": [
+					10,
+					13
+				],
+				"neighbour_coord": [
+					10,
+					14
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_13__11_14",
+				"coord": [
+					10,
+					13
+				],
+				"neighbour_coord": [
+					11,
+					14
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_1__9_1",
+				"coord": [
+					9,
+					1
+				],
+				"neighbour_coord": [
+					10,
+					1
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_1__9_2",
+				"coord": [
+					9,
+					2
+				],
+				"neighbour_coord": [
+					10,
+					1
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_2__9_2",
+				"coord": [
+					10,
+					2
+				],
+				"neighbour_coord": [
+					9,
+					2
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_2__9_3",
+				"coord": [
+					9,
+					3
+				],
+				"neighbour_coord": [
+					10,
+					2
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_3__9_3",
+				"coord": [
+					10,
+					3
+				],
+				"neighbour_coord": [
+					9,
+					3
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_3__9_4",
+				"coord": [
+					9,
+					4
+				],
+				"neighbour_coord": [
+					10,
+					3
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_4__9_4",
+				"coord": [
+					9,
+					4
+				],
+				"neighbour_coord": [
+					10,
+					4
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_4__9_5",
+				"coord": [
+					9,
+					5
+				],
+				"neighbour_coord": [
+					10,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_5__10_6",
+				"coord": [
+					10,
+					6
+				],
+				"neighbour_coord": [
+					10,
+					5
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_5__9_5",
+				"coord": [
+					9,
+					5
+				],
+				"neighbour_coord": [
+					10,
+					5
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.10_5__9_6",
+				"coord": [
+					9,
+					6
+				],
+				"neighbour_coord": [
+					10,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_6__10_7",
+				"coord": [
+					10,
+					6
+				],
+				"neighbour_coord": [
+					10,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_6__11_6",
+				"coord": [
+					10,
+					6
+				],
+				"neighbour_coord": [
+					11,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_6__11_7",
+				"coord": [
+					11,
+					7
+				],
+				"neighbour_coord": [
+					10,
+					6
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_6__9_6",
+				"coord": [
+					9,
+					6
+				],
+				"neighbour_coord": [
+					10,
+					6
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_6__9_7",
+				"coord": [
+					10,
+					6
+				],
+				"neighbour_coord": [
+					9,
+					7
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_7__10_8",
+				"coord": [
+					10,
+					7
+				],
+				"neighbour_coord": [
+					10,
+					8
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_7__11_7",
+				"coord": [
+					10,
+					7
+				],
+				"neighbour_coord": [
+					11,
+					7
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_7__11_8",
+				"coord": [
+					10,
+					7
+				],
+				"neighbour_coord": [
+					11,
+					8
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_7__9_7",
+				"coord": [
+					9,
+					7
+				],
+				"neighbour_coord": [
+					10,
+					7
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_7__9_8",
+				"coord": [
+					10,
+					7
+				],
+				"neighbour_coord": [
+					9,
+					8
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_8__11_8",
+				"coord": [
+					10,
+					8
+				],
+				"neighbour_coord": [
+					11,
+					8
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_8__11_9",
+				"coord": [
+					10,
+					8
+				],
+				"neighbour_coord": [
+					11,
+					9
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_8__9_8",
+				"coord": [
+					9,
+					8
+				],
+				"neighbour_coord": [
+					10,
+					8
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_9__11_10",
+				"coord": [
+					10,
+					9
+				],
+				"neighbour_coord": [
+					11,
+					10
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.10_9__11_9",
+				"coord": [
+					11,
+					9
+				],
+				"neighbour_coord": [
+					10,
+					9
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_0__11_1",
+				"coord": [
+					11,
+					0
+				],
+				"neighbour_coord": [
+					11,
+					1
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.11_10__11_11",
+				"coord": [
+					11,
+					10
+				],
+				"neighbour_coord": [
+					11,
+					11
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_11__11_12",
+				"coord": [
+					11,
+					12
+				],
+				"neighbour_coord": [
+					11,
+					11
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.11_11__12_10",
+				"coord": [
+					11,
+					11
+				],
+				"neighbour_coord": [
+					12,
+					10
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_11__12_11",
+				"coord": [
+					12,
+					11
+				],
+				"neighbour_coord": [
+					11,
+					11
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_12__11_13",
+				"coord": [
+					11,
+					12
+				],
+				"neighbour_coord": [
+					11,
+					13
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.11_12__12_11",
+				"coord": [
+					11,
+					12
+				],
+				"neighbour_coord": [
+					12,
+					11
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_12__12_12",
+				"coord": [
+					12,
+					12
+				],
+				"neighbour_coord": [
+					11,
+					12
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_13__11_14",
+				"coord": [
+					11,
+					14
+				],
+				"neighbour_coord": [
+					11,
+					13
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.11_13__12_12",
+				"coord": [
+					12,
+					12
+				],
+				"neighbour_coord": [
+					11,
+					13
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_13__12_13",
+				"coord": [
+					12,
+					13
+				],
+				"neighbour_coord": [
+					11,
+					13
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_14__12_13",
+				"coord": [
+					12,
+					13
+				],
+				"neighbour_coord": [
+					11,
+					14
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_14__12_14",
+				"coord": [
+					11,
+					14
+				],
+				"neighbour_coord": [
+					12,
+					14
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_1__12_0",
+				"coord": [
+					12,
+					0
+				],
+				"neighbour_coord": [
+					11,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.11_6__11_7",
+				"coord": [
+					11,
+					6
+				],
+				"neighbour_coord": [
+					11,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.11_7__12_6",
+				"coord": [
+					12,
+					6
+				],
+				"neighbour_coord": [
+					11,
+					7
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.12_0__12_1",
+				"coord": [
+					12,
+					1
+				],
+				"neighbour_coord": [
+					12,
+					0
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_10__12_11",
+				"coord": [
+					12,
+					11
+				],
+				"neighbour_coord": [
+					12,
+					10
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_11__12_12",
+				"coord": [
+					12,
+					11
+				],
+				"neighbour_coord": [
+					12,
+					12
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_11__13_11",
+				"coord": [
+					12,
+					11
+				],
+				"neighbour_coord": [
+					13,
+					11
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_11__13_12",
+				"coord": [
+					13,
+					12
+				],
+				"neighbour_coord": [
+					12,
+					11
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_12__12_13",
+				"coord": [
+					12,
+					12
+				],
+				"neighbour_coord": [
+					12,
+					13
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_12__13_12",
+				"coord": [
+					12,
+					12
+				],
+				"neighbour_coord": [
+					13,
+					12
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_12__13_13",
+				"coord": [
+					12,
+					12
+				],
+				"neighbour_coord": [
+					13,
+					13
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_1__13_1",
+				"coord": [
+					13,
+					1
+				],
+				"neighbour_coord": [
+					12,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_4__13_5",
+				"coord": [
+					13,
+					5
+				],
+				"neighbour_coord": [
+					12,
+					4
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_5__13_5",
+				"coord": [
+					12,
+					5
+				],
+				"neighbour_coord": [
+					13,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_5__13_6",
+				"coord": [
+					13,
+					6
+				],
+				"neighbour_coord": [
+					12,
+					5
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_6__12_7",
+				"coord": [
+					12,
+					6
+				],
+				"neighbour_coord": [
+					12,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.12_6__13_6",
+				"coord": [
+					12,
+					6
+				],
+				"neighbour_coord": [
+					13,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.12_6__13_7",
+				"coord": [
+					13,
+					7
+				],
+				"neighbour_coord": [
+					12,
+					6
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.13_12__13_13",
+				"coord": [
+					13,
+					13
+				],
+				"neighbour_coord": [
+					13,
+					12
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_1__13_2",
+				"coord": [
+					13,
+					2
+				],
+				"neighbour_coord": [
+					13,
+					1
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_1__14_1",
+				"coord": [
+					13,
+					1
+				],
+				"neighbour_coord": [
+					14,
+					1
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_2__14_1",
+				"coord": [
+					14,
+					1
+				],
+				"neighbour_coord": [
+					13,
+					2
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_2__14_2",
+				"coord": [
+					13,
+					2
+				],
+				"neighbour_coord": [
+					14,
+					2
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_3__14_2",
+				"coord": [
+					14,
+					2
+				],
+				"neighbour_coord": [
+					13,
+					3
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_3__14_3",
+				"coord": [
+					13,
+					3
+				],
+				"neighbour_coord": [
+					14,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.13_6__13_7",
+				"coord": [
+					13,
+					6
+				],
+				"neighbour_coord": [
+					13,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.13_7__14_6",
+				"coord": [
+					14,
+					6
+				],
+				"neighbour_coord": [
+					13,
+					7
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.14_0__14_1",
+				"coord": [
+					14,
+					0
+				],
+				"neighbour_coord": [
+					14,
+					1
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.14_0__15_1",
+				"coord": [
+					15,
+					1
+				],
+				"neighbour_coord": [
+					14,
+					0
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.14_11__15_12",
+				"coord": [
+					15,
+					12
+				],
+				"neighbour_coord": [
+					14,
+					11
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.14_3__14_4",
+				"coord": [
+					14,
+					4
+				],
+				"neighbour_coord": [
+					14,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.14_4__15_4",
+				"coord": [
+					15,
+					4
+				],
+				"neighbour_coord": [
+					14,
+					4
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.14_6__14_7",
+				"coord": [
+					14,
+					7
+				],
+				"neighbour_coord": [
+					14,
+					6
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.15_0__15_1",
+				"coord": [
+					15,
+					1
+				],
+				"neighbour_coord": [
+					15,
+					0
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.15_10__16_10",
+				"coord": [
+					16,
+					10
+				],
+				"neighbour_coord": [
+					15,
+					10
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.15_11__15_12",
+				"coord": [
+					15,
+					12
+				],
+				"neighbour_coord": [
+					15,
+					11
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.15_11__16_10",
+				"coord": [
+					16,
+					10
+				],
+				"neighbour_coord": [
+					15,
+					11
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.15_11__16_11",
+				"coord": [
+					15,
+					11
+				],
+				"neighbour_coord": [
+					16,
+					11
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.15_1__16_0",
+				"coord": [
+					16,
+					0
+				],
+				"neighbour_coord": [
+					15,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.15_4__15_5",
+				"coord": [
+					15,
+					4
+				],
+				"neighbour_coord": [
+					15,
+					5
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.16_0__16_1",
+				"coord": [
+					16,
+					0
+				],
+				"neighbour_coord": [
+					16,
+					1
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.16_0__17_1",
+				"coord": [
+					17,
+					1
+				],
+				"neighbour_coord": [
+					16,
+					0
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.16_10__16_9",
+				"coord": [
+					16,
+					10
+				],
+				"neighbour_coord": [
+					16,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.16_6__16_7",
+				"coord": [
+					16,
+					7
+				],
+				"neighbour_coord": [
+					16,
+					6
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.16_6__17_7",
+				"coord": [
+					16,
+					6
+				],
+				"neighbour_coord": [
+					17,
+					7
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.16_8__17_9",
+				"coord": [
+					17,
+					9
+				],
+				"neighbour_coord": [
+					16,
+					8
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.16_9__17_10",
+				"coord": [
+					16,
+					9
+				],
+				"neighbour_coord": [
+					17,
+					10
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.16_9__17_9",
+				"coord": [
+					17,
+					9
+				],
+				"neighbour_coord": [
+					16,
+					9
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.17_0__17_1",
+				"coord": [
+					17,
+					1
+				],
+				"neighbour_coord": [
+					17,
+					0
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_1__18_0",
+				"coord": [
+					17,
+					1
+				],
+				"neighbour_coord": [
+					18,
+					0
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_3__18_3",
+				"coord": [
+					17,
+					3
+				],
+				"neighbour_coord": [
+					18,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_5__18_4",
+				"coord": [
+					17,
+					5
+				],
+				"neighbour_coord": [
+					18,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_5__18_5",
+				"coord": [
+					18,
+					5
+				],
+				"neighbour_coord": [
+					17,
+					5
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_6__17_7",
+				"coord": [
+					17,
+					7
+				],
+				"neighbour_coord": [
+					17,
+					6
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.17_6__18_5",
+				"coord": [
+					18,
+					5
+				],
+				"neighbour_coord": [
+					17,
+					6
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.17_7__18_7",
+				"coord": [
+					18,
+					7
+				],
+				"neighbour_coord": [
+					17,
+					7
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.17_8__17_9",
+				"coord": [
+					17,
+					8
+				],
+				"neighbour_coord": [
+					17,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.17_8__18_7",
+				"coord": [
+					17,
+					8
+				],
+				"neighbour_coord": [
+					18,
+					7
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.17_8__18_8",
+				"coord": [
+					17,
+					8
+				],
+				"neighbour_coord": [
+					18,
+					8
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "forest_track"
+			},
+			{
+				"id": "road.18_0__18_1",
+				"coord": [
+					18,
+					1
+				],
+				"neighbour_coord": [
+					18,
+					0
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.18_0__19_0",
+				"coord": [
+					18,
+					0
+				],
+				"neighbour_coord": [
+					19,
+					0
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.18_0__19_1",
+				"coord": [
+					18,
+					0
+				],
+				"neighbour_coord": [
+					19,
+					1
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.18_1__19_1",
+				"coord": [
+					19,
+					1
+				],
+				"neighbour_coord": [
+					18,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.18_1__19_2",
+				"coord": [
+					19,
+					2
+				],
+				"neighbour_coord": [
+					18,
+					1
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.19_1__19_2",
+				"coord": [
+					19,
+					2
+				],
+				"neighbour_coord": [
+					19,
+					1
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.19_6__19_7",
+				"coord": [
+					19,
+					6
+				],
+				"neighbour_coord": [
+					19,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.1_10__1_11",
+				"coord": [
+					1,
+					10
+				],
+				"neighbour_coord": [
+					1,
+					11
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.1_10__2_10",
+				"coord": [
+					2,
+					10
+				],
+				"neighbour_coord": [
+					1,
+					10
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.1_10__2_9",
+				"coord": [
+					2,
+					9
+				],
+				"neighbour_coord": [
+					1,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_2__1_3",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					1,
+					2
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_3__1_4",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					1,
+					4
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_3__2_2",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					2,
+					2
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_3__2_3",
+				"coord": [
+					1,
+					3
+				],
+				"neighbour_coord": [
+					2,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_4__1_5",
+				"coord": [
+					1,
+					4
+				],
+				"neighbour_coord": [
+					1,
+					5
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.1_5__2_4",
+				"coord": [
+					1,
+					5
+				],
+				"neighbour_coord": [
+					2,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.1_6__2_6",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					1,
+					6
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_7__2_6",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					1,
+					7
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_7__2_7",
+				"coord": [
+					2,
+					7
+				],
+				"neighbour_coord": [
+					1,
+					7
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_8__2_7",
+				"coord": [
+					2,
+					7
+				],
+				"neighbour_coord": [
+					1,
+					8
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_8__2_8",
+				"coord": [
+					2,
+					8
+				],
+				"neighbour_coord": [
+					1,
+					8
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_9__2_8",
+				"coord": [
+					2,
+					8
+				],
+				"neighbour_coord": [
+					1,
+					9
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.1_9__2_9",
+				"coord": [
+					1,
+					9
+				],
+				"neighbour_coord": [
+					2,
+					9
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_0__3_0",
+				"coord": [
+					2,
+					0
+				],
+				"neighbour_coord": [
+					3,
+					0
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_0__3_1",
+				"coord": [
+					2,
+					0
+				],
+				"neighbour_coord": [
+					3,
+					1
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_10__2_9",
+				"coord": [
+					2,
+					9
+				],
+				"neighbour_coord": [
+					2,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.2_1__3_1",
+				"coord": [
+					3,
+					1
+				],
+				"neighbour_coord": [
+					2,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_1__3_2",
+				"coord": [
+					3,
+					2
+				],
+				"neighbour_coord": [
+					2,
+					1
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_2__2_3",
+				"coord": [
+					2,
+					3
+				],
+				"neighbour_coord": [
+					2,
+					2
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_2__3_2",
+				"coord": [
+					3,
+					2
+				],
+				"neighbour_coord": [
+					2,
+					2
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_2__3_3",
+				"coord": [
+					2,
+					2
+				],
+				"neighbour_coord": [
+					3,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_3__3_3",
+				"coord": [
+					3,
+					3
+				],
+				"neighbour_coord": [
+					2,
+					3
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_4__2_5",
+				"coord": [
+					2,
+					4
+				],
+				"neighbour_coord": [
+					2,
+					5
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.2_5__2_6",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					2,
+					5
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_5__3_6",
+				"coord": [
+					2,
+					5
+				],
+				"neighbour_coord": [
+					3,
+					6
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_6__2_7",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					2,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_6__3_6",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					3,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_6__3_7",
+				"coord": [
+					2,
+					6
+				],
+				"neighbour_coord": [
+					3,
+					7
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.2_9__3_10",
+				"coord": [
+					3,
+					10
+				],
+				"neighbour_coord": [
+					2,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.3_10__3_9",
+				"coord": [
+					3,
+					10
+				],
+				"neighbour_coord": [
+					3,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.3_10__4_9",
+				"coord": [
+					4,
+					9
+				],
+				"neighbour_coord": [
+					3,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.3_13__4_13",
+				"coord": [
+					4,
+					13
+				],
+				"neighbour_coord": [
+					3,
+					13
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.3_14__4_13",
+				"coord": [
+					4,
+					13
+				],
+				"neighbour_coord": [
+					3,
+					14
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.3_14__4_14",
+				"coord": [
+					3,
+					14
+				],
+				"neighbour_coord": [
+					4,
+					14
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.3_2__3_3",
+				"coord": [
+					3,
+					3
+				],
+				"neighbour_coord": [
+					3,
+					2
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.3_3__4_2",
+				"coord": [
+					4,
+					2
+				],
+				"neighbour_coord": [
+					3,
+					3
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_10__4_9",
+				"coord": [
+					4,
+					10
+				],
+				"neighbour_coord": [
+					4,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.4_10__5_10",
+				"coord": [
+					4,
+					10
+				],
+				"neighbour_coord": [
+					5,
+					10
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.4_12__4_13",
+				"coord": [
+					4,
+					13
+				],
+				"neighbour_coord": [
+					4,
+					12
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_12__5_13",
+				"coord": [
+					5,
+					13
+				],
+				"neighbour_coord": [
+					4,
+					12
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_2__4_3",
+				"coord": [
+					4,
+					2
+				],
+				"neighbour_coord": [
+					4,
+					3
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_2__5_2",
+				"coord": [
+					4,
+					2
+				],
+				"neighbour_coord": [
+					5,
+					2
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_2__5_3",
+				"coord": [
+					4,
+					2
+				],
+				"neighbour_coord": [
+					5,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.4_5__5_5",
+				"coord": [
+					4,
+					5
+				],
+				"neighbour_coord": [
+					5,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.5_10__5_11",
+				"coord": [
+					5,
+					10
+				],
+				"neighbour_coord": [
+					5,
+					11
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.5_10__6_10",
+				"coord": [
+					6,
+					10
+				],
+				"neighbour_coord": [
+					5,
+					10
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.5_12__5_13",
+				"coord": [
+					5,
+					13
+				],
+				"neighbour_coord": [
+					5,
+					12
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.5_13__6_12",
+				"coord": [
+					5,
+					13
+				],
+				"neighbour_coord": [
+					6,
+					12
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.5_2__5_3",
+				"coord": [
+					5,
+					2
+				],
+				"neighbour_coord": [
+					5,
+					3
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.5_2__6_2",
+				"coord": [
+					5,
+					2
+				],
+				"neighbour_coord": [
+					6,
+					2
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.5_5__5_6",
+				"coord": [
+					5,
+					5
+				],
+				"neighbour_coord": [
+					5,
+					6
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.5_6__6_5",
+				"coord": [
+					5,
+					6
+				],
+				"neighbour_coord": [
+					6,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.6_10__6_9",
+				"coord": [
+					6,
+					10
+				],
+				"neighbour_coord": [
+					6,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.6_10__7_10",
+				"coord": [
+					7,
+					10
+				],
+				"neighbour_coord": [
+					6,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.6_12__6_13",
+				"coord": [
+					6,
+					12
+				],
+				"neighbour_coord": [
+					6,
+					13
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.6_12__7_13",
+				"coord": [
+					7,
+					13
+				],
+				"neighbour_coord": [
+					6,
+					12
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.6_1__6_2",
+				"coord": [
+					6,
+					1
+				],
+				"neighbour_coord": [
+					6,
+					2
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.6_1__7_2",
+				"coord": [
+					7,
+					2
+				],
+				"neighbour_coord": [
+					6,
+					1
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.6_5__6_6",
+				"coord": [
+					6,
+					5
+				],
+				"neighbour_coord": [
+					6,
+					6
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.6_6__7_6",
+				"coord": [
+					6,
+					6
+				],
+				"neighbour_coord": [
+					7,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.6_9__7_10",
+				"coord": [
+					7,
+					10
+				],
+				"neighbour_coord": [
+					6,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_10__7_11",
+				"coord": [
+					7,
+					11
+				],
+				"neighbour_coord": [
+					7,
+					10
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_10__7_9",
+				"coord": [
+					7,
+					10
+				],
+				"neighbour_coord": [
+					7,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_11__8_10",
+				"coord": [
+					7,
+					11
+				],
+				"neighbour_coord": [
+					8,
+					10
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_11__8_11",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					7,
+					11
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_12__7_13",
+				"coord": [
+					7,
+					13
+				],
+				"neighbour_coord": [
+					7,
+					12
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_12__8_11",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					7,
+					12
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_13__8_12",
+				"coord": [
+					7,
+					13
+				],
+				"neighbour_coord": [
+					8,
+					12
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_1__7_2",
+				"coord": [
+					7,
+					1
+				],
+				"neighbour_coord": [
+					7,
+					2
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_1__8_1",
+				"coord": [
+					8,
+					1
+				],
+				"neighbour_coord": [
+					7,
+					1
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.7_6__7_7",
+				"coord": [
+					7,
+					6
+				],
+				"neighbour_coord": [
+					7,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_6__8_6",
+				"coord": [
+					8,
+					6
+				],
+				"neighbour_coord": [
+					7,
+					6
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_7__8_6",
+				"coord": [
+					7,
+					7
+				],
+				"neighbour_coord": [
+					8,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_7__8_7",
+				"coord": [
+					8,
+					7
+				],
+				"neighbour_coord": [
+					7,
+					7
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_8__8_7",
+				"coord": [
+					8,
+					7
+				],
+				"neighbour_coord": [
+					7,
+					8
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.7_9__8_9",
+				"coord": [
+					7,
+					9
+				],
+				"neighbour_coord": [
+					8,
+					9
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_0__8_1",
+				"coord": [
+					8,
+					1
+				],
+				"neighbour_coord": [
+					8,
+					0
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_10__8_11",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					8,
+					10
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_11__8_12",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					8,
+					12
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_11__9_11",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					9,
+					11
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_11__9_12",
+				"coord": [
+					8,
+					11
+				],
+				"neighbour_coord": [
+					9,
+					12
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_12__8_13",
+				"coord": [
+					8,
+					12
+				],
+				"neighbour_coord": [
+					8,
+					13
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_12__9_12",
+				"coord": [
+					9,
+					12
+				],
+				"neighbour_coord": [
+					8,
+					12
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_12__9_13",
+				"coord": [
+					8,
+					12
+				],
+				"neighbour_coord": [
+					9,
+					13
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_13__9_13",
+				"coord": [
+					9,
+					13
+				],
+				"neighbour_coord": [
+					8,
+					13
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_1__9_1",
+				"coord": [
+					9,
+					1
+				],
+				"neighbour_coord": [
+					8,
+					1
+				],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.8_5__8_6",
+				"coord": [
+					8,
+					6
+				],
+				"neighbour_coord": [
+					8,
+					5
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_5__9_6",
+				"coord": [
+					9,
+					6
+				],
+				"neighbour_coord": [
+					8,
+					5
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_6__8_7",
+				"coord": [
+					8,
+					6
+				],
+				"neighbour_coord": [
+					8,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_6__9_6",
+				"coord": [
+					8,
+					6
+				],
+				"neighbour_coord": [
+					9,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_6__9_7",
+				"coord": [
+					9,
+					7
+				],
+				"neighbour_coord": [
+					8,
+					6
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_7__8_8",
+				"coord": [
+					8,
+					7
+				],
+				"neighbour_coord": [
+					8,
+					8
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_7__9_7",
+				"coord": [
+					8,
+					7
+				],
+				"neighbour_coord": [
+					9,
+					7
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_7__9_8",
+				"coord": [
+					9,
+					8
+				],
+				"neighbour_coord": [
+					8,
+					7
+				],
+				"edge_index": 3,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_8__8_9",
+				"coord": [
+					8,
+					9
+				],
+				"neighbour_coord": [
+					8,
+					8
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_8__9_8",
+				"coord": [
+					8,
+					8
+				],
+				"neighbour_coord": [
+					9,
+					8
+				],
+				"edge_index": 5,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.8_8__9_9",
+				"coord": [
+					8,
+					8
+				],
+				"neighbour_coord": [
+					9,
+					9
+				],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.9_11__9_12",
+				"coord": [
+					9,
+					12
+				],
+				"neighbour_coord": [
+					9,
+					11
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.9_1__9_2",
+				"coord": [
+					9,
+					1
+				],
+				"neighbour_coord": [
+					9,
+					2
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.9_5__9_6",
+				"coord": [
+					9,
+					6
+				],
+				"neighbour_coord": [
+					9,
+					5
+				],
+				"edge_index": 4,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.9_6__9_7",
+				"coord": [
+					9,
+					6
+				],
+				"neighbour_coord": [
+					9,
+					7
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.9_7__9_8",
+				"coord": [
+					9,
+					7
+				],
+				"neighbour_coord": [
+					9,
+					8
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.9_8__9_9",
+				"coord": [
+					9,
+					8
+				],
+				"neighbour_coord": [
+					9,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "road",
+				"style_id": "primary_road"
+			},
+			{
+				"id": "road.edge.0001",
+				"coord": [
+					12,
+					14
+				],
+				"neighbour_coord": [],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.edge.0002",
+				"coord": [
+					4,
+					14
+				],
+				"neighbour_coord": [],
+				"edge_index": 0,
+				"edge_type": "road",
+				"style_id": "local_road"
+			},
+			{
+				"id": "road.edge.0003",
+				"coord": [
+					4,
+					14
+				],
+				"neighbour_coord": [],
+				"edge_index": 2,
+				"edge_type": "road",
+				"style_id": "local_road"
+			}
+		],
+		"border_edges": [
+			{
+				"id": "border.0_10__0_9",
+				"coord": [
+					0,
+					9
+				],
+				"neighbour_coord": [
+					0,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.10_10__10_9",
+				"coord": [
+					10,
+					9
+				],
+				"neighbour_coord": [
+					10,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.10_3__10_4",
+				"coord": [
+					10,
+					3
+				],
+				"neighbour_coord": [
+					10,
+					4
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.10_3__9_3",
+				"coord": [
+					9,
+					3
+				],
+				"neighbour_coord": [
+					10,
+					3
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.10_9__11_10",
+				"coord": [
+					10,
+					9
+				],
+				"neighbour_coord": [
+					11,
+					10
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.10_9__9_10",
+				"coord": [
+					10,
+					9
+				],
+				"neighbour_coord": [
+					9,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.11_10__11_9",
+				"coord": [
+					11,
+					10
+				],
+				"neighbour_coord": [
+					11,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.11_3__11_4",
+				"coord": [
+					11,
+					4
+				],
+				"neighbour_coord": [
+					11,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.12_8__12_9",
+				"coord": [
+					12,
+					9
+				],
+				"neighbour_coord": [
+					12,
+					8
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.13_7__14_6",
+				"coord": [
+					13,
+					7
+				],
+				"neighbour_coord": [
+					14,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.14_9__15_9",
+				"coord": [
+					15,
+					9
+				],
+				"neighbour_coord": [
+					14,
+					9
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.15_10__15_9",
+				"coord": [
+					15,
+					10
+				],
+				"neighbour_coord": [
+					15,
+					9
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.15_10__16_9",
+				"coord": [
+					16,
+					9
+				],
+				"neighbour_coord": [
+					15,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.16_10__16_9",
+				"coord": [
+					16,
+					9
+				],
+				"neighbour_coord": [
+					16,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.16_10__17_10",
+				"coord": [
+					17,
+					10
+				],
+				"neighbour_coord": [
+					16,
+					10
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.17_10__17_11",
+				"coord": [
+					17,
+					10
+				],
+				"neighbour_coord": [
+					17,
+					11
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.17_11__18_10",
+				"coord": [
+					17,
+					11
+				],
+				"neighbour_coord": [
+					18,
+					10
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.18_10__18_11",
+				"coord": [
+					18,
+					11
+				],
+				"neighbour_coord": [
+					18,
+					10
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.18_11__19_11",
+				"coord": [
+					18,
+					11
+				],
+				"neighbour_coord": [
+					19,
+					11
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.1_10__1_9",
+				"coord": [
+					1,
+					9
+				],
+				"neighbour_coord": [
+					1,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.2_10__2_9",
+				"coord": [
+					2,
+					9
+				],
+				"neighbour_coord": [
+					2,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.2_9__3_10",
+				"coord": [
+					3,
+					10
+				],
+				"neighbour_coord": [
+					2,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.3_10__3_9",
+				"coord": [
+					3,
+					9
+				],
+				"neighbour_coord": [
+					3,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.5_8__5_9",
+				"coord": [
+					5,
+					8
+				],
+				"neighbour_coord": [
+					5,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.6_8__6_9",
+				"coord": [
+					6,
+					8
+				],
+				"neighbour_coord": [
+					6,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.8_0__9_1",
+				"coord": [
+					8,
+					0
+				],
+				"neighbour_coord": [
+					9,
+					1
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.8_3__9_3",
+				"coord": [
+					9,
+					3
+				],
+				"neighbour_coord": [
+					8,
+					3
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.8_9__9_10",
+				"coord": [
+					9,
+					10
+				],
+				"neighbour_coord": [
+					8,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.9_10__9_9",
+				"coord": [
+					9,
+					9
+				],
+				"neighbour_coord": [
+					9,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.9_3__9_4",
+				"coord": [
+					9,
+					4
+				],
+				"neighbour_coord": [
+					9,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0001",
+				"coord": [
+					0,
+					9
+				],
+				"neighbour_coord": [
+					1,
+					10
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0002",
+				"coord": [
+					1,
+					10
+				],
+				"neighbour_coord": [
+					2,
+					9
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0003",
+				"coord": [
+					10,
+					3
+				],
+				"neighbour_coord": [
+					11,
+					4
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0005",
+				"coord": [
+					12,
+					3
+				],
+				"neighbour_coord": [
+					11,
+					4
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0006",
+				"coord": [
+					12,
+					9
+				],
+				"neighbour_coord": [
+					11,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0008",
+				"coord": [
+					12,
+					4
+				],
+				"neighbour_coord": [
+					12,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0009",
+				"coord": [
+					12,
+					4
+				],
+				"neighbour_coord": [
+					13,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0010",
+				"coord": [
+					13,
+					9
+				],
+				"neighbour_coord": [
+					12,
+					8
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0011",
+				"coord": [
+					13,
+					4
+				],
+				"neighbour_coord": [
+					13,
+					5
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0012",
+				"coord": [
+					13,
+					5
+				],
+				"neighbour_coord": [
+					14,
+					4
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0013",
+				"coord": [
+					14,
+					5
+				],
+				"neighbour_coord": [
+					13,
+					5
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0014",
+				"coord": [
+					13,
+					6
+				],
+				"neighbour_coord": [
+					14,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0015",
+				"coord": [
+					13,
+					6
+				],
+				"neighbour_coord": [
+					14,
+					6
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0016",
+				"coord": [
+					14,
+					7
+				],
+				"neighbour_coord": [
+					13,
+					7
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0017",
+				"coord": [
+					13,
+					8
+				],
+				"neighbour_coord": [
+					13,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0018",
+				"coord": [
+					14,
+					7
+				],
+				"neighbour_coord": [
+					13,
+					8
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0019",
+				"coord": [
+					14,
+					8
+				],
+				"neighbour_coord": [
+					13,
+					8
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0020",
+				"coord": [
+					13,
+					9
+				],
+				"neighbour_coord": [
+					14,
+					8
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0021",
+				"coord": [
+					14,
+					8
+				],
+				"neighbour_coord": [
+					14,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0025",
+				"coord": [
+					19,
+					11
+				],
+				"neighbour_coord": [
+					19,
+					12
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0026",
+				"coord": [
+					4,
+					9
+				],
+				"neighbour_coord": [
+					3,
+					9
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0027",
+				"coord": [
+					4,
+					8
+				],
+				"neighbour_coord": [
+					4,
+					9
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0028",
+				"coord": [
+					4,
+					8
+				],
+				"neighbour_coord": [
+					5,
+					9
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0029",
+				"coord": [
+					6,
+					4
+				],
+				"neighbour_coord": [
+					5,
+					4
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0030",
+				"coord": [
+					6,
+					4
+				],
+				"neighbour_coord": [
+					5,
+					5
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0031",
+				"coord": [
+					6,
+					5
+				],
+				"neighbour_coord": [
+					5,
+					5
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0032",
+				"coord": [
+					5,
+					6
+				],
+				"neighbour_coord": [
+					6,
+					5
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0033",
+				"coord": [
+					5,
+					6
+				],
+				"neighbour_coord": [
+					6,
+					6
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0034",
+				"coord": [
+					5,
+					7
+				],
+				"neighbour_coord": [
+					6,
+					6
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0035",
+				"coord": [
+					5,
+					7
+				],
+				"neighbour_coord": [
+					6,
+					7
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0036",
+				"coord": [
+					5,
+					8
+				],
+				"neighbour_coord": [
+					6,
+					7
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0037",
+				"coord": [
+					6,
+					8
+				],
+				"neighbour_coord": [
+					5,
+					8
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0038",
+				"coord": [
+					5,
+					9
+				],
+				"neighbour_coord": [
+					6,
+					8
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0039",
+				"coord": [
+					6,
+					3
+				],
+				"neighbour_coord": [
+					6,
+					4
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0040",
+				"coord": [
+					7,
+					4
+				],
+				"neighbour_coord": [
+					6,
+					3
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0041",
+				"coord": [
+					6,
+					9
+				],
+				"neighbour_coord": [
+					7,
+					9
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0042",
+				"coord": [
+					7,
+					10
+				],
+				"neighbour_coord": [
+					8,
+					9
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0043",
+				"coord": [
+					7,
+					4
+				],
+				"neighbour_coord": [
+					7,
+					3
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0044",
+				"coord": [
+					8,
+					3
+				],
+				"neighbour_coord": [
+					7,
+					3
+				],
+				"edge_index": 3,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0045",
+				"coord": [
+					7,
+					9
+				],
+				"neighbour_coord": [
+					7,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0046",
+				"coord": [
+					8,
+					0
+				],
+				"neighbour_coord": [
+					9,
+					0
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0047",
+				"coord": [
+					8,
+					1
+				],
+				"neighbour_coord": [
+					9,
+					1
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0048",
+				"coord": [
+					8,
+					3
+				],
+				"neighbour_coord": [
+					8,
+					2
+				],
+				"edge_index": 4,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0049",
+				"coord": [
+					8,
+					9
+				],
+				"neighbour_coord": [
+					8,
+					10
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0050",
+				"coord": [
+					9,
+					1
+				],
+				"neighbour_coord": [
+					9,
+					2
+				],
+				"edge_index": 1,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0051",
+				"coord": [
+					9,
+					2
+				],
+				"neighbour_coord": [
+					10,
+					1
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0052",
+				"coord": [
+					9,
+					2
+				],
+				"neighbour_coord": [
+					10,
+					2
+				],
+				"edge_index": 0,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0053",
+				"coord": [
+					9,
+					3
+				],
+				"neighbour_coord": [
+					10,
+					2
+				],
+				"edge_index": 5,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			},
+			{
+				"id": "border.edge.0054",
+				"coord": [
+					10,
+					3
+				],
+				"neighbour_coord": [
+					9,
+					4
+				],
+				"edge_index": 2,
+				"edge_type": "border",
+				"style_id": "subregion_border"
+			}
+		],
+		"subregions": {
+			"subregion.life.telluria_proper": "Telluria Proper",
+			"subregion.life.north_west_telluria": "North-West Telluria",
+			"subregion.life.north_east_telluria": "North-East Telluria",
+			"subregion.life.south_telluria": "South Telluria"
+		},
+		"aliases": [
+			"region.life.verdant_march"
+		],
+		"site_aliases": {
+			"site.fifth_god.ruin": "site.fifth_god_ruin",
+			"site.life.southroad_farm": "site.farm.starter_storehouse"
+		},
+		"main_settlement_site_id": "site.settlement.telluria",
+		"fifth_god_ruin_site_id": "site.fifth_god_ruin",
+		"military_site_id": "site.military.forest_gate_garrison",
+		"religious_site_ids": [
+			"site.religious.hero_of_mercy_monument"
+		],
+		"mission_site_ids": [
+			"site.farm.starter_storehouse",
+			"site.farm.dalry_breeding_estate",
+			"site.farm.bellmare_lakeside_holdings",
+			"site.telluria.wheat_warehouse",
+			"site.telluria.lumbermill",
+			"site.telluria.textiles_warehouse",
+			"site.telluria.craftsman_district",
+			"site.telluria.guild_house",
+			"site.telluria.noble_housing",
+			"site.religious.hero_of_mercy_monument",
+			"site.military.forest_gate_garrison",
+			"site.wilderness.deep_forest_ruins",
+			"site.wilderness.northern_marsh",
+			"site.telluria.east_merchant_quarter",
+			"site.westmarch.north_granary",
+			"site.westmarch.south_granary",
+			"site.westmarch.craftsman_yard",
+			"site.westmarch.textile_store",
+			"site.solis.granary",
+			"site.solis.textile_houses",
+			"site.solis.guild_house",
+			"site.oakstead.artifact_hall",
+			"site.oakstead.warehouse",
+			"site.oakstead.syndicate_house"
+		]
+	},
+	"label_offsets_by_site_id": {},
+	"editor_metadata": {
+		"camera_zoom": 1.41359129792779,
+		"camera_pan_x": 181.977355957031,
+		"camera_pan_y": 89.7249755859375,
+		"active_tool": "select"
+	}
+}

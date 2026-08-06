@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.mercys_rebuke"
+display_name = "Mercy’s Rebuke"
+description = "Half Action, 30 feet, one biological living target. Deals 2d6+3 divine nonlethal damage; Will DC 15 halves."
+action_cost_type = &"half"
+implementation_profile_id = &"ability.nonlethal_save_damage"
+targeting_rule_id = &"target.single_hostile_living"
+range_feet = 30
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &"resource.mercy.mercys_rebuke"
+resource_cost = 1
+spell_rank = 2
+caster_level = 3
+school_tags = Array[StringName]([&"divine", &"nonlethal"])
+dice_count = 2
+die_size = 6
+flat_bonus = 3
+damage_channel = &"nonlethal"
+save_type = &"will"
+save_dc = 15
+half_on_save = true
+condition_id = &""
+duration_rounds = 0
+concentration = false
+bonus_value = 0
+effect_tags = Array[StringName]([&"divine", &"nonlethal", &"biological_only"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])

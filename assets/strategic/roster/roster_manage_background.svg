@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#18201f"/><stop offset="1" stop-color="#080b0c"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#7b6537" stop-opacity=".34"/><stop offset="1" stop-color="#111817" stop-opacity="0"/></radialGradient>
+ <pattern id="stone" width="120" height="80" patternUnits="userSpaceOnUse"><path d="M0 2h120M0 78h120M2 0v80M118 0v80" stroke="#35413c" stroke-width="2" opacity=".28"/><path d="M20 18h78v42H20z" fill="none" stroke="#667067" opacity=".08"/></pattern>
+</defs>
+<rect width="1920" height="1080" fill="url(#bg)"/><rect width="1920" height="1080" fill="url(#stone)"/>
+<ellipse cx="960" cy="520" rx="780" ry="460" fill="url(#glow)"/>
+<path d="M0 190L210 100h1500l210 90v890H0z" fill="#111716" stroke="#4a554e" stroke-width="8"/>
+<path d="M95 250h360v700H95zM1465 250h360v700h-360z" fill="#161d1b" stroke="#3b463f" stroke-width="6"/>
+<g fill="#27312d" stroke="#566158" stroke-width="5">
+ <rect x="125" y="315" width="300" height="70"/><rect x="125" y="420" width="300" height="70"/><rect x="125" y="525" width="300" height="70"/>
+ <rect x="1495" y="315" width="300" height="100"/><rect x="1495" y="460" width="300" height="100"/><rect x="1495" y="605" width="300" height="100"/>
+</g>
+<g fill="#9c8248" opacity=".38"><circle cx="210" cy="350" r="10"/><circle cx="210" cy="455" r="10"/><circle cx="210" cy="560" r="10"/></g>
+<path d="M610 890h700l-60-130H670z" fill="#1e2925" stroke="#515b54" stroke-width="5"/>
+<path d="M770 150v95M960 130v115M1150 150v95" stroke="#9d8a5a" stroke-width="7" opacity=".35"/>
+<g stroke="#8a774a" stroke-width="4" opacity=".3"><path d="M760 245h20v320h-20zM950 245h20v320h-20zM1140 245h20v320h-20z"/></g>
+<rect width="1920" height="1080" fill="#000" opacity=".18"/>
+</svg>

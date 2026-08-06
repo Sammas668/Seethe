@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+[resource]
+script = ExtResource("1_def")
+id = &"item.mercy_satchel"
+display_name = "Mercy-Bearer's Satchel"
+description = "Bandages, splints and living salves sufficient for one administered healing action."
+weight_lb = 3.0
+inventory_footprint = Vector2i(2, 2)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = true
+stackable = true
+maximum_stack_size = 3
+storage_space = 2
+storage_units_per_bundle = 3
+storage_space_per_bundle = 2
+equipment_tags = Array[StringName]([&"medical", &"healing", &"mercy"])
+permits_first_aid = true
+first_aid_bonus = 2
+first_aid_uses_consumed = 1
+permits_administered_healing = true
+healing_amount = 6
+tactical_visual_category = &"tool"
+shop_category_id = &"supplies"
+shop_buy_price_gold = 10
+shop_sell_price_gold = 5
+shop_starting_available = false

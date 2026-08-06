@@ -1,0 +1,104 @@
+{
+  "stage": "4.7-hotfix-5",
+  "godot_version": "4.7.1",
+  "suites": [
+    {
+      "id": "stage_3_12_characters",
+      "category": "characters",
+      "runner": "res://tests/characters/run_stage_3_12_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_3_14_campaign",
+      "category": "campaign",
+      "runner": "res://tests/campaign/run_stage_3_14_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_3_15_integrity",
+      "category": "integration",
+      "runner": "res://tests/integration/run_stage_3_15_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_2_5_visibility",
+      "category": "visibility",
+      "runner": "res://tests/tactical/run_stage_4_2_5_5_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_3_2_bodies",
+      "category": "bodies",
+      "runner": "res://tests/tactical/run_stage_4_3_2_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_4_tactical",
+      "category": "tactical",
+      "runner": "res://tests/tactical/run_stage_4_4_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_5_reactions",
+      "category": "reactions",
+      "runner": "res://tests/tactical/run_stage_4_5_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_5e5_invalidation",
+      "category": "invalidation",
+      "runner": "res://tests/tactical/run_stage_4_5e5_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_5f_interrupted_movement",
+      "category": "movement",
+      "runner": "res://tests/tactical/run_stage_4_5f_tests.gd",
+      "required": true,
+      "timeout_seconds": 120
+    },
+    {
+      "id": "stage_4_5g_foundation_lock",
+      "category": "foundation",
+      "runner": "res://tests/integration/run_stage_4_5g_tests.gd",
+      "required": true,
+      "timeout_seconds": 180
+    },
+    {
+      "id": "stage_4_6_authored_mission",
+      "category": "missions",
+      "runner": "res://tests/integration/run_stage_4_6_tests.gd",
+      "required": true,
+      "timeout_seconds": 180
+    },
+    {
+      "id": "stage_4_7_hotfix_2_loadout_legality",
+      "category": "content",
+      "runner": "res://tests/integration/run_stage_4_7_hotfix_2_tests.gd",
+      "required": true,
+      "timeout_seconds": 240
+    },
+    {
+      "id": "stage_4_7_hotfix_5_marauder_mechanics",
+      "category": "content",
+      "runner": "res://tests/integration/run_stage_4_7_hotfix_5_tests.gd",
+      "required": true,
+      "timeout_seconds": 240
+    },
+    {
+      "id": "stage_4_5g_benchmark",
+      "category": "performance",
+      "runner": "res://tests/performance/run_stage_4_5g_benchmark.gd",
+      "required": true,
+      "timeout_seconds": 180
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = &"item.rations"
+display_name = "Deprecated Rations"
+description = "Legacy-save compatibility only. No current Marauder loadout creates or displays this item."
+weight_lb = 1.0
+inventory_footprint = Vector2i(1, 1)
+handedness = &"not_equippable"
+belt_allowed = false
+backpack_allowed = true
+storage_space = 1
+storage_units_per_bundle = 1
+storage_space_per_bundle = 1
+equipment_tags = Array[StringName]([&"deprecated_legacy_item"])
+shop_category_id = &"supplies"
+shop_buy_price_gold = 0
+shop_sell_price_gold = 0
+shop_starting_available = false

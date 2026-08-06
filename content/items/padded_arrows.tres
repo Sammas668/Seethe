@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+[resource]
+script = ExtResource("1_def")
+id = &"item.sanctuary.padded_arrows"
+display_name = "Padded Capture Arrows"
+description = "Blunt padded arrows for the Sanctuary Capture Bow."
+weight_lb = 0.2
+inventory_footprint = Vector2i(1, 2)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = true
+stackable = true
+maximum_stack_size = 30
+storage_space = 1
+storage_units_per_bundle = 20
+storage_space_per_bundle = 1
+equipment_tags = Array[StringName]([&"ammunition", &"arrow", &"padded_arrow", &"nonlethal"])
+granted_action_ids = Array[StringName]([])
+defence_profile_id = &""
+stat_modifiers = {}
+tactical_visual_category = &"tool"
+permits_first_aid = false
+first_aid_bonus = 0
+is_restraint = false
+shop_category_id = &"ammunition"
+shop_buy_price_gold = 2
+shop_sell_price_gold = 1
+shop_starting_available = false

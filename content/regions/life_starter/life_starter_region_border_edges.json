@@ -1,0 +1,1031 @@
+{
+  "border_edges": [
+    {
+      "id": "border.0_10__0_9",
+      "coord": [
+        0,
+        9
+      ],
+      "neighbour_coord": [
+        0,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.10_10__10_9",
+      "coord": [
+        10,
+        9
+      ],
+      "neighbour_coord": [
+        10,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.10_3__10_4",
+      "coord": [
+        10,
+        3
+      ],
+      "neighbour_coord": [
+        10,
+        4
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.10_3__9_3",
+      "coord": [
+        9,
+        3
+      ],
+      "neighbour_coord": [
+        10,
+        3
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.10_9__11_10",
+      "coord": [
+        10,
+        9
+      ],
+      "neighbour_coord": [
+        11,
+        10
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.10_9__9_10",
+      "coord": [
+        10,
+        9
+      ],
+      "neighbour_coord": [
+        9,
+        10
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.11_10__11_9",
+      "coord": [
+        11,
+        10
+      ],
+      "neighbour_coord": [
+        11,
+        9
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.11_3__11_4",
+      "coord": [
+        11,
+        4
+      ],
+      "neighbour_coord": [
+        11,
+        3
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.12_8__12_9",
+      "coord": [
+        12,
+        9
+      ],
+      "neighbour_coord": [
+        12,
+        8
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.13_7__14_6",
+      "coord": [
+        13,
+        7
+      ],
+      "neighbour_coord": [
+        14,
+        6
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.14_9__15_9",
+      "coord": [
+        15,
+        9
+      ],
+      "neighbour_coord": [
+        14,
+        9
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.15_10__15_9",
+      "coord": [
+        15,
+        10
+      ],
+      "neighbour_coord": [
+        15,
+        9
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.15_10__16_9",
+      "coord": [
+        16,
+        9
+      ],
+      "neighbour_coord": [
+        15,
+        10
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.16_10__16_9",
+      "coord": [
+        16,
+        9
+      ],
+      "neighbour_coord": [
+        16,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.16_10__17_10",
+      "coord": [
+        17,
+        10
+      ],
+      "neighbour_coord": [
+        16,
+        10
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.17_10__17_11",
+      "coord": [
+        17,
+        10
+      ],
+      "neighbour_coord": [
+        17,
+        11
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.17_11__18_10",
+      "coord": [
+        17,
+        11
+      ],
+      "neighbour_coord": [
+        18,
+        10
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.18_10__18_11",
+      "coord": [
+        18,
+        11
+      ],
+      "neighbour_coord": [
+        18,
+        10
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.18_11__19_11",
+      "coord": [
+        18,
+        11
+      ],
+      "neighbour_coord": [
+        19,
+        11
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.1_10__1_9",
+      "coord": [
+        1,
+        9
+      ],
+      "neighbour_coord": [
+        1,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.2_10__2_9",
+      "coord": [
+        2,
+        9
+      ],
+      "neighbour_coord": [
+        2,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.2_9__3_10",
+      "coord": [
+        3,
+        10
+      ],
+      "neighbour_coord": [
+        2,
+        9
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.3_10__3_9",
+      "coord": [
+        3,
+        9
+      ],
+      "neighbour_coord": [
+        3,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.5_8__5_9",
+      "coord": [
+        5,
+        8
+      ],
+      "neighbour_coord": [
+        5,
+        9
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.6_8__6_9",
+      "coord": [
+        6,
+        8
+      ],
+      "neighbour_coord": [
+        6,
+        9
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.8_0__9_1",
+      "coord": [
+        8,
+        0
+      ],
+      "neighbour_coord": [
+        9,
+        1
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.8_3__9_3",
+      "coord": [
+        9,
+        3
+      ],
+      "neighbour_coord": [
+        8,
+        3
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.8_9__9_10",
+      "coord": [
+        9,
+        10
+      ],
+      "neighbour_coord": [
+        8,
+        9
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.9_10__9_9",
+      "coord": [
+        9,
+        9
+      ],
+      "neighbour_coord": [
+        9,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.9_3__9_4",
+      "coord": [
+        9,
+        4
+      ],
+      "neighbour_coord": [
+        9,
+        3
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0001",
+      "coord": [
+        0,
+        9
+      ],
+      "neighbour_coord": [
+        1,
+        10
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0002",
+      "coord": [
+        1,
+        10
+      ],
+      "neighbour_coord": [
+        2,
+        9
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0003",
+      "coord": [
+        10,
+        3
+      ],
+      "neighbour_coord": [
+        11,
+        4
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0005",
+      "coord": [
+        12,
+        3
+      ],
+      "neighbour_coord": [
+        11,
+        4
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0006",
+      "coord": [
+        12,
+        9
+      ],
+      "neighbour_coord": [
+        11,
+        9
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0008",
+      "coord": [
+        12,
+        4
+      ],
+      "neighbour_coord": [
+        12,
+        3
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0009",
+      "coord": [
+        12,
+        4
+      ],
+      "neighbour_coord": [
+        13,
+        4
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0010",
+      "coord": [
+        13,
+        9
+      ],
+      "neighbour_coord": [
+        12,
+        8
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0011",
+      "coord": [
+        13,
+        4
+      ],
+      "neighbour_coord": [
+        13,
+        5
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0012",
+      "coord": [
+        13,
+        5
+      ],
+      "neighbour_coord": [
+        14,
+        4
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0013",
+      "coord": [
+        14,
+        5
+      ],
+      "neighbour_coord": [
+        13,
+        5
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0014",
+      "coord": [
+        13,
+        6
+      ],
+      "neighbour_coord": [
+        14,
+        5
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0015",
+      "coord": [
+        13,
+        6
+      ],
+      "neighbour_coord": [
+        14,
+        6
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0016",
+      "coord": [
+        14,
+        7
+      ],
+      "neighbour_coord": [
+        13,
+        7
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0017",
+      "coord": [
+        13,
+        8
+      ],
+      "neighbour_coord": [
+        13,
+        9
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0018",
+      "coord": [
+        14,
+        7
+      ],
+      "neighbour_coord": [
+        13,
+        8
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0019",
+      "coord": [
+        14,
+        8
+      ],
+      "neighbour_coord": [
+        13,
+        8
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0020",
+      "coord": [
+        13,
+        9
+      ],
+      "neighbour_coord": [
+        14,
+        8
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0021",
+      "coord": [
+        14,
+        8
+      ],
+      "neighbour_coord": [
+        14,
+        9
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0025",
+      "coord": [
+        19,
+        11
+      ],
+      "neighbour_coord": [
+        19,
+        12
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0026",
+      "coord": [
+        4,
+        9
+      ],
+      "neighbour_coord": [
+        3,
+        9
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0027",
+      "coord": [
+        4,
+        8
+      ],
+      "neighbour_coord": [
+        4,
+        9
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0028",
+      "coord": [
+        4,
+        8
+      ],
+      "neighbour_coord": [
+        5,
+        9
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0029",
+      "coord": [
+        6,
+        4
+      ],
+      "neighbour_coord": [
+        5,
+        4
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0030",
+      "coord": [
+        6,
+        4
+      ],
+      "neighbour_coord": [
+        5,
+        5
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0031",
+      "coord": [
+        6,
+        5
+      ],
+      "neighbour_coord": [
+        5,
+        5
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0032",
+      "coord": [
+        5,
+        6
+      ],
+      "neighbour_coord": [
+        6,
+        5
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0033",
+      "coord": [
+        5,
+        6
+      ],
+      "neighbour_coord": [
+        6,
+        6
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0034",
+      "coord": [
+        5,
+        7
+      ],
+      "neighbour_coord": [
+        6,
+        6
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0035",
+      "coord": [
+        5,
+        7
+      ],
+      "neighbour_coord": [
+        6,
+        7
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0036",
+      "coord": [
+        5,
+        8
+      ],
+      "neighbour_coord": [
+        6,
+        7
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0037",
+      "coord": [
+        6,
+        8
+      ],
+      "neighbour_coord": [
+        5,
+        8
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0038",
+      "coord": [
+        5,
+        9
+      ],
+      "neighbour_coord": [
+        6,
+        8
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0039",
+      "coord": [
+        6,
+        3
+      ],
+      "neighbour_coord": [
+        6,
+        4
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0040",
+      "coord": [
+        7,
+        4
+      ],
+      "neighbour_coord": [
+        6,
+        3
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0041",
+      "coord": [
+        6,
+        9
+      ],
+      "neighbour_coord": [
+        7,
+        9
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0042",
+      "coord": [
+        7,
+        10
+      ],
+      "neighbour_coord": [
+        8,
+        9
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0043",
+      "coord": [
+        7,
+        4
+      ],
+      "neighbour_coord": [
+        7,
+        3
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0044",
+      "coord": [
+        8,
+        3
+      ],
+      "neighbour_coord": [
+        7,
+        3
+      ],
+      "edge_index": 3,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0045",
+      "coord": [
+        7,
+        9
+      ],
+      "neighbour_coord": [
+        7,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0046",
+      "coord": [
+        8,
+        0
+      ],
+      "neighbour_coord": [
+        9,
+        0
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0047",
+      "coord": [
+        8,
+        1
+      ],
+      "neighbour_coord": [
+        9,
+        1
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0048",
+      "coord": [
+        8,
+        3
+      ],
+      "neighbour_coord": [
+        8,
+        2
+      ],
+      "edge_index": 4,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0049",
+      "coord": [
+        8,
+        9
+      ],
+      "neighbour_coord": [
+        8,
+        10
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0050",
+      "coord": [
+        9,
+        1
+      ],
+      "neighbour_coord": [
+        9,
+        2
+      ],
+      "edge_index": 1,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0051",
+      "coord": [
+        9,
+        2
+      ],
+      "neighbour_coord": [
+        10,
+        1
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0052",
+      "coord": [
+        9,
+        2
+      ],
+      "neighbour_coord": [
+        10,
+        2
+      ],
+      "edge_index": 0,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0053",
+      "coord": [
+        9,
+        3
+      ],
+      "neighbour_coord": [
+        10,
+        2
+      ],
+      "edge_index": 5,
+      "border_class": "subregion_border"
+    },
+    {
+      "id": "border.edge.0054",
+      "coord": [
+        10,
+        3
+      ],
+      "neighbour_coord": [
+        9,
+        4
+      ],
+      "edge_index": 2,
+      "border_class": "subregion_border"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://d2vlj482c67mh"]
+
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+damage_type = &"piercing"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+range_kind = &"ranged"
+range_increment_feet = 10
+maximum_increments = 5
+
+[resource]
+script = ExtResource("1_attack")
+attack_kind = &"ranged"
+attack_ability = &"dexterity"
+damage_ability = &"strength"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+critical_threat_minimum = 19
+attack_tags = Array[StringName]([&"weapon", &"dagger", &"ranged", &"thrown"])
+implementation_profile_id = &"combat.ranged_weapon"
+supports_power_attack = false
+id = &"action.reaver_thrown_dagger_attack"
+display_name = "Thrown Dagger"
+description = "A dagger thrown at a nearby target."
+action_tags = Array[StringName]([&"attack", &"weapon_attack", &"thrown"])

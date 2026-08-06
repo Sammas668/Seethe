@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ActionDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/action_definition.gd" id="1_action"]
+
+[resource]
+script = ExtResource("1_action")
+id = &"action.restrain"
+display_name = "Restrain"
+description = "Restrain a helpless, surrendered, Paralysed or Pinned adjacent target."
+action_cost_type = &"half"
+action_tags = Array[StringName]([&"body_action"])

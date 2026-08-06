@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://3p6qknnhaymg"]
+
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 3
+damage_type = &"bludgeoning"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+
+[resource]
+script = ExtResource("1_attack")
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+attack_tags = Array[StringName]([&"unarmed", &"melee"])
+implementation_profile_id = &"combat.melee_weapon"
+id = &"action.unarmed_strike"
+display_name = "Unarmed Strike"
+description = "A basic attack made without a weapon."
+action_tags = Array[StringName]([&"attack", &"innate_attack"])

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DismantlingRecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/dismantling_recipe_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"dismantle.grain_crate.basic"
+input_item_definition_id = &"item.grain_crate"
+resource_yields = {"wood": 2, "food": 4}
+description = "Break down the crate and reclaim its timber and grain."

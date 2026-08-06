@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/item_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"item.rope"
+display_name = "Rope"
+description = "A coil of rope used by interactions."
+weight_lb = 4.0
+inventory_footprint = Vector2i(2, 1)
+handedness = &"not_equippable"
+belt_allowed = true
+backpack_allowed = true
+stackable = false
+maximum_stack_size = 1
+storage_space = 1
+storage_units_per_bundle = 1
+storage_space_per_bundle = 1
+equipment_tags = Array[StringName]([&"tool", &"rope"])
+tactical_visual_category = &"tool"
+is_restraint = true
+shop_category_id = &"supplies"
+shop_buy_price_gold = 1
+shop_sell_price_gold = 1
+shop_starting_available = true

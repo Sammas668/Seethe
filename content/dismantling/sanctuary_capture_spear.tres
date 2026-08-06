@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DismantlingRecipeDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/inventory/definitions/dismantling_recipe_definition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = &"dismantle.sanctuary_capture_spear.basic"
+input_item_definition_id = &"item.sanctuary.capture_spear"
+resource_yields = {"metal": 3, "wood": 1}
+description = "Strip the capture spear into ordinary metal fittings and timber."

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.prototype.practice_dummy"
+display_name = "Training Dummy"
+species_name = "Construct"
+class_name_text = "Training Object"
+archetype_name = "None"
+troop_type = "Stationary Hostile Training Target"
+base_level = 1
+base_ability_scores = {"CHA": 1, "CON": 10, "DEX": 10, "INT": 1, "STR": 10, "WIS": 1}
+base_attack_bonus = 0
+base_save_bonuses = {"fortitude": 0, "reflex": 0, "will": 0}
+base_hp_before_constitution = 60
+hp_constitution_levels = 0
+base_armour_class = 10
+base_turn_capacity_feet = 5
+sprint_multiplier = 1.0
+passive_perception_base = 0
+perception_skill_bonus = 0
+maximum_weight_lb = 1.0
+footprint = Vector2i(1, 1)
+default_defence_profile_id = &"defence.practice_dummy"
+innate_action_ids = Array[StringName]([])
+ability_entries = Array[String](["Stationary — this target takes no actions or movement.", "Enemy-turn training target — automatically passes. At 0 HP it becomes Defeated and remains on the map; corpse handling is deferred."])
+tactical_visual_id = &"tactical.practice_dummy"
+
+provisional_content = true

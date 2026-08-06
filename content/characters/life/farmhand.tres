@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CharacterTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/characters/definitions/character_template_definition.gd" id="1_template"]
+
+[resource]
+script = ExtResource("1_template")
+id = &"character_template.life.farmhand"
+display_name = "Ilyran Farmhand"
+species_name = "Human"
+class_name_text = "Commoner 1"
+archetype_name = "None"
+troop_type = "Civilian"
+base_level = 1
+base_ability_scores = {"CHA": 10, "CON": 11, "DEX": 10, "INT": 10, "STR": 11, "WIS": 10}
+base_attack_bonus = 0
+base_save_bonuses = {"fortitude": 0, "reflex": 0, "will": 0}
+base_hp_before_constitution = 6
+hp_constitution_levels = 1
+base_turn_capacity_feet = 30
+maximum_weight_lb = 50.0
+default_defence_profile_id = &"defence.hide_armour"
+innate_action_ids = Array[StringName]([])
+ability_entries = Array[String](["Civilian — works at authored anchors, witnesses hostile actions and seeks safety rather than combat."])
+tactical_visual_id = &"tactical.life.farmhand"
+role_tags = Array[StringName]([&"civilian", &"farmhand", &"witness"])
+proficiency_ids = Array[StringName]([])
+ai_profile_id = &"ai.civilian.farm_worker"
+combatant_classification = &"civilian"
+capture_eligible = true
+surrender_eligible = true
+loot_profile_id = &"loot_profile.life.farmhand"

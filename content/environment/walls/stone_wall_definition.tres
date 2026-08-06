@@ -1,0 +1,14 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/definitions/tactical_wall_material_definition.gd" id="1_wall"]
+
+[resource]
+script = ExtResource("1_wall")
+material_id = &"wall.stone"
+display_name = "Stone Wall"
+base_color = Color(0.285, 0.305, 0.315, 1)
+inset_color = Color(0.405, 0.415, 0.415, 1)
+outline_color = Color(0.055, 0.052, 0.048, 1)
+detail_color = Color(0.13, 0.14, 0.145, 1)
+highlight_color = Color(0.60, 0.605, 0.59, 1)
+far_color = Color(0.245, 0.26, 0.27, 1)

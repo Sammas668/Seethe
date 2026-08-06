@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AttackDefinition" format=3 uid="uid://c5bfutd3k2phu"]
+
+[ext_resource type="Script" uid="uid://caa2gks0t4qll" path="res://domain/combat/attack_definition.gd" id="1_attack"]
+[ext_resource type="Script" uid="uid://ipewe6fvex27" path="res://domain/combat/damage_profile.gd" id="2_damage"]
+[ext_resource type="Script" uid="uid://44nfaw7l4txs" path="res://domain/combat/range_profile.gd" id="3_range"]
+
+[sub_resource type="Resource" id="Damage"]
+script = ExtResource("2_damage")
+die_size = 3
+damage_type = &"slashing"
+
+[sub_resource type="Resource" id="Range"]
+script = ExtResource("3_range")
+
+[resource]
+script = ExtResource("1_attack")
+attack_ability = &"dexterity"
+damage_profile = SubResource("Damage")
+range_profile = SubResource("Range")
+attack_tags = Array[StringName]([&"weapon", &"light_blade", &"melee"])
+implementation_profile_id = &"combat.melee_weapon"
+id = &"action.knife_attack"
+display_name = "Knife Attack"
+description = "A normal melee attack with a utility knife."
+action_tags = Array[StringName]([&"attack", &"weapon_attack"])

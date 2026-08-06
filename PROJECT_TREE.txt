@@ -1,0 +1,209 @@
+Seethe_Godot_Tactical_Movement_Prototype/
+├── application/
+│   ├── campaign/
+│   ├── inventory/
+│   ├── missions/
+│   ├── strategic/
+│   ├── stronghold/
+│   ├── tactical/
+│   │   ├── tactical_command_handler.gd
+│   │   └── tactical_state_store.gd
+│   └── time/
+├── assets/
+│   ├── art/
+│   └── audio/
+├── bootstrap/
+│   ├── autoload/
+│   ├── boot/
+│   │   ├── boot.gd
+│   │   └── boot.tscn
+│   └── config/
+├── content/
+│   ├── ai_profiles/
+│   ├── archetypes/
+│   │   └── reaver/
+│   ├── characters/
+│   ├── facilities/
+│   │   └── generic/
+│   ├── items/
+│   ├── manifest/
+│   ├── missions/
+│   │   └── farm_storehouse/
+│   │       └── movement_test_map.tres
+│   ├── regions/
+│   │   └── ilyra_starter_region/
+│   ├── statuses/
+│   └── strongholds/
+│       └── fifth_god_ruin_01/
+├── core/
+│   ├── changes/
+│   ├── diagnostics/
+│   ├── events/
+│   ├── grid/
+│   ├── ids/
+│   ├── random/
+│   ├── results/
+│   │   └── operation_result.gd
+│   └── serialisation/
+├── docs/
+│   ├── architecture/
+│   │   ├── DEPENDENCY_RULES.md
+│   │   ├── FUTURE_STRUCTURE_REFERENCE.md
+│   │   └── STAGE_1_TACTICAL_MOVEMENT_IMPLEMENTATION.md
+│   ├── content_authoring/
+│   └── decisions/
+├── domain/
+│   ├── campaign/
+│   ├── characters/
+│   ├── inventory/
+│   ├── missions/
+│   ├── projects/
+│   ├── shared/
+│   ├── strategic/
+│   │   └── notoriety/
+│   ├── stronghold/
+│   └── tactical/
+│       ├── move_command.gd
+│       ├── movement_path_result.gd
+│       ├── movement_rules.gd
+│       ├── tactical_map_definition.gd
+│       ├── tactical_state.gd
+│       └── tactical_unit_state.gd
+├── infrastructure/
+│   ├── content/
+│   ├── diagnostics/
+│   ├── persistence/
+│   │   └── migrations/
+│   └── platform/
+├── presentation/
+│   ├── input/
+│   ├── screens/
+│   │   ├── region_map/
+│   │   └── stronghold/
+│   ├── shell/
+│   ├── tactical/
+│   │   ├── tactical_screen.gd
+│   │   ├── tactical_screen.tscn
+│   │   ├── tactical_unit_view.gd
+│   │   └── tactical_unit_view.tscn
+│   ├── themes/
+│   ├── view_models/
+│   └── widgets/
+├── tests/
+│   ├── content/
+│   ├── integration/
+│   ├── invariants/
+│   └── unit/
+├── tools/
+│   ├── debug_tactical_launcher/
+│   └── state_viewer/
+├── .editorconfig
+├── .gitignore
+├── CHANGELOG_FROM_V1.md
+├── CHANGELOG_STAGE_1.md
+├── project.godot
+├── PROJECT_TREE.txt
+├── README_FIRST.txt
+└── SEETHE_PROJECT_STRUCTURE_GUIDE_V2.md
+
+Stage 4.5g additions
+├── core/serialization/canonical_data_hasher.gd
+├── domain/missions/mission_authority_snapshot.gd
+├── domain/missions/mission_commit_envelope.gd
+├── domain/tactical/invalidation/tactical_invalidation_contract.gd
+├── domain/tactical/items/tactical_generated_item_provenance.gd
+├── application/tactical/transactions/tactical_transaction_snapshot.gd
+├── tests/integration/run_stage_4_5g_tests.gd
+├── tests/performance/run_stage_4_5g_benchmark.gd
+└── tools/testing/run_stage_4_5g_validation.py
+├── tests/release/validate_stage_4_5g_packages.py
+├── STAGE_4_5G_RUNTIME_VALIDATION_RESULTS.txt
+├── STAGE_4_5G_PATCH_README.txt
+└── STAGE_4_5G_PATCH_FILE_MANIFEST.txt
+├── tools/patching/apply_stage_4_5g_patch.py
+
+Stage 4.6 additions
+├── domain/missions/mission_definition.gd
+├── domain/missions/mission_objective_definition.gd
+├── domain/missions/mission_objective_state.gd
+├── domain/missions/mission_runtime_state.gd
+├── domain/tactical/maps/map_zone_definition.gd
+├── domain/tactical/maps/map_anchor_definition.gd
+├── domain/tactical/maps/patrol_path_definition.gd
+├── application/missions/mission_definition_registry.gd
+├── application/missions/mission_objective_service.gd
+├── bootstrap/debug/authored_mission_factory.gd
+├── presentation/debug/debug_mission_selector.tscn
+├── content/missions/farm_storehouse/life_farm_storehouse_raid_01.tres
+├── content/missions/farm_storehouse/life_farm_storehouse_map_01.tres
+├── tests/integration/run_stage_4_6_tests.gd
+└── tools/testing/run_stage_4_6_validation.py
+
+Stage 4.7 additions
+├── domain/tactical/ai/tactical_ai_profile_definition.gd
+├── content/ai_profiles/
+│   ├── reaver_marauder_aggressive.tres
+│   ├── civilian_farm_worker.tres
+│   ├── life_guard_melee_defender.tres
+│   ├── life_archer_ranged_defender.tres
+│   ├── life_patrol_leader.tres
+│   └── life_mercy_bearer_support.tres
+├── content/characters/protagonist/provisional_scorned_champion.tres
+├── content/characters/reaver/marauder_tier_1.tres
+├── content/characters/life/
+│   ├── farmhand.tres
+│   ├── settlement_guard.tres
+│   ├── settlement_archer.tres
+│   ├── patrol_leader.tres
+│   └── novice_mercy_bearer.tres
+├── content/items/ (Stage 4.7 Guard, Archer, Leader and Mercy-Bearer equipment)
+├── content/actions/ (Stage 4.7 production attack definitions)
+├── docs/content/STAGE_4_7_STARTER_TROOP_AND_ENEMY_CONTENT.md
+├── tests/content/validate_stage_4_7_character_content.py
+├── tests/integration/stage_4_7_starter_content_tests.gd
+├── tests/integration/run_stage_4_7_tests.gd
+└── tools/testing/run_stage_4_7_validation.py
+
+
+STAGE 4.7 HOTFIX 1 ADDITIONS
+- application/tactical/abilities/tactical_ability_service.gd
+- domain/actions/tactical_ability_definition.gd
+- content/characters/specifications/stage_4_7_approved_sheets.json
+- content/characters/life/sanctuary_spear_guard.tres
+- content/characters/life/sanctuary_archer.tres
+- content/characters/life/mercy_bearer.tres
+- content/actions/mercy/
+- tests/content/validate_stage_4_7_sheet_conformance.py
+- tests/integration/run_stage_4_7_hotfix_1_tests.gd
+- docs/content/STAGE_4_7_HOTFIX_1_CHARACTER_SHEET_FIDELITY.md
+
+
+STAGE 4.7 HOTFIX 2 ADDITIONS
+- application/content/content_catalogue.gd (default-loadout legality validation)
+- content/items/sanctuary_blackjack.tres (Belt-legal approved sidearm)
+- tests/content/validate_default_loadout_legality.py
+- tests/integration/run_stage_4_7_hotfix_2_tests.gd
+- docs/content/STAGE_4_7_HOTFIX_2_DEPLOYMENT_LOADOUT_LEGALITY.md
+- tools/patching/apply_stage_4_7_hotfix_2_patch.py
+
+
+STAGE 4.7 HOTFIX 3 ADDITIONS
+- docs/content/STAGE_4_7_HOTFIX_3_GUARD_INSTANCE_NAMING.md
+- tools/patching/apply_stage_4_7_hotfix_3_patch.py
+- STAGE_4_7_HOTFIX_3_* release files
+
+STAGE 4.7 HOTFIX 5e ADDITIONS
+- domain/tactical/movement_reachable_field.gd
+- domain/tactical/movement_rules.gd (binary-heap A* and bounded reachable field)
+- application/tactical/ai/enemy_action_plan.gd (selected route transport)
+- application/tactical/ai/enemy_action_planner.gd (one field per activation)
+- application/tactical/ai/enemy_turn_handler.gd (actor-step API and timing breakdown)
+- application/tactical/facades/tactical_screen_facade.gd
+- presentation/tactical/tactical_screen.gd (frame-budgeted AI presentation)
+- presentation/tactical/tactical_unit_view.gd (total movement-duration budget)
+- docs/architecture/STAGE_4_7_HOTFIX_5E_ENEMY_TURN_RESPONSIVENESS_AND_CADENCE.md
+- tests/content/validate_stage_4_7_hotfix_5e_enemy_turn_responsiveness.py
+- tests/integration/stage_4_7_hotfix_5e_enemy_turn_responsiveness_tests.gd
+- tests/integration/run_stage_4_7_hotfix_5e_tests.gd
+- tools/patching/apply_stage_4_7_hotfix_5e_patch.py
+- STAGE_4_7_HOTFIX_5E_* release files

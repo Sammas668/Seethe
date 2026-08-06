@@ -1,0 +1,363 @@
+{
+  "schema": "seethe.stage_4_7_hotfix_4.marauder_sheet_conformance.v1",
+  "authority": "Approved character sheets from the Seethe character-design workflow",
+  "sheets": {
+    "character_template.reaver.marauder_tier_1": {
+      "display_name": "Tier I Marauder",
+      "class_name_text": "Barbarian 3",
+      "level": 3,
+      "abilities": {
+        "STR": 15,
+        "DEX": 13,
+        "CON": 14,
+        "INT": 10,
+        "WIS": 12,
+        "CHA": 8
+      },
+      "resolved": {
+        "maximum_hp": 32,
+        "armour_class": 14,
+        "initiative": 1,
+        "base_attack_bonus": 3,
+        "fortitude": 5,
+        "reflex": 2,
+        "will": 2,
+        "grapple": 5,
+        "passive_perception": 17,
+        "turn_capacity": 80,
+        "half_action_cost": 40,
+        "sprint_distance": 120,
+        "effective_carrying_strength": 19,
+        "light_load_max_lb": 116,
+        "medium_load_max_lb": 233,
+        "maximum_weight_lb": 350
+      },
+      "attacks": {
+        "action.raiders_axe_attack": {
+          "attack_bonus": 5,
+          "raging_attack_bonus": 7,
+          "damage_notation": "1d8+2",
+          "raging_damage_notation": "1d8+4",
+          "critical": "x3",
+          "damage_type": "slashing"
+        },
+        "action.mace_attack": {
+          "attack_bonus": 5,
+          "raging_attack_bonus": 7,
+          "damage_notation": "1d6+2",
+          "raging_damage_notation": "1d6+4",
+          "damage_type": "blunt",
+          "damage_policy": "selectable"
+        },
+        "action.reaver_dagger_attack": {
+          "attack_bonus": 5,
+          "raging_attack_bonus": 7,
+          "damage_notation": "1d4+2",
+          "raging_damage_notation": "1d4+4",
+          "critical": "19-20/x2"
+        },
+        "action.reaver_thrown_dagger_attack": {
+          "attack_bonus": 4,
+          "damage_notation": "1d4+2",
+          "critical": "19-20/x2"
+        }
+      },
+      "traits": [
+        "feature.rage",
+        "feature.fast_movement",
+        "feature.uncanny_dodge",
+        "feature.trap_sense_1",
+        "feat.power_attack",
+        "trait.take_them_alive",
+        "trait.raiders_burden"
+      ],
+      "feature_parameters": {
+        "feature.rage": {
+          "activation_cost": "quick",
+          "duration_rounds": 7,
+          "uses_per_mission": 1
+        },
+        "feat.power_attack": {
+          "maximum_value_source": "bab"
+        },
+        "trait.take_them_alive": {
+          "nonlethal_penalty_offset": 4,
+          "restrain_cost": "quick"
+        },
+        "trait.raiders_burden": {
+          "carrying_strength_bonus": 4,
+          "container_item_id": "item.raiders_sack",
+          "secured_burden_limit": 1,
+          "maximum_secured_size": "medium"
+        }
+      },
+      "resources": {
+        "resource.rage": 1
+      },
+      "raging": {
+        "STR": 19,
+        "CON": 18,
+        "maximum_hp": 38,
+        "armour_class": 12,
+        "fortitude": 7,
+        "reflex": 2,
+        "will": 4,
+        "grapple": 7,
+        "effective_carrying_strength": 23,
+        "light_load_max_lb": 200,
+        "medium_load_max_lb": 400,
+        "maximum_weight_lb": 600
+      },
+      "skills": {
+        "Climb": 7,
+        "Intimidate": 5,
+        "Jump": 7,
+        "Perception": 7,
+        "Survival": 7,
+        "Stealth": 0
+      },
+      "proficiencies": [
+        "proficiency.simple_weapons",
+        "proficiency.martial_weapons",
+        "proficiency.light_armour",
+        "proficiency.medium_armour",
+        "proficiency.shields_except_tower"
+      ],
+      "required_items": [
+        "item.raiders_axe",
+        "item.patchwork_raider_armour",
+        "item.mace",
+        "item.reaver_dagger",
+        "item.manacles",
+        "item.marauder_keys",
+        "item.bandage",
+        "item.rope",
+        "item.raiders_sack"
+      ],
+      "design_overrides": {
+        "rations_removed": true,
+        "raiders_sack_replaces_empty_sack_and_separate_carrying_belt": true,
+        "full_attack_deferred_at_level_3": true,
+        "five_foot_adjustment_removed": true,
+        "surrender_deferred": true,
+        "broad_skill_actions_deferred": true
+      }
+    },
+    "character_template.life.sanctuary_spear_guard": {
+      "display_name": "Sanctuary Spear Guard",
+      "class_name_text": "Warrior 1",
+      "level": 1,
+      "abilities": {
+        "STR": 14,
+        "DEX": 10,
+        "CON": 14,
+        "INT": 10,
+        "WIS": 10,
+        "CHA": 9
+      },
+      "resolved": {
+        "maximum_hp": 10,
+        "armour_class": 16,
+        "base_attack_bonus": 1,
+        "fortitude": 4,
+        "reflex": 0,
+        "will": 0
+      },
+      "attacks": {
+        "action.sanctuary.capture_spear_attack": {
+          "attack_bonus": 3,
+          "damage_notation": "1d6+2",
+          "damage_type": "blunt",
+          "damage_policy": "nonlethal_only"
+        },
+        "action.sanctuary.blackjack_attack": {
+          "attack_bonus": 4,
+          "damage_notation": "1d6+2",
+          "damage_type": "blunt",
+          "damage_policy": "nonlethal_only"
+        }
+      },
+      "traits": [
+        "feat.weapon_focus.sanctuary_blackjack",
+        "feat.subdual_takedown"
+      ],
+      "required_actions": [
+        "action.brace",
+        "action.grapple",
+        "action.trip",
+        "action.shove",
+        "action.restrain",
+        "action.first_aid"
+      ],
+      "required_items": [
+        "item.sanctuary.capture_spear",
+        "item.sanctuary.blackjack",
+        "item.guard_shield",
+        "item.manacles",
+        "item.bandage"
+      ]
+    },
+    "character_template.life.sanctuary_archer": {
+      "display_name": "Sanctuary Archer",
+      "class_name_text": "Warrior 1",
+      "level": 1,
+      "abilities": {
+        "STR": 10,
+        "DEX": 14,
+        "CON": 12,
+        "INT": 10,
+        "WIS": 12,
+        "CHA": 10
+      },
+      "resolved": {
+        "maximum_hp": 9,
+        "armour_class": 15,
+        "initiative": 2,
+        "base_attack_bonus": 1,
+        "fortitude": 3,
+        "reflex": 2,
+        "will": 1
+      },
+      "attacks": {
+        "action.sanctuary.capture_bow_attack": {
+          "attack_bonus": 4,
+          "overwatch_attack_bonus": 3,
+          "damage_notation": "1d6",
+          "damage_type": "blunt",
+          "damage_policy": "nonlethal_only",
+          "range_increment_feet": 60,
+          "ammunition_tag": "padded_arrow"
+        },
+        "action.sanctuary.blackjack_attack": {
+          "attack_bonus": 1,
+          "damage_notation": "1d6",
+          "damage_type": "blunt",
+          "damage_policy": "nonlethal_only"
+        }
+      },
+      "traits": [
+        "feat.weapon_focus.sanctuary_capture_bow",
+        "feat.patient_overwatch"
+      ],
+      "required_items": [
+        "item.sanctuary.capture_bow",
+        "item.sanctuary.blackjack",
+        "item.sanctuary.padded_arrows",
+        "item.manacles",
+        "item.bandage"
+      ]
+    },
+    "character_template.life.mercy_bearer": {
+      "display_name": "Mercy-Bearer",
+      "class_name_text": "Cleric 3",
+      "level": 3,
+      "abilities": {
+        "STR": 12,
+        "DEX": 10,
+        "CON": 14,
+        "INT": 10,
+        "WIS": 16,
+        "CHA": 14
+      },
+      "resolved": {
+        "maximum_hp": 24,
+        "armour_class": 17,
+        "base_attack_bonus": 2,
+        "fortitude": 5,
+        "reflex": 1,
+        "will": 6
+      },
+      "attacks": {
+        "action.sanctuary.blackjack_attack": {
+          "attack_bonus": 3,
+          "damage_notation": "1d6+1",
+          "damage_type": "blunt",
+          "damage_policy": "nonlethal_only"
+        }
+      },
+      "traits": [
+        "feature.mercy_bearer_spellcasting",
+        "feat.combat_casting",
+        "feat.augmented_healing",
+        "feat.spell_focus.compulsion",
+        "feature.mercy_intercession"
+      ],
+      "resources": {
+        "resource.mercy.cure_light_wounds": 2,
+        "resource.mercy.cure_moderate_wounds": 1,
+        "resource.mercy.command_kneel": 1,
+        "resource.mercy.sanctuary": 1,
+        "resource.mercy.hold_person": 1,
+        "resource.mercy.mercys_rebuke": 1,
+        "resource.mercy.intercession": 1
+      },
+      "required_actions": [
+        "action.mercy.mercy_intercession",
+        "action.mercy.cure_light_wounds",
+        "action.mercy.cure_moderate_wounds",
+        "action.mercy.command_kneel",
+        "action.mercy.sanctuary",
+        "action.mercy.hold_person",
+        "action.mercy.mercys_rebuke",
+        "action.mercy.guidance",
+        "action.mercy.resistance",
+        "action.mercy.detect_poison",
+        "action.mercy.light"
+      ],
+      "required_items": [
+        "item.sanctuary.blackjack",
+        "item.mercy.cradling_shield",
+        "item.mercy.field_kit",
+        "item.manacles",
+        "item.mercy.divine_focus"
+      ],
+      "spell_profiles": {
+        "action.mercy.cure_light_wounds": {
+          "dice": "1d8",
+          "flat_bonus": 5,
+          "uses": 2
+        },
+        "action.mercy.cure_moderate_wounds": {
+          "dice": "2d8",
+          "flat_bonus": 7,
+          "uses": 1
+        },
+        "action.mercy.command_kneel": {
+          "save": "will",
+          "dc": 15,
+          "uses": 1
+        },
+        "action.mercy.sanctuary": {
+          "dc": 14,
+          "uses": 1
+        },
+        "action.mercy.hold_person": {
+          "save": "will",
+          "dc": 16,
+          "uses": 1
+        },
+        "action.mercy.mercys_rebuke": {
+          "dice": "2d6",
+          "flat_bonus": 3,
+          "save": "will",
+          "dc": 15,
+          "damage_channel": "nonlethal",
+          "uses": 1
+        }
+      }
+    }
+  },
+  "forbidden_production_templates": [
+    "character_template.life.settlement_guard",
+    "character_template.life.settlement_archer",
+    "character_template.life.patrol_leader",
+    "character_template.life.novice_mercy_bearer"
+  ],
+  "forbidden_farm_items": [
+    "item.settlement_spear",
+    "item.settlement_shortbow",
+    "item.patrol_sword",
+    "item.mercy_staff",
+    "item.mercy.satchel"
+  ]
+}

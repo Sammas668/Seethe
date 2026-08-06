@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TacticalAIProfileDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/ai/tactical_ai_profile_definition.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"ai.life.patrol_leader"
+display_name = "Settlement Patrol Leader"
+role = &"leader"
+preferred_attack_kind = &"melee"
+prefers_cover = true
+can_raise_alarm = true
+can_surrender = false
+support_priority = 1
+notes = "Higher-perception defender who anchors and coordinates the watch squad."

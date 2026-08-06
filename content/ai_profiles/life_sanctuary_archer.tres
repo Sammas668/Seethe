@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TacticalAIProfileDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/tactical/ai/tactical_ai_profile_definition.gd" id="1_profile"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"ai.life.sanctuary_archer"
+display_name = "Sanctuary Archer"
+role = &"ranged_defender"
+preferred_attack_kind = &"ranged"
+prefers_cover = true
+prefers_overwatch = true
+preserves_ammunition = true
+can_raise_alarm = true
+can_surrender = true
+avoids_melee = true
+notes = "Prefers the nonlethal Capture Bow, cover and Patient Overwatch; preserves padded ammunition and uses the Blackjack when engaged."

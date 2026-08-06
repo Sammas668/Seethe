@@ -1,0 +1,56 @@
+{
+  "id": "region.life.starter",
+  "display_name": "Telluria",
+  "width": 20,
+  "height": 15,
+  "hex_orientation": "flat_top_even_q",
+  "main_settlement_site_id": "site.settlement.telluria",
+  "fifth_god_ruin_site_id": "site.fifth_god_ruin",
+  "military_site_id": "site.military.forest_gate_garrison",
+  "religious_site_ids": [
+    "site.religious.hero_of_mercy_monument"
+  ],
+  "mission_site_ids": [
+    "site.farm.starter_storehouse",
+    "site.telluria.wheat_warehouse",
+    "site.telluria.lumbermill",
+    "site.telluria.textiles_warehouse",
+    "site.telluria.craftsman_district",
+    "site.telluria.guild_house",
+    "site.telluria.noble_housing",
+    "site.religious.hero_of_mercy_monument",
+    "site.military.forest_gate_garrison",
+    "site.wilderness.deep_forest_ruins",
+    "site.wilderness.northern_marsh",
+    "site.telluria.east_merchant_quarter",
+    "site.westmarch.south_granary",
+    "site.westmarch.craftsman_yard",
+    "site.westmarch.textile_store",
+    "site.oakstead.artifact_hall",
+    "site.oakstead.warehouse",
+    "site.oakstead.syndicate_house"
+  ],
+  "aliases": [
+    "region.life.verdant_march"
+  ],
+  "subregions": [
+    {
+      "id": "subregion.life.north_east_telluria",
+      "display_name": "North-East Telluria"
+    },
+    {
+      "id": "subregion.life.north_west_telluria",
+      "display_name": "North-West Telluria"
+    },
+    {
+      "id": "subregion.life.south_telluria",
+      "display_name": "South Telluria"
+    },
+    {
+      "id": "subregion.life.telluria_proper",
+      "display_name": "Telluria Proper"
+    }
+  ],
+  "label_offsets": {},
+  "source_map_note": "User-authored Telluria baseline locked for Stage 5.1c. Roads and borders preserve the latest Region Authoring Tool export."
+}

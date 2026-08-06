@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="TacticalAbilityDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://domain/actions/tactical_ability_definition.gd" id="1_ability"]
+
+[resource]
+script = ExtResource("1_ability")
+id = &"action.mercy.sanctuary"
+display_name = "Sanctuary"
+description = "Half Action, touch. Direct hostile attackers must pass Will DC 14 or their attack is spent without occurring. Ends at the beginning of the Mercy-Bearer’s next activation or when the protected creature attacks."
+action_cost_type = &"half"
+implementation_profile_id = &"ability.apply_bonus"
+targeting_rule_id = &"target.touch_creature"
+range_feet = 5
+required_feature_ids = Array[StringName]([&"feature.mercy_bearer_spellcasting"])
+resource_id = &"resource.mercy.sanctuary"
+resource_cost = 1
+spell_rank = 1
+caster_level = 3
+school_tags = Array[StringName]([&"protection"])
+dice_count = 0
+die_size = 0
+flat_bonus = 0
+damage_channel = &""
+save_type = &""
+save_dc = 0
+half_on_save = false
+condition_id = &"effect.sanctuary"
+duration_rounds = 2
+concentration = false
+bonus_value = 14
+effect_tags = Array[StringName]([&"protection"])
+action_tags = Array[StringName]([&"spell", &"mercy_bearer"])
